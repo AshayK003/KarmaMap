@@ -5,6 +5,7 @@
   --color-primary: #059669;
   --color-primary-dark: #047857;
   --color-accent: #f59e0b;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -33,4 +34,45 @@ body {
   body {
     background: white;
   }
+  body * {
+    visibility: hidden;
+  }
+  .certificate, .certificate * {
+    visibility: visible;
+  }
+  .certificate {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 600px;
+    border: 4px double #d97706 !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
 }
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+

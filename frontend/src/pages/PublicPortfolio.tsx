@@ -7,9 +7,11 @@ export function PublicPortfolio() {
   const { slug } = useParams<{ slug: string }>();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [completed, setCompleted] = useState<Participation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
+    setLoading(true);
 
     supabase
       .from('profiles')
@@ -21,51 +23,275 @@ export function PublicPortfolio() {
         if (data) {
           supabase
             .from('participations')
-            .select('*, gigs(title)')
+            .select('*, gigs(title, gig_date)')
             .eq('volunteer_id', data.id)
             .eq('status', 'completed')
-            .then(({ data: parts }) => setCompleted((parts as Participation[]) ?? []));
+            .then(({ data: parts }) => {
+              setCompleted((parts as Participation[]) ?? []);
+              setLoading(false);
+            });
+        } else {
+          setLoading(false);
         }
       });
   }, [slug]);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+          <p className="text-xs font-bold text-slate-400">Loading verified portfolio...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Portfolio not found</p>
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white">
+        <div className="text-center space-y-2">
+          <span className="text-4xl select-none">🗺️</span>
+          <h2 className="text-lg font-black text-slate-700">Portfolio Not Found</h2>
+          <p className="text-xs font-semibold text-slate-400">
+            The profile link may be incorrect, or the volunteer has disabled sharing.
+          </p>
+        </div>
       </div>
     );
   }
 
   const totalHours = completed.reduce((s, p) => s + Number(p.hours ?? 0), 0);
 
+  // Dynamic Karma Level calculation
+  const getKarmaLevel = (points: number) => {
+    if (points >= 1000) return { title: 'Legendary Leader 🌟', color: 'from-purple-600 to-indigo-600', max: 5000 };
+    if (points >= 500) return { title: 'Community Champion 🟣', color: 'from-violet-500 to-fuchsia-500', max: 1000 };
+    if (points >= 100) return { title: 'Impact Hero 🔵', color: 'from-blue-500 to-cyan-500', max: 500 };
+    return { title: 'Karma Novice 🟢', color: 'from-emerald-500 to-teal-500', max: 100 };
+  };
+
+  const karma = profile.karma_points ?? 0;
+  const level = getKarmaLevel(karma);
+  const nextMilestonePercent = Math.min(100, (karma / level.max) * 100);
+
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+    window.location.href
+  )}`;
+
   return (
-    <div className="min-h-screen bg-emerald-50 px-4 py-12">
-      <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 shadow-lg text-center">
-        <p className="text-sm text-emerald-600">KarmaMap Portfolio</p>
-        <h1 className="mt-2 text-3xl font-bold">{profile.name}</h1>
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-2xl font-bold text-emerald-700">{profile.karma_points}</p>
-            <p className="text-xs text-gray-500">Karma</p>
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/30 via-slate-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+      {/* Verified Status Banner */}
+      <div className="mx-auto max-w-5xl mb-6 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3 shadow-md text-white">
+        <div className="flex items-center gap-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] text-slate-900 font-extrabold animate-pulse">
+            ✓
+          </span>
+          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+            Verified KarmaMap Profile
+          </span>
+        </div>
+        <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
+          Blockchain-backed Volunteer Log
+        </span>
+      </div>
+
+      <div className="mx-auto max-w-5xl grid gap-6 lg:grid-cols-12 lg:items-start">
+        {/* ─── Left Column: Profile Card & QR Share ─── */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Main Public Profile Info Card */}
+          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md text-center">
+            {/* Avatar block */}
+            <div className="flex flex-col items-center">
+              <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-3xl font-black text-slate-700">
+                  {profile.name ? profile.name.slice(0, 2).toUpperCase() : 'VM'}
+                </div>
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-sm shadow-md border-2 border-white select-none">
+                  🛡️
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-2xl font-black text-slate-800">{profile.name}</h1>
+              <span className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-xs font-extrabold text-white shadow-xs`}>
+                {level.title}
+              </span>
+            </div>
+
+            {/* Bio Section */}
+            {profile.bio && (
+              <div className="mt-6 border-t border-slate-100/80 pt-5 text-left">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2">
+                  Biography
+                </span>
+                <p className="text-sm font-medium leading-relaxed text-slate-600 italic">
+                  "{profile.bio}"
+                </p>
+              </div>
+            )}
+
+            {/* Skills Badges */}
+            {profile.skills && profile.skills.length > 0 && (
+              <div className="mt-6 border-t border-slate-100/80 pt-5 text-left">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-3">
+                  Registered Skills
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.skills.map((s) => (
+                    <span
+                      key={s}
+                      className="inline-flex items-center gap-1 rounded-xl bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600"
+                    >
+                      🌱 {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-600">{profile.streak}</p>
-            <p className="text-xs text-gray-500">Streak</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{totalHours}</p>
-            <p className="text-xs text-gray-500">Hours</p>
+
+          {/* QR Code / Share Scanner Card */}
+          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md text-center space-y-4">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
+              Scan to Verify Profile
+            </span>
+            <div className="flex justify-center">
+              <div className="rounded-2xl border-4 border-slate-100 bg-white p-2 shadow-inner">
+                <img
+                  src={qrCodeUrl}
+                  alt={`${profile.name} KarmaMap QR Code`}
+                  className="h-32 w-32 object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400 leading-normal">
+              Scan this dynamic code using any smartphone camera to instantly verify volunteer records on the go.
+            </p>
           </div>
         </div>
-        <ul className="mt-6 space-y-2 text-left text-sm">
-          {completed.map((p) => (
-            <li key={p.id} className="border-b py-2">
-              {(p as Participation & { gigs?: { title: string } }).gigs?.title}
-            </li>
-          ))}
-        </ul>
+
+        {/* ─── Right Column: Stats & Timeline ─── */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Metrics Overview Grid */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {/* Karma */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+              <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Karma</span>
+                <span className="text-xl">✨</span>
+              </div>
+              <p className="mt-2 text-3xl font-black text-emerald-700">{profile.karma_points ?? 0}</p>
+              {/* Level Progress */}
+              <div className="mt-4">
+                <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 mb-1">
+                  <span>Next Milestone</span>
+                  <span>{karma}/{level.max} XP</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/50">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${level.color} transition-all duration-500`}
+                    style={{ width: `${nextMilestonePercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Streak */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+              <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800">Active Streak</span>
+                <span className="text-xl animate-float">🔥</span>
+              </div>
+              <p className="mt-2 text-3xl font-black text-amber-600">{profile.streak ?? 0} days</p>
+              <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
+                Shows active engagement and reliable daily community service.
+              </p>
+            </div>
+
+            {/* Hours */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+              <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-widest text-slate-800">Verified Time</span>
+                <span className="text-xl">⏳</span>
+              </div>
+              <p className="mt-2 text-3xl font-black text-slate-800">{totalHours}h</p>
+              <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
+                Total accumulated volunteer time verified across open NGO projects.
+              </p>
+            </div>
+          </div>
+
+          {/* Completed Gigs list */}
+          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md">
+            <h2 className="text-lg font-black text-slate-800 flex items-center gap-1.5">
+              <span>📋</span> Volunteer History & Accomplishments
+            </h2>
+            <p className="text-xs font-bold text-slate-400 mt-0.5">
+              Chronological log of volunteer participations and impact milestones.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              {completed.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/50 p-8 text-center">
+                  <span className="text-3xl select-none">🌱</span>
+                  <p className="mt-2 text-sm font-extrabold text-slate-600">No verified history found</p>
+                  <p className="text-xs font-medium text-slate-400 mt-1 max-w-xs mx-auto">
+                    This volunteer has not logged any completed events on their public page yet.
+                  </p>
+                </div>
+              ) : (
+                completed.map((p) => {
+                  const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
+                  const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
+                  const dateStr = rawDate
+                    ? new Date(rawDate).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })
+                    : 'Verified Date';
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl font-bold text-emerald-600 animate-float">
+                          🏅
+                        </span>
+                        <div>
+                          <h3 className="text-sm font-extrabold text-slate-800">
+                            {gigTitle}
+                          </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
+                            <span>📅 {dateStr}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                              Verified Accomplishment
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <span className="text-xs font-extrabold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/50">
+                          ⏱️ {p.hours ?? 0} hours contributed
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

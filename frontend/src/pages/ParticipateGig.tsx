@@ -13,7 +13,7 @@ import type { Participation } from '../types/database';
 
 const schema = z.object({
   hours: z.coerce
-    .number({ invalid_type_error: 'Enter valid hours' })
+    .number()
     .min(0.5, 'Minimum 0.5 hours')
     .max(24, 'Maximum 24 hours'),
 });
@@ -38,7 +38,7 @@ export function ParticipateGig() {
     formState: { errors },
     setError,
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { hours: 2 },
   });
 

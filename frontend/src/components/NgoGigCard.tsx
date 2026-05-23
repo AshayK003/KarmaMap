@@ -1,12 +1,42 @@
 import { useState } from 'react';
 import type { Gig, GigStatus } from '../types/database';
 import { updateGigDetails, updateGigStatus } from '../services/gigs';
-import { GIG_STATUS_LABELS, GIG_STATUS_STYLES } from '../utils/gigStatus';
 
 interface NgoGigCardProps {
   gig: Gig;
   onUpdated: () => void;
 }
+
+const STATUS_THEME: Record<GigStatus, { bg: string; text: string; border: string; dot: string; label: string }> = {
+  open: { 
+    bg: 'bg-emerald-50/70', 
+    text: 'text-emerald-700', 
+    border: 'border-emerald-200/50', 
+    dot: 'bg-emerald-500',
+    label: 'Open for volunteers' 
+  },
+  in_progress: { 
+    bg: 'bg-blue-50/70', 
+    text: 'text-blue-700', 
+    border: 'border-blue-200/50', 
+    dot: 'bg-blue-500 animate-pulse',
+    label: 'In Progress' 
+  },
+  completed: { 
+    bg: 'bg-slate-50/70', 
+    text: 'text-slate-700', 
+    border: 'border-slate-200/50', 
+    dot: 'bg-slate-400',
+    label: 'Completed' 
+  },
+  cancelled: { 
+    bg: 'bg-rose-50/70', 
+    text: 'text-rose-700', 
+    border: 'border-rose-200/50', 
+    dot: 'bg-rose-500',
+    label: 'Closed' 
+  },
+};
 
 export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [busy, setBusy] = useState(false);
@@ -68,27 +98,70 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
 
   const isTerminal = gig.status === 'completed' || gig.status === 'cancelled';
 
+  // Calculate spots filled progress bar metrics
+  const fillRate = gig.volunteers_needed > 0 ? (gig.volunteers_joined / gig.volunteers_needed) * 100 : 0;
+  const cappedFillRate = Math.min(fillRate, 100);
+  const progressTheme = fillRate >= 100 ? 'bg-emerald-500' : fillRate >= 50 ? 'bg-teal-500' : 'bg-amber-500';
+
+  const currentTheme = STATUS_THEME[gig.status];
+
   return (
-    <article className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+    <article className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-xs hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-950/2 transition-all duration-300 ease-out">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          {/* Header row with Title & Badge */}
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-gray-900">{gig.title}</h3>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${GIG_STATUS_STYLES[gig.status]}`}
-            >
-              {GIG_STATUS_LABELS[gig.status]}
+            <h3 className="text-lg font-bold text-gray-900 leading-snug group-hover:text-emerald-900 transition-colors">
+              {gig.title}
+            </h3>
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-2xs ${currentTheme.bg} ${currentTheme.text} ${currentTheme.border}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${currentTheme.dot}`} />
+              {currentTheme.label}
             </span>
           </div>
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{gig.description}</p>
-          <p className="mt-2 text-xs text-gray-500">
-            {gig.volunteers_joined}/{gig.volunteers_needed} volunteers ·{' '}
-            {gigDate.toLocaleString()}
+
+          {/* Description text */}
+          <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2 pt-0.5">
+            {gig.description}
           </p>
+
+          {/* Date & Subtitle meta details */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 font-semibold pt-1">
+            <span className="flex items-center gap-1 select-none">
+              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {gigDate.toLocaleDateString()}
+            </span>
+            <span className="flex items-center gap-1 select-none">
+              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {timePart}
+            </span>
+          </div>
+
+          {/* Dynamic Volunteer Progress Bar */}
+          <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100/50 p-3 max-w-xl">
+            <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+              <span className="text-gray-500">Spots Filled</span>
+              <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                {gig.volunteers_joined} / {gig.volunteers_needed} spots ({Math.round(fillRate)}%)
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-slate-200/60 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${progressTheme}`} 
+                style={{ width: `${cappedFillRate}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Required skills tags */}
           {gig.required_skills.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
               {gig.required_skills.map((s) => (
-                <span key={s} className="rounded bg-gray-100 px-2 py-0.5 text-xs">
+                <span key={s} className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700 transition-colors">
                   {s}
                 </span>
               ))}
@@ -98,11 +171,17 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
       </div>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-600">{error}</p>
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600">
+          <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          {error}
+        </div>
       )}
 
+      {/* Normal State Action Buttons */}
       {!editing && (
-        <div className="no-print mt-4 flex flex-wrap gap-2">
+        <div className="no-print mt-5 flex flex-wrap items-center gap-2 border-t border-gray-50 pt-4">
           {!isTerminal && (
             <>
               {gig.status === 'open' && (
@@ -110,9 +189,15 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('in_progress')}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm shadow-blue-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
                 >
-                  Start gig
+                  {busy && (
+                    <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Start Gig
                 </button>
               )}
               {(gig.status === 'open' || gig.status === 'in_progress') && (
@@ -120,9 +205,15 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('completed')}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
                 >
-                  Mark completed
+                  {busy && (
+                    <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Mark Completed
                 </button>
               )}
               {(gig.status === 'open' || gig.status === 'in_progress') && (
@@ -130,9 +221,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('cancelled')}
-                  className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all duration-200 disabled:opacity-50"
                 >
-                  Close gig
+                  Close Gig
                 </button>
               )}
             </>
@@ -142,9 +233,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               type="button"
               disabled={busy}
               onClick={() => setStatus('open')}
-              className="rounded-lg border border-emerald-400 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3.5 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 disabled:opacity-50"
             >
-              Reopen gig
+              Reopen Gig
             </button>
           )}
           {!isTerminal && (
@@ -152,79 +243,101 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               type="button"
               disabled={busy}
               onClick={() => setEditing(true)}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all duration-200 disabled:opacity-50 mr-auto"
             >
-              Edit details
+              Edit Details
             </button>
           )}
         </div>
       )}
 
+      {/* Editing State Collapsible Form */}
       {editing && (
-        <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
-          <div>
-            <label className="text-xs font-medium text-gray-600">Title</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            />
+        <div className="mt-5 space-y-4 border-t border-gray-100 pt-4 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-wider uppercase text-gray-400">Edit Gig Details</span>
+            <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded">All changes save instantly</span>
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">Required skills</label>
-            <input
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+
+          <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-600">Volunteers needed</label>
+              <label className="text-xs font-bold text-gray-500">Gig Title</label>
               <input
-                type="number"
-                min={1}
-                value={volunteersNeeded}
-                onChange={(e) => setVolunteersNeeded(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                placeholder="Enter an catchy title..."
               />
             </div>
+
             <div>
-              <label className="text-xs font-medium text-gray-600">Date</label>
+              <label className="text-xs font-bold text-gray-500">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                placeholder="Describe what the volunteers will do..."
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500">Required Skills (comma separated)</label>
               <input
-                type="date"
-                value={datePart}
-                onChange={(e) => setDatePart(e.target.value)}
-                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                placeholder="e.g. Teaching, Gardening, Cooking"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Volunteers Needed</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={volunteersNeeded}
+                  onChange={(e) => setVolunteersNeeded(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Date</label>
+                <input
+                  type="date"
+                  value={datePart}
+                  onChange={(e) => setDatePart(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500">Time</label>
+              <input
+                type="time"
+                value={timePart}
+                onChange={(e) => setTimePart(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">Time</label>
-            <input
-              type="time"
-              value={timePart}
-              onChange={(e) => setTimePart(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 pt-2">
             <button
               type="button"
               disabled={busy}
               onClick={saveEdits}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 transition-all duration-200 disabled:opacity-50"
             >
-              Save changes
+              {busy && (
+                <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              Save Changes
             </button>
             <button
               type="button"
@@ -236,7 +349,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                 setVolunteersNeeded(gig.volunteers_needed);
                 setSkills(gig.required_skills.join(', '));
               }}
-              className="rounded-lg border px-4 py-2 text-xs text-gray-600"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all duration-200"
             >
               Cancel
             </button>

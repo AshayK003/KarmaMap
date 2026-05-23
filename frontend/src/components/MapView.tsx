@@ -24,6 +24,38 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Custom green pin icon for gig markers
+const gigIcon = L.divIcon({
+  className: '',
+  html: `<div style="
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #059669, #0d9488);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2.5px solid white;
+    box-shadow: 0 2px 8px rgba(5,150,105,0.4);
+  "></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -30],
+});
+
+// Custom "you are here" pulse icon
+const youIcon = L.divIcon({
+  className: '',
+  html: `<div style="position:relative; width:20px; height:20px;">
+    <div style="
+      position:absolute; inset:0;
+      background:#059669; border-radius:50%;
+      border: 3px solid white;
+      box-shadow: 0 0 0 4px rgba(5,150,105,0.25);
+    "></div>
+  </div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -14],
+});
+
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => {
@@ -67,7 +99,10 @@ export function MapView({
   pickMode = false,
 }: MapViewProps) {
   return (
-    <div style={{ height }} className="overflow-hidden rounded-xl border border-emerald-200">
+    <div
+      style={{ height }}
+      className="overflow-hidden rounded-2xl border border-emerald-100 shadow-sm"
+    >
       <MapContainer
         center={[lat, lng]}
         zoom={13}
@@ -80,24 +115,44 @@ export function MapView({
         />
         <RecenterMap lat={lat} lng={lng} />
         <MapClickPicker enabled={pickMode} onPick={onMapClick} />
+
+        {/* Search radius circle */}
         <Circle
+          key={`circle-${lat}-${lng}-${radiusMeters}`}
           center={[lat, lng]}
           radius={radiusMeters}
-          pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 0.08 }}
+          pathOptions={{
+            color: '#059669',
+            weight: 1.5,
+            fillColor: '#059669',
+            fillOpacity: 0.06,
+            dashArray: '6 4',
+          }}
         />
-        <Marker position={[lat, lng]}>
-          <Popup>You are here</Popup>
+
+        {/* "You are here" marker */}
+        <Marker position={[lat, lng]} icon={youIcon}>
+          <Popup className="leaflet-popup-custom">
+            <div className="min-w-[120px] text-center py-1">
+              <p className="font-extrabold text-sm text-gray-900">📍 You are here</p>
+            </div>
+          </Popup>
         </Marker>
+
+        {/* Gig markers */}
         {gigs.map((gig) => (
-          <Marker key={gig.id} position={[gig.lat, gig.lng]}>
-            <Popup>
-              <div className="min-w-[160px]">
-                <p className="font-semibold">{gig.title}</p>
-                <p className="text-xs text-gray-500">{gig.ngo_name}</p>
-                <p className="text-xs">{formatDistance(gig.distance_meters)} away</p>
+          <Marker key={gig.id} position={[gig.lat, gig.lng]} icon={gigIcon}>
+            <Popup className="leaflet-popup-custom" minWidth={200}>
+              <div className="min-w-[200px] space-y-1.5 py-1">
+                <p className="font-extrabold text-sm text-gray-900 leading-snug">{gig.title}</p>
+                <p className="text-xs font-bold text-emerald-700">{gig.ngo_name}</p>
+                <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
+                  <span>📍 {formatDistance(gig.distance_meters)} away</span>
+                  <span>{gig.volunteers_joined}/{gig.volunteers_needed} spots</span>
+                </div>
                 <Link
                   to={`/gigs/${gig.id}`}
-                  className="mt-2 block text-sm text-emerald-600 hover:underline"
+                  className="mt-2 block w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 py-1.5 text-center text-xs font-extrabold text-white transition-colors"
                 >
                   View gig →
                 </Link>

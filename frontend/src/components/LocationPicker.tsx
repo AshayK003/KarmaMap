@@ -35,8 +35,8 @@ export function LocationPicker({
   };
 
   return (
-    <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-medium text-gray-800">Location</p>
+    <div className="p-4 border rounded-lg bg-white/30 backdrop-blur-lg border-white/20 shadow-lg backdrop-filter">
+      <h2 className="text-lg font-bold mb-2">Location Picker</h2>
       {placeLabel && source === 'search' ? (
         <p className="mt-1 text-xs text-gray-700">{placeLabel}</p>
       ) : null}
