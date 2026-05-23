@@ -1,0 +1,169 @@
+import { supabaseAdmin } from './supabase.js';
+
+export interface MatchedVolunteer {
+  id: string;
+  name: string;
+  email: string;
+  skills: string[];
+  distance_meters: number;
+  skill_overlap: number;
+  final_score: number;
+}
+
+function skillOverlap(required: string[], volunteer: string[]): number {
+  if (required.length === 0) return 1;
+  const requiredLower = required.map((s) => s.toLowerCase());
+  const matches = volunteer.filter((s) =>
+    requiredLower.includes(s.toLowerCase())
+  ).length;
+  return matches / required.length;
+}
+
+function normalizeDistance(distanceMeters: number, maxMeters = 50000): number {
+  return Math.max(0, 1 - distanceMeters / maxMeters);
+}
+
+export async function findMatchedVolunteers(
+  gigId: string,
+  radiusMeters = 10000,
+  limit = 10
+): Promise<MatchedVolunteer[]> {
+  const { data: gig, error: gigError } = await supabaseAdmin
+    .from('gigs')
+    .select('id, required_skills, location')
+    .eq('id', gigId)
+    .single();
+
+  if (gigError || !gig) {
+    throw new Error('Gig not found');
+  }
+
+  const { data: locationRow } = await supabaseAdmin.rpc('get_gig_location', {
+    gig_uuid: gigId,
+  }).maybeSingle();
+
+  // Fallback: query volunteers with raw SQL via rpc
+  const { data: volunteers, error } = await supabaseAdmin.rpc(
+    'match_volunteers_for_gig',
+    {
+      p_gig_id: gigId,
+      p_radius_meters: radiusMeters,
+    }
+  );
+
+  if (error) {
+    // Use inline query if RPC not deployed yet
+    return matchVolunteersFallback(
+      gigId,
+      gig.required_skills ?? [],
+      radiusMeters,
+      limit,
+      locationRow
+    );
+  }
+
+  const ranked = (volunteers ?? []).map(
+    (v: {
+      id: string;
+      name: string;
+      email: string;
+      skills: string[];
+      distance_meters: number;
+    }) => {
+      const overlap = skillOverlap(gig.required_skills ?? [], v.skills ?? []);
+      const distScore = normalizeDistance(v.distance_meters);
+      const final_score = 0.5 * distScore + 0.5 * overlap;
+      return { ...v, skill_overlap: overlap, final_score };
+    }
+  );
+
+  return ranked
+    .sort((a: MatchedVolunteer, b: MatchedVolunteer) => b.final_score - a.final_score)
+    .slice(0, limit);
+}
+
+async function matchVolunteersFallback(
+  gigId: string,
+  requiredSkills: string[],
+  radiusMeters: number,
+  limit: number,
+  _locationRow: unknown
+): Promise<MatchedVolunteer[]> {
+  const { data: gigData } = await supabaseAdmin
+    .from('gigs')
+    .select('ngo_id')
+    .eq('id', gigId)
+    .single();
+
+  const { data: profiles } = await supabaseAdmin
+    .from('profiles')
+    .select('id, name, skills, location')
+    .eq('role', 'volunteer')
+    .not('location', 'is', null);
+
+  const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
+  const emailMap = new Map(
+    authUsers.users.map((u) => [u.id, u.email ?? ''])
+  );
+
+  const { data: nearby } = await supabaseAdmin.rpc('nearby_volunteers_for_gig', {
+    p_gig_id: gigId,
+    p_radius_meters: radiusMeters,
+  });
+
+  if (nearby && nearby.length > 0) {
+    return (nearby as Array<{
+      id: string;
+      name: string;
+      skills: string[];
+      distance_meters: number;
+    }>)
+      .map((v) => {
+        const overlap = skillOverlap(requiredSkills, v.skills ?? []);
+        const distScore = normalizeDistance(v.distance_meters);
+        return {
+          id: v.id,
+          name: v.name,
+          email: emailMap.get(v.id) ?? '',
+          skills: v.skills ?? [],
+          distance_meters: v.distance_meters,
+          skill_overlap: overlap,
+          final_score: 0.5 * distScore + 0.5 * overlap,
+        };
+      })
+      .sort((a, b) => b.final_score - a.final_score)
+      .slice(0, limit);
+  }
+
+  // Last resort: score all volunteers without geo (dev mode)
+  return (profiles ?? [])
+    .map((v) => {
+      const overlap = skillOverlap(requiredSkills, v.skills ?? []);
+      return {
+        id: v.id,
+        name: v.name,
+        email: emailMap.get(v.id) ?? '',
+        skills: v.skills ?? [],
+        distance_meters: 5000,
+        skill_overlap: overlap,
+        final_score: overlap * 0.5 + 0.25,
+      };
+    })
+    .sort((a, b) => b.final_score - a.final_score)
+    .slice(0, limit);
+}
+
+export async function notifyMatchedVolunteers(
+  gigId: string,
+  volunteers: MatchedVolunteer[],
+  gigTitle: string
+): Promise<void> {
+  const notifications = volunteers.map((v) => ({
+    user_id: v.id,
+    message: `New gig nearby: "${gigTitle}" — you're a top match!`,
+    gig_id: gigId,
+    read_status: false,
+  }));
+
+  await supabaseAdmin.from('notifications').insert(notifications);
+}
