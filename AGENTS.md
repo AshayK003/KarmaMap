@@ -30,7 +30,9 @@ KarmaMap/
 │   ├── services/
 │   │   ├── supabase.ts       # service_role admin client
 │   │   ├── matchingService.ts # 0.5*proximity + 0.5*skill, 3-tier fallback
-│   │   └── emailService.ts   # EmailJS REST via native fetch
+│   │   ├── emailService.ts   # EmailJS REST via native fetch
+│   │   ├── gigService.ts     # createGig, getNgoAnalytics, verifyGigOwnership
+│   │   └── participationService.ts # joinGig, completeParticipation, awardKarma
 │   └── dist/                 # Compiled JS
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
@@ -63,14 +65,15 @@ KarmaMap/
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
 │       └── utils/             # api.ts, geo.ts, gigStatus.ts
-├── supabase/migrations/      # 7 SQL files
+├── supabase/migrations/      # 8 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
 │   ├── 20240523000000_initial_schema.sql  # Combined (lacks featured_until)
 │   ├── fix_matching_functions.sql
 │   ├── fix_postgis_functions.sql
-│   └── storage_policies.sql
+│   ├── storage_policies.sql
+│   └── 03_atomic_karma.sql
 ├── render.yaml               # Backend deploy (Render)
 ├── vercel.json               # Frontend deploy (Vercel)
 └── .env.example
@@ -109,13 +112,15 @@ KarmaMap/
 - **supabase.ts**: `supabaseAdmin` (service_role SupabaseClient)
 - **matchingService.ts**: `MatchedVolunteer` (interface), `findMatchedVolunteers(gigId, radius?, limit?)`, `notifyMatchedVolunteers(gigId, volunteers, gigTitle)`
 - **emailService.ts**: `sendEmail(params)`, `sendGigMatchEmails(volunteers, gigTitle)`, `sendCompletionEmail(email, name, gigTitle)`
+- **gigService.ts**: `createGig`, `getNgoAnalytics`, `verifyGigOwnership`, `getGigOwnership`
+- **participationService.ts**: `completeParticipation`, `joinGig`, `awardKarma`
 
 ## Database (PostgreSQL + PostGIS)
 **Custom enums**: `user_role` (volunteer, ngo), `gig_status` (open, in_progress, completed, cancelled), `participation_status` (pending, joined, checked_in, completed, cancelled)
 
 **Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
 
-**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `match_volunteers_for_gig(gig_id, radius)`, `nearby_volunteers_for_gig(gig_id, radius)`.
+**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `match_volunteers_for_gig(gig_id, radius)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
 
 **Triggers**: auto-create profile on signup (`handle_new_user`), auto-update `updated_at` (`set_updated_at`), increment `volunteers_joined` on participation insert (`increment_gig_volunteers`).
 
@@ -143,7 +148,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Location**: Use `useLocationPicker()` hook which wraps `useGeolocation()` for GPS; supports GPS, preset, manual coords, search (Photon), and map click sources
 - **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail; `useRealtimeNotifications(userId?)` subscribes to `notifications` channel
 - **Marker clustering**: `react-leaflet-cluster` (v4.1.3) wraps `<Marker>` children in `<MarkerClusterGroup>` — `chunkedLoading`, `maxClusterRadius=60`, `disableClusteringAtZoom=16`; CSS imported from `leaflet.markercluster/dist/`
-- **NotificationBell**: `lucide-react` `Bell` icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig
+- **NotificationBell**: Inline SVG bell icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig
 - **Leaderboard**: `/leaderboard` route — `SELECT name, karma_points, streak FROM profiles WHERE role='volunteer' ORDER BY karma_points DESC LIMIT 50`; Recharts `BarChart` (horizontal, top 10); medals for top 3
 - **Best Match sort**: `sortMode` state in `VolunteerMap.tsx` toggles between `'nearest'` (RPC default) and `'best_match'` (client-side reorder via `skillOverlapScore`) — disabled when profile has no skills
 - **Add to Calendar**: ICS generator button on GigDetail — 3h default duration, GeoJSON/EWKT location parsed via `parseGigLocation`, Blob download
@@ -164,17 +169,17 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **GEarth radius**: 6371km used in haversine formula (`utils/geo.ts`)
 
 ### Backend
-- **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table; `jsonwebtoken` package is imported but NEVER called (dead code)
+- **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table; `jsonwebtoken` package is imported but NEVER called (dead code, removed)
 - **Email**: `emailService.ts` uses native `fetch` to POST to EmailJS API (not `@emailjs/node`); gracefully skips if env vars not configured
 - **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500)
 - **Duplicate join detection**: first checks via `select`, then catches `23505` unique constraint violation as fallback
-- **Karma award**: `hours * 10` awarded on participation completion
+- **Karma award**: `hours * 10` awarded on participation completion; uses `award_karma` RPC (atomic) with read-then-write fallback
 - **Feature gig**: sets `featured_until` column; `nearby_gigs` RPC sorts featured (future) gigs first
-- **Nodemon discrepancy**: `nodemon` is a devDependency but unused; dev script uses `tsx watch index.ts` instead
+- **Nodemon**: was an unused devDependency; dev script uses `tsx watch index.ts`; removed from package.json
 
-### Corrupted / Unused Files
-- **4 Responsive* components** exist but are BROKEN (encoding corruption, non-functional): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx` — do not import or use
-- **`jsonwebtoken`** (backend) and **`@emailjs/browser`** (frontend) are unused dependencies
+### Removed / Unused Files (cleaned up)
+- **4 Responsive* components** were BROKEN (encoding corruption, non-functional) and have been **deleted**: `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
+- **`jsonwebtoken`**, **`@types/jsonwebtoken`**, **`nodemon`** (backend) and **`@emailjs/browser`** (frontend) have been **removed** as unused dependencies
 
 ### Migrations
 - **Migration order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql`

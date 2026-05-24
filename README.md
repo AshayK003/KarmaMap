@@ -82,7 +82,9 @@ KarmaMap/
 │   ├── services/
 │   │   ├── supabase.ts         # service_role admin client
 │   │   ├── matchingService.ts  # 0.5*proximity + 0.5*skill, 3-tier fallback
-│   │   └── emailService.ts     # EmailJS REST via fetch
+│   │   ├── emailService.ts     # EmailJS REST via fetch
+│   │   ├── gigService.ts       # createGig, getNgoAnalytics, verifyGigOwnership
+│   │   └── participationService.ts # joinGig, completeParticipation, awardKarma
 │   └── dist/                   # Compiled JS
 ├── frontend/                   # React SPA (port 5173)
 │   └── src/
@@ -115,7 +117,7 @@ KarmaMap/
 │       ├── types/              # database.ts (TS types + DB namespace)
 │       ├── lib/                # supabase.ts, utils.ts (cn)
 │       └── utils/              # api.ts, geo.ts, gigStatus.ts
-├── supabase/migrations/        # 7 SQL files (schema, RPCs, RLS, storage)
+├── supabase/migrations/        # 8 SQL files (schema, RPCs, RLS, storage, atomic_karma)
 ├── render.yaml                 # Backend deploy (Render, Node 20)
 ├── vercel.json                 # Frontend deploy (Vercel, SPA rewrites)
 └── .env.example
@@ -145,7 +147,7 @@ KarmaMap/
 - **Marker clustering**: `react-leaflet-cluster` wraps `<Marker>` children in `<MarkerClusterGroup>` — auto-clusters at zoom < 16, `maxClusterRadius=60`
 - **Leaderboard**: `/leaderboard` route queries `profiles WHERE role=volunteer ORDER BY karma_points DESC LIMIT 50`; Recharts horizontal bar chart for top 10
 - **Best Match sort**: Toggle on VolunteerMap re-sorts gigg via `skillOverlapScore()` — fallback to distance on tie
-- **NotificationBell**: Lucide `Bell` icon + unread count badge; dropdown lists notifications from `notifications` table; `markRead` / `markAllRead` support
+- **NotificationBell**: Inline SVG bell icon + unread count badge; dropdown lists notifications from `notifications` table; `markRead` / `markAllRead` support
 - **Add to Calendar**: Inline .ics generator on GigDetail — 3-hour default duration, GeoJSON/EWKT location parsing
 - **Auth**: `AuthContext` listens to `onAuthStateChange`; backend verifies via `supabaseAdmin.auth.getUser()`
 
@@ -171,7 +173,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 **Core tables**: `profiles`, `gigs`, `participations`, `notifications`
 **Custom enums**: `user_role`, `gig_status`, `participation_status`
 **GEOGRAPHY columns**: `profiles.location`, `gigs.location` (SRID 4326)
-**Key RPCs**: `nearby_gigs`, `insert_gig`, `update_profile_location`, `match_volunteers_for_gig`, `nearby_volunteers_for_gig`
+**Key RPCs**: `nearby_gigs`, `insert_gig`, `update_profile_location`, `match_volunteers_for_gig`, `nearby_volunteers_for_gig`, `award_karma`
 **Triggers**: auto-profile on signup, auto-update `updated_at`, increment `volunteers_joined`
 
 **Migration order**:
@@ -181,6 +183,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 4. `01_functions_and_realtime.sql` — helper RPCs + realtime publish
 5. `02_featured_gigs.sql` — `featured_until` column + sort order
 6. `storage_policies.sql` — storage bucket RLS
+7. `03_atomic_karma.sql` — `award_karma` atomic increment function (optional; fallback exists)
 
 Or use the combined `20240523000000_initial_schema.sql` (steps 3–5 combined — lacks `featured_until`).
 
@@ -240,7 +243,7 @@ npm run dev
 - **OSRM profiles**: `walking`, `cycling`, `driving`
 - **Carbon offset**: Haversine distance × 0.12 kg CO₂/km estimate
 - **Duplicate join**: Backend returns 409 `"You have already joined this gig."`
-- **Unused deps**: `jsonwebtoken` installed but never called (Supabase Auth handles verification); `@emailjs/browser` in frontend deps but unused
+- **No icon library** — all icons are inline SVGs (no `lucide-react` or similar)
 
 ---
 
