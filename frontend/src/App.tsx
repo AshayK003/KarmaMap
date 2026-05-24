@@ -12,6 +12,7 @@ import { NgoDashboard } from './pages/NgoDashboard';
 import { CreateGig } from './pages/CreateGig';
 import { VolunteerPortfolio } from './pages/VolunteerPortfolio';
 import { PublicPortfolio } from './pages/PublicPortfolio';
+import { Leaderboard } from './pages/Leaderboard';
 
 function App() {
   return (
@@ -42,6 +43,14 @@ function App() {
                 }
               />
               <Route path="/gigs/:id" element={<GigDetail />} />
+              <Route
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute>
+                    <Leaderboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/gigs/:id/participate"
                 element={

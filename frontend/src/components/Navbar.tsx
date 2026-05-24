@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
@@ -44,6 +45,7 @@ export function Navbar() {
                 <>
                   <Link to="/map" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 transition-all duration-200">Discovery Map</Link>
                   <Link to="/portfolio" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 transition-all duration-200">My Portfolio</Link>
+                  <Link to="/leaderboard" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 transition-all duration-200">Leaderboard</Link>
                   <Badge variant="default" className="px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
                 </>
               )}
@@ -53,6 +55,7 @@ export function Navbar() {
                   <Link to="/ngo/create-gig"><Button size="sm">Create Opportunity</Button></Link>
                 </>
               )}
+              <NotificationBell />
               <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
             </>
           ) : (
@@ -92,6 +95,7 @@ export function Navbar() {
                   <>
                     <Link to="/map" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors">🗺️ Discovery Map</Link>
                     <Link to="/portfolio" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors">📋 My Portfolio</Link>
+                    <Link to="/leaderboard" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors">🏆 Leaderboard</Link>
                     <div className="px-3 py-2"><Badge variant="default" className="text-xs">{profile.karma_points} Karma Points</Badge></div>
                   </>
                 )}
@@ -101,6 +105,9 @@ export function Navbar() {
                     <Link to="/ngo/create-gig" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors">➕ Create Opportunity</Link>
                   </>
                 )}
+                <div className="flex px-3 py-2">
+                  <NotificationBell />
+                </div>
                 <div className="pt-2 border-t border-slate-100">
                   <button onClick={handleSignOut} className="w-full px-3 py-3 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 transition-colors text-left">Sign Out</button>
                 </div>

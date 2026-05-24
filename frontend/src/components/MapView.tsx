@@ -9,7 +9,10 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { NearbyGig } from '../types/database';
 import { formatDistance } from '../utils/geo';
 import { Link } from 'react-router-dom';
@@ -258,82 +261,90 @@ export function MapView({
           </Popup>
         </Marker>
 
-        {gigs.map((gig) => (
-          <Marker
-            key={gig.id}
-            position={[gig.lat, gig.lng]}
-            icon={gigIcon}
-            eventHandlers={{
-              click: () => setSelectedGig(gig),
-            }}
-          >
-            <Popup className="leaflet-popup-custom" minWidth={210}>
-              <div className="space-y-1.5 py-1">
-                <p className="font-extrabold text-sm sm:text-base text-slate-800 leading-snug flex items-center gap-1.5">
-                  {gig.featured_until && new Date(gig.featured_until) > new Date() && (
-                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800">★ FEATURED</span>
-                  )}
-                  {gig.title}
-                </p>
-                <p className="text-xs sm:text-sm font-black text-emerald-700">{gig.ngo_name}</p>
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom
+          showCoverageOnHover={false}
+          disableClusteringAtZoom={16}
+        >
+          {gigs.map((gig) => (
+            <Marker
+              key={gig.id}
+              position={[gig.lat, gig.lng]}
+              icon={gigIcon}
+              eventHandlers={{
+                click: () => setSelectedGig(gig),
+              }}
+            >
+              <Popup className="leaflet-popup-custom" minWidth={210}>
+                <div className="space-y-1.5 py-1">
+                  <p className="font-extrabold text-sm sm:text-base text-slate-800 leading-snug flex items-center gap-1.5">
+                    {gig.featured_until && new Date(gig.featured_until) > new Date() && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800">★ FEATURED</span>
+                    )}
+                    {gig.title}
+                  </p>
+                  <p className="text-xs sm:text-sm font-black text-emerald-700">{gig.ngo_name}</p>
 
-                <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
-                  <div className="flex items-center justify-between">
-                    <span>📍 Straight line:</span>
-                    <span className="text-slate-700 font-extrabold">{formatDistance(gig.distance_meters)}</span>
+                  <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                    <div className="flex items-center justify-between">
+                      <span>📍 Straight line:</span>
+                      <span className="text-slate-700 font-extrabold">{formatDistance(gig.distance_meters)}</span>
+                    </div>
+
+                    {activeRoute && activeRoute.gigId === gig.id ? (
+                      <>
+                        <div className={`flex items-center justify-between font-black ${
+                          travelMode === 'foot' ? 'text-emerald-700' : travelMode === 'bicycle' ? 'text-cyan-700' : 'text-indigo-700'
+                        }`}>
+                          <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
+                          <span>{formatDistance(activeRoute.distance)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-teal-600 font-black">
+                          <span>⏱️ Travel time:</span>
+                          <span>{Math.round(activeRoute.duration / 60)} mins</span>
+                        </div>
+                        
+                        {travelMode !== 'car' ? (
+                          <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs">
+                            <span>🌱 CO2 Saved:</span>
+                            <span>{calculateCo2(activeRoute.distance)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1">
+                            <span>🚗 CO2 Emitted:</span>
+                            <span>{calculateCo2(activeRoute.distance)}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : loadingRoute ? (
+                      <div className="text-[10px] sm:text-xs text-emerald-600 animate-pulse font-extrabold py-0.5">
+                        Calculating road route...
+                      </div>
+                    ) : (
+                      <div className="text-[10px] sm:text-xs text-slate-400 font-medium italic py-0.5">
+                        Click marker to calculate road route
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500">
+                      <span>👥 Joined spots:</span>
+                      <span className="text-slate-700 font-extrabold">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
+                    </div>
                   </div>
 
-                  {activeRoute && activeRoute.gigId === gig.id ? (
-                    <>
-                      <div className={`flex items-center justify-between font-black ${
-                        travelMode === 'foot' ? 'text-emerald-700' : travelMode === 'bicycle' ? 'text-cyan-700' : 'text-indigo-700'
-                      }`}>
-                        <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
-                        <span>{formatDistance(activeRoute.distance)}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-teal-600 font-black">
-                        <span>⏱️ Travel time:</span>
-                        <span>{Math.round(activeRoute.duration / 60)} mins</span>
-                      </div>
-                      
-                      {travelMode !== 'car' ? (
-                        <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs">
-                          <span>🌱 CO2 Saved:</span>
-                          <span>{calculateCo2(activeRoute.distance)}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1">
-                          <span>🚗 CO2 Emitted:</span>
-                          <span>{calculateCo2(activeRoute.distance)}</span>
-                        </div>
-                      )}
-                    </>
-                  ) : loadingRoute ? (
-                    <div className="text-[10px] sm:text-xs text-emerald-600 animate-pulse font-extrabold py-0.5">
-                      Calculating road route...
-                    </div>
-                  ) : (
-                    <div className="text-[10px] sm:text-xs text-slate-400 font-medium italic py-0.5">
-                      Click marker to calculate road route
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500">
-                    <span>👥 Joined spots:</span>
-                    <span className="text-slate-700 font-extrabold">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
-                  </div>
+                  <Link
+                    to={`/gigs/${gig.id}`}
+                    className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-center text-xs sm:text-sm font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                  >
+                    View details →
+                  </Link>
                 </div>
-
-                <Link
-                  to={`/gigs/${gig.id}`}
-                  className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-center text-xs sm:text-sm font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
-                >
-                  View details →
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );

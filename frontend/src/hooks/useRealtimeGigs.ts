@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Gig } from '../types/database';
+import type { Gig, Notification } from '../types/database';
 
 export function useRealtimeGigs(ngoId?: string) {
   const [gigs, setGigs] = useState<Gig[]>([]);
@@ -40,6 +40,67 @@ export function useRealtimeGigs(ngoId?: string) {
   }, [fetchGigs]);
 
   return { gigs, refetch: fetchGigs };
+}
+
+export function useRealtimeNotifications(userId?: string) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setNotifications((data as Notification[]) ?? []);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchNotifications, userId]);
+
+  const unreadCount = notifications.filter((n) => !n.read_status).length;
+
+  const markRead = async (id: string) => {
+    try {
+      await supabase.from('notifications').update({ read_status: true }).eq('id', id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_status: true } : n)));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  };
+
+  const markAllRead = async () => {
+    if (!userId) return;
+    try {
+      await supabase.from('notifications').update({ read_status: true }).eq('user_id', userId).eq('read_status', false);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read_status: true })));
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+    }
+  };
+
+  return { notifications, unreadCount, markRead, markAllRead, refetch: fetchNotifications };
 }
 
 export function useRealtimeParticipations(gigId?: string) {

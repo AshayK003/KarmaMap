@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MapView } from '../components/MapView';
 import { GigCard } from '../components/GigCard';
 import { LocationPicker } from '../components/LocationPicker';
@@ -6,7 +6,7 @@ import { useLocationPicker } from '../hooks/useLocationPicker';
 import { useAuth } from '../context/AuthContext';
 import { fetchNearbyGigs, updateProfileLocation } from '../services/gigs';
 import type { NearbyGig } from '../types/database';
-import { DEFAULT_RADIUS_METERS } from '../utils/geo';
+import { DEFAULT_RADIUS_METERS, skillOverlapScore } from '../utils/geo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -66,6 +66,20 @@ export function VolunteerMap() {
   const [loading, setLoading] = useState(true);
   const [radius, setRadius] = useState(DEFAULT_RADIUS_METERS);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<'nearest' | 'best_match'>('nearest');
+
+  const sortedGigs = useMemo(() => {
+    if (sortMode === 'nearest' || !profile?.skills) return gigs;
+    const withScore = gigs.map((g) => ({
+      ...g,
+      matchScore: skillOverlapScore(g.required_skills, profile.skills),
+    }));
+    withScore.sort((a, b) => {
+      if (a.matchScore !== b.matchScore) return b.matchScore - a.matchScore;
+      return a.distance_meters - b.distance_meters;
+    });
+    return withScore;
+  }, [gigs, sortMode, profile?.skills]);
 
   const loadGigs = useCallback(async () => {
     setLoading(true);
@@ -111,7 +125,7 @@ export function VolunteerMap() {
             {!loading && (
               <Badge variant="default" className="gap-1.5 px-3 py-1 text-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {gigs.length} {gigs.length === 1 ? 'gig' : 'gigs'} found
+                {sortedGigs.length} {sortedGigs.length === 1 ? 'gig' : 'gigs'} found
               </Badge>
             )}
             <Button size="sm" onClick={loadGigs} disabled={loading}>
@@ -130,7 +144,7 @@ export function VolunteerMap() {
             <MapView
               lat={lat}
               lng={lng}
-              gigs={gigs}
+              gigs={sortedGigs}
               radiusMeters={radius}
               height="100%"
               pickMode
@@ -172,12 +186,40 @@ export function VolunteerMap() {
               </div>
             </Card>
 
+            {/* Sort mode */}
+            <Card className="p-4">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-3">Sort By</p>
+              <div className="flex gap-2">
+                <Button
+                  variant={sortMode === 'nearest' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSortMode('nearest')}
+                >
+                  Nearest
+                </Button>
+                <Button
+                  variant={sortMode === 'best_match' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSortMode('best_match')}
+                  disabled={!profile?.skills || profile.skills.length === 0}
+                  title={!profile?.skills?.length ? 'Add skills in your portfolio to use Best Match' : 'Sort by skill relevance'}
+                >
+                  Best Match
+                </Button>
+              </div>
+              {sortMode === 'best_match' && profile?.skills && profile.skills.length > 0 && (
+                <p className="text-[10px] font-bold text-emerald-600 mt-2">
+                  Sorted by skill relevance
+                </p>
+              )}
+            </Card>
+
             {/* Gig list in sidebar */}
             <div className="space-y-3">
               <div className="flex items-center justify-between px-0.5">
                 <h2 className="text-xs font-extrabold uppercase tracking-widest text-gray-400">Nearby Opportunities</h2>
-                {!loading && gigs.length > 0 && (
-                  <span className="text-[10px] font-bold text-gray-400">{gigs.length} results</span>
+                {!loading && sortedGigs.length > 0 && (
+                  <span className="text-[10px] font-bold text-gray-400">{sortedGigs.length} results</span>
                 )}
               </div>
 
@@ -194,7 +236,7 @@ export function VolunteerMap() {
                   </svg>
                   {loadError}
                 </div>
-              ) : gigs.length === 0 ? (
+              ) : sortedGigs.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-5 text-center space-y-2 flex flex-col items-center">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +251,7 @@ export function VolunteerMap() {
                   </ul>
                 </div>
               ) : (
-                gigs.map((gig) => (
+                sortedGigs.map((gig) => (
                   <GigCard key={gig.id} gig={gig} volunteerSkills={profile?.skills} />
                 ))
               )}

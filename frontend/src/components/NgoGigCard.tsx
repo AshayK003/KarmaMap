@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Gig, GigStatus } from '../types/database';
 import { updateGigDetails, updateGigStatus } from '../services/gigs';
+import { parseGigLocation } from '../utils/geo';
 import { Progress } from '@/components/ui/progress';
 
 interface NgoGigCardProps {
@@ -39,6 +40,20 @@ const STATUS_THEME: Record<GigStatus, { bg: string; text: string; border: string
   },
 };
 
+function LocationDisplay({ gig }: { gig: Gig }) {
+  const parsed = parseGigLocation(gig.location);
+  if (!parsed) return null;
+  return (
+    <span className="flex items-center gap-1 select-none">
+      <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      {parsed.lat.toFixed(4)}, {parsed.lng.toFixed(4)}
+    </span>
+  );
+}
+
 export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +62,10 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [description, setDescription] = useState(gig.description);
   const [volunteersNeeded, setVolunteersNeeded] = useState(gig.volunteers_needed);
   const [skills, setSkills] = useState(gig.required_skills.join(', '));
+
+  const initialLocation = parseGigLocation(gig.location);
+  const [lat, setLat] = useState(initialLocation?.lat ?? 28.6139);
+  const [lng, setLng] = useState(initialLocation?.lng ?? 77.209);
 
   const gigDate = new Date(gig.gig_date);
   const [datePart, setDatePart] = useState(gigDate.toISOString().slice(0, 10));
@@ -84,6 +103,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
       if (Number.isNaN(combined.getTime())) {
         throw new Error('Invalid date or time');
       }
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        throw new Error('Invalid coordinates');
+      }
       await updateGigDetails(gig.id, {
         title: title.trim(),
         description: description.trim(),
@@ -93,24 +115,36 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
           .map((s) => s.trim())
           .filter(Boolean),
         gig_date: combined.toISOString(),
+        lat,
+        lng,
       });
       setEditing(false);
     });
 
   const isTerminal = gig.status === 'completed' || gig.status === 'cancelled';
 
-  // Calculate spots filled progress bar metrics
   const fillRate = gig.volunteers_needed > 0 ? (gig.volunteers_joined / gig.volunteers_needed) * 100 : 0;
   const cappedFillRate = Math.min(fillRate, 100);
   const progressTheme = fillRate >= 100 ? 'bg-emerald-500' : fillRate >= 50 ? 'bg-teal-500' : 'bg-amber-500';
 
   const currentTheme = STATUS_THEME[gig.status];
 
+  const cancelEdit = () => {
+    setEditing(false);
+    setTitle(gig.title);
+    setDescription(gig.description);
+    setVolunteersNeeded(gig.volunteers_needed);
+    setSkills(gig.required_skills.join(', '));
+    if (initialLocation) {
+      setLat(initialLocation.lat);
+      setLng(initialLocation.lng);
+    }
+  };
+
   return (
     <article className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-xs hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-950/2 transition-all duration-300 ease-out">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1 space-y-1">
-          {/* Header row with Title & Badge */}
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-bold text-gray-900 leading-snug group-hover:text-emerald-900 transition-colors">
               {gig.title}
@@ -121,12 +155,10 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             </span>
           </div>
 
-          {/* Description text */}
           <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2 pt-0.5">
             {gig.description}
           </p>
 
-          {/* Date & Subtitle meta details */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 font-semibold pt-1">
             <span className="flex items-center gap-1 select-none">
               <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,9 +172,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               </svg>
               {timePart}
             </span>
+            {!editing && <LocationDisplay gig={gig} />}
           </div>
 
-          {/* Dynamic Volunteer Progress Bar */}
           <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100/50 p-3 max-w-xl">
             <div className="flex items-center justify-between text-xs font-bold mb-1.5">
               <span className="text-gray-500">Spots Filled</span>
@@ -153,7 +185,6 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             <Progress value={cappedFillRate} indicatorClassName={progressTheme} />
           </div>
 
-          {/* Required skills tags */}
           {gig.required_skills.length > 0 && (
             <div className="mt-3.5 flex flex-wrap gap-1.5">
               {gig.required_skills.map((s) => (
@@ -175,7 +206,6 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
         </div>
       )}
 
-      {/* Normal State Action Buttons */}
       {!editing && (
         <div className="no-print mt-5 flex flex-wrap items-center gap-2 border-t border-gray-50 pt-4">
           {!isTerminal && (
@@ -247,7 +277,6 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
         </div>
       )}
 
-      {/* Editing State Collapsible Form */}
       {editing && (
         <div className="mt-5 space-y-4 border-t border-gray-100 pt-4 transition-all duration-300">
           <div className="flex items-center justify-between">
@@ -318,6 +347,31 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={lat}
+                  onChange={(e) => setLat(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                  placeholder="e.g. 28.6139"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={lng}
+                  onChange={(e) => setLng(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                  placeholder="e.g. 77.209"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-2">
@@ -338,13 +392,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => {
-                setEditing(false);
-                setTitle(gig.title);
-                setDescription(gig.description);
-                setVolunteersNeeded(gig.volunteers_needed);
-                setSkills(gig.required_skills.join(', '));
-              }}
+              onClick={cancelEdit}
               className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all duration-200"
             >
               Cancel

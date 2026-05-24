@@ -81,11 +81,21 @@ export async function updateGigDetails(
     volunteers_needed?: number;
     gig_date?: string;
     required_skills?: string[];
+    lat?: number;
+    lng?: number;
   }
 ) {
+  const payload: Record<string, unknown> = { ...updates };
+  delete payload.lat;
+  delete payload.lng;
+
+  if (updates.lat !== undefined && updates.lng !== undefined) {
+    payload.location = { type: 'Point', coordinates: [updates.lng, updates.lat] };
+  }
+
   const { data, error } = await supabase
     .from('gigs')
-    .update(updates)
+    .update(payload)
     .eq('id', gigId)
     .select()
     .single();

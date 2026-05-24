@@ -30,6 +30,23 @@ export function estimateTravelTime(meters: number): string {
   return `${driveMinutes} min drive`;
 }
 
+export function parseGigLocation(location: unknown): { lat: number; lng: number } | null {
+  if (!location) return null;
+  // GeoJSON format: { type: "Point", coordinates: [lng, lat] }
+  if (typeof location === 'object' && location !== null) {
+    const obj = location as Record<string, unknown>;
+    if (obj.type === 'Point' && Array.isArray(obj.coordinates) && obj.coordinates.length === 2) {
+      return { lng: Number(obj.coordinates[0]), lat: Number(obj.coordinates[1]) };
+    }
+  }
+  // E/WKT format: "SRID=4326;POINT(lng lat)" or "POINT(lng lat)"
+  if (typeof location === 'string') {
+    const match = location.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/i);
+    if (match) return { lng: Number(match[1]), lat: Number(match[2]) };
+  }
+  return null;
+}
+
 export function calculateHaversineDistance(
   lat1: number,
   lon1: number,

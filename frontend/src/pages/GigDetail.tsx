@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { joinGigViaApi } from '../services/gigs';
 import { useRealtimeParticipations } from '../hooks/useRealtimeGigs';
 import type { Gig } from '../types/database';
-import { skillOverlapScore } from '../utils/geo';
+import { skillOverlapScore, parseGigLocation } from '../utils/geo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -310,25 +310,61 @@ export function GigDetail() {
           )}
         </Card>
 
-        {/* Right Column: Date & Live Weather */}
-        <Card className="p-5 bg-gradient-to-b from-white to-emerald-50/20 flex flex-col justify-between">
-          <div className="space-y-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Date & Planning</span>
-            <p className="text-sm font-black text-slate-800 leading-snug">
-              {new Date(gig.gig_date).toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-            <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
-              🕒 {new Date(gig.gig_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-            </p>
-          </div>
+          {/* Right Column: Date & Live Weather */}
+          <Card className="p-5 bg-gradient-to-b from-white to-emerald-50/20 flex flex-col justify-between">
+            <div className="space-y-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Date & Planning</span>
+              <p className="text-sm font-black text-slate-800 leading-snug">
+                {new Date(gig.gig_date).toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+              <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                🕒 {new Date(gig.gig_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const parsed = parseGigLocation(gig.location);
+                  const start = new Date(gig.gig_date);
+                  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+                  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                  const ics = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//KarmaMap//EN',
+                    'BEGIN:VEVENT',
+                    `DTSTART:${fmt(start)}`,
+                    `DTEND:${fmt(end)}`,
+                    `SUMMARY:${gig.title}`,
+                    `DESCRIPTION:${gig.description.replace(/\n/g, '\\n')}`,
+                    parsed ? `LOCATION:${parsed.lat},${parsed.lng}` : '',
+                    `URL:${window.location.href}`,
+                    'END:VEVENT',
+                    'END:VCALENDAR',
+                  ].filter(Boolean).join('\r\n');
+                  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${gig.title.replace(/\s+/g, '_')}.ics`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors cursor-pointer"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Add to Calendar
+              </button>
+            </div>
 
-          {/* Live Weather Widget */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            {/* Live Weather Widget */}
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
             {loadingWeather ? (
               <span className="text-xs font-bold text-slate-400 animate-pulse">Checking weather conditions...</span>
             ) : weather ? (
