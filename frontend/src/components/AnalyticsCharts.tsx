@@ -69,17 +69,6 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
           }`}
         >
-          Bar View
-        </button>
-        <button
-          type="button"
-          onClick={() => setChartType('area')}
-          className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
-            chartType === 'area'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
           Area Flow
         </button>
       </div>
@@ -88,17 +77,17 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         <ChartContainer config={chartConfig} height={256}>
           {chartType === 'bar' ? (
             <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} className="dark:[&>path]:stroke-slate-700" />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
+                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
                 dy={6}
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
+                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
                 dx={-4}
@@ -121,17 +110,17 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} className="dark:[&>path]:stroke-slate-700" />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
+                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
                 dy={6}
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
+                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
                 dx={-4}
