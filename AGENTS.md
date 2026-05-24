@@ -170,7 +170,12 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
 - **Testing**: 75 tests across 9 files — Vitest + Supertest + happy-dom. See `docs/testing-strategy.md`.
+- **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, date-fns, OpenObserve) with integration guides.
+- **No toast library** — sonner is the shadcn/ui default, install it for form feedback
+- **No icon library** — lucide-react referenced in components.json but not installed; currently using inline SVGs
+- **No date library** — date-fns v4 recommended for tree-shakable date formatting
 - **No external state library** — React Context + hooks only
+- **No structured logging** — pino recommended (5-8x faster than Winston, JSON to stdout)
 - **Vite proxy**: `/api` → `localhost:3001` in dev
 - **`@/` path alias**: configured in `tsconfig.app.json` and `vite.config.ts`
 - **PWA**: auto-update with registration; OSM tiles cached (CacheFirst, 200 max, 30 days)
