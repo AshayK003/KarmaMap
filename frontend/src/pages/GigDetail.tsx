@@ -101,6 +101,7 @@ export function GigDetail() {
   const navigate = useNavigate();
   const [gig, setGig] = useState<Gig | null>(null);
   const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const volunteerCount = useRealtimeParticipations(id);
@@ -167,11 +168,12 @@ export function GigDetail() {
   const handleJoin = async () => {
     if (!id) return;
     setJoining(true);
+    setJoinError(null);
     try {
       await joinGigViaApi(id);
       navigate(`/gigs/${id}/participate`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to join');
+      setJoinError(err instanceof Error ? err.message : 'Failed to join');
     } finally {
       setJoining(false);
     }
@@ -410,9 +412,19 @@ export function GigDetail() {
       )}
 
       {profile?.role === 'volunteer' && user && (
-        <Button className="mt-6 w-full" size="lg" onClick={handleJoin} disabled={joining}>
-          {joining ? 'Registering Opportunity...' : 'Join this gig & serve community'}
-        </Button>
+        <div className="mt-6 space-y-2">
+          {joinError && (
+            <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700/50 px-4 py-2.5 text-xs font-bold text-rose-700 dark:text-rose-300">
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {joinError}
+            </div>
+          )}
+          <Button className="w-full" size="lg" onClick={handleJoin} disabled={joining}>
+            {joining ? 'Registering Opportunity...' : 'Join this gig & serve community'}
+          </Button>
+        </div>
       )}
     </div>
   );
