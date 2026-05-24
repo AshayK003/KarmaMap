@@ -5,3 +5,14 @@ dist/
 *.log
 .DS_Store
 dev-dist/
+
+# Deployment
+.env.production
+backend/.env
+frontend/.env
+backups/
+prometheus_data/
+loki_data/
+grafana_data/
+caddy_data/
+caddy_config/
