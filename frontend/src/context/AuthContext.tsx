@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -119,19 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
+  const value = useMemo(
+    () => ({ user, session, profile, loading, signUp, signIn, signOut, refreshProfile }),
+    [user, session, profile, loading, signUp, signIn, signOut, refreshProfile]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        loading,
-        signUp,
-        signIn,
-        signOut,
-        refreshProfile,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

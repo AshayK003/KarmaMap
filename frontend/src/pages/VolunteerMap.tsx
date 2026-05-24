@@ -215,7 +215,7 @@ export function VolunteerMap() {
             </Card>
 
             {/* Gig list in sidebar */}
-            <div className="space-y-3">
+            <div className="space-y-3" style={{ contentVisibility: 'auto' }}>
               <div className="flex items-center justify-between px-0.5">
                 <h2 className="text-xs font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400">Nearby Opportunities</h2>
                 {!loading && sortedGigs.length > 0 && (

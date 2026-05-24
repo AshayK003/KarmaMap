@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import type { NearbyGig } from '../types/database';
 import { formatDistance, skillOverlapScore, estimateTravelTime } from '../utils/geo';
@@ -22,7 +23,7 @@ function SkillMatchBadge({ overlap }: { overlap: number }) {
   );
 }
 
-export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
+export const GigCard = memo(function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
   const overlap = skillOverlapScore(gig.required_skills, volunteerSkills);
   const fillRate = gig.volunteers_needed > 0
     ? Math.min((gig.volunteers_joined / gig.volunteers_needed) * 100, 100)
@@ -118,5 +119,5 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
       </div>
     </article>
   );
-}
+});
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -91,7 +91,7 @@ interface MapViewProps {
   pickMode?: boolean;
 }
 
-export function MapView({
+export const MapView = memo(function MapView({
   lat,
   lng,
   gigs,
@@ -348,4 +348,4 @@ export function MapView({
       </MapContainer>
     </div>
   );
-}
+});
