@@ -9,7 +9,7 @@ A hyper-local, real-time PWA connecting local NGOs with nearby volunteers. Uses 
 | Frontend | React 19 + TypeScript 6, Vite 6, Tailwind CSS v4, **shadcn/ui** |
 | Backend | Node.js + Express 4 + TypeScript (ESM) |
 | Database | Supabase (PostgreSQL + PostGIS), service_role key for backend |
-| Mapping | React-Leaflet, OpenStreetMap tiles, OSRM routing, Photon geocoding |
+| Mapping | React-Leaflet + react-leaflet-cluster, OpenStreetMap tiles, OSRM routing, Photon geocoding |
 | Weather | Open-Meteo API (free, no key) |
 | Email | EmailJS (REST API via `fetch`, not SDK) |
 | PWA | vite-plugin-pwa (Workbox, OSM tile caching) |
@@ -34,15 +34,17 @@ KarmaMap/
 │   └── dist/                 # Compiled JS
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
-│       ├── App.tsx            # 10 routes + AuthProvider + Navbar
+│       ├── App.tsx            # 11 routes + AuthProvider + Navbar
 │       ├── pages/             # Home, Login, Signup, VolunteerMap, GigDetail,
 │       │                      #   ParticipateGig, NgoDashboard, CreateGig,
-│       │                      #   VolunteerPortfolio, PublicPortfolio
+│       │                      #   VolunteerPortfolio, PublicPortfolio,
+│       │                      #   Leaderboard
 │       ├── components/
 │       │   ├── ui/            # 10 shadcn/ui components: Button, Card, Badge,
 │       │   │                  #   Input, Avatar, Progress, Skeleton, Separator,
 │       │   │                  #   Tabs, Chart (cn() from lib/utils)
-│       │   ├── MapView.tsx    # Leaflet + OSRM routing + CO₂ calc
+│       │   ├── NotificationBell.tsx # In-app notification dropdown (realtime)
+│       │   ├── MapView.tsx    # Leaflet + OSRM routing + cluster markers
 │       │   ├── LocationPicker.tsx
 │       │   ├── PlaceSearch.tsx # Photon geocoding w/ debounce
 │       │   ├── GigCard.tsx    # Volunteer-facing discovery card
@@ -55,7 +57,8 @@ KarmaMap/
 │       │   └── ProtectedRoute.tsx # Role-based route guard
 │       ├── context/           # AuthContext.tsx
 │       ├── hooks/             # useGeolocation, useLocationPicker,
-│       │                      #   useRealtimeGigs, useRealtimeParticipations
+│       │                      #   useRealtimeGigs, useRealtimeParticipations,
+│       │                      #   useRealtimeNotifications
 │       ├── services/          # gigs.ts, geocoding.ts, storage.ts
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
@@ -73,9 +76,9 @@ KarmaMap/
 └── .env.example
 ```
 
-## Roles & Routing (10 pages)
-- **Volunteer**: `/map` (discovery), `/portfolio`, `/gigs/:id`, `/gigs/:id/participate`
-- **NGO**: `/ngo/dashboard`, `/ngo/create-gig`
+## Roles & Routing (11 pages)
+- **Volunteer**: `/map` (discovery), `/portfolio`, `/gigs/:id`, `/gigs/:id/participate`, `/leaderboard`
+- **NGO**: `/ngo/dashboard`, `/ngo/create-gig`, `/leaderboard`
 - **Public**: `/` (home), `/login`, `/signup`, `/p/:slug` (public portfolio)
 
 ## API Endpoints (Express backend)
@@ -138,7 +141,13 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Map center**: DEFAULT_CENTER = Delhi (28.6139, 77.209), NOT Lucknow. Lucknow RDSO preset = (26.8193, 80.8853) exported as `PRESET_LUCKNOW_RDSO` from `useLocationPicker.ts`. Map zoom = 13.
 - **shadcn/ui**: 10 components in `src/components/ui/` — import via `@/components/ui/button`
 - **Location**: Use `useLocationPicker()` hook which wraps `useGeolocation()` for GPS; supports GPS, preset, manual coords, search (Photon), and map click sources
-- **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail
+- **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail; `useRealtimeNotifications(userId?)` subscribes to `notifications` channel
+- **Marker clustering**: `react-leaflet-cluster` (v4.1.3) wraps `<Marker>` children in `<MarkerClusterGroup>` — `chunkedLoading`, `maxClusterRadius=60`, `disableClusteringAtZoom=16`; CSS imported from `leaflet.markercluster/dist/`
+- **NotificationBell**: `lucide-react` `Bell` icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig
+- **Leaderboard**: `/leaderboard` route — `SELECT name, karma_points, streak FROM profiles WHERE role='volunteer' ORDER BY karma_points DESC LIMIT 50`; Recharts `BarChart` (horizontal, top 10); medals for top 3
+- **Best Match sort**: `sortMode` state in `VolunteerMap.tsx` toggles between `'nearest'` (RPC default) and `'best_match'` (client-side reorder via `skillOverlapScore`) — disabled when profile has no skills
+- **Add to Calendar**: ICS generator button on GigDetail — 3h default duration, GeoJSON/EWKT location parsed via `parseGigLocation`, Blob download
+- **NgoGigCard location edit**: `parseGigLocation()` helper in view mode; lat/lng number inputs in edit mode; `updateGigDetails()` builds GeoJSON `{type:"Point", coordinates:[lng,lat]}` payload
 - **Carbon offset**: `calculateHaversineDistance` × 0.12 kg CO₂/km, rendered in VolunteerPortfolio as eco-savings
 - **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` via dynamic CDN import)
 - **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket

@@ -11,7 +11,7 @@
 | Frontend | React 19 + TypeScript 6, Vite 6, Tailwind CSS v4, shadcn/ui |
 | Backend | Node.js + Express 4 + TypeScript (ESM) |
 | Database | Supabase (PostgreSQL + PostGIS), service_role key for backend |
-| Mapping | React-Leaflet, OpenStreetMap tiles, OSRM routing, Photon geocoding |
+| Mapping | React-Leaflet + react-leaflet-cluster, OpenStreetMap tiles, OSRM routing, Photon geocoding |
 | Weather | Open-Meteo API (free, no key) |
 | Email | EmailJS (REST API via `fetch`) |
 | PWA | vite-plugin-pwa (Workbox, OSM tile caching) |
@@ -23,10 +23,14 @@
 ## Features
 
 ### Volunteer
-- **Discovery Map** — Browse open gigs within configurable radius (10–100 km) with GPS, search, or map-tap location
+- **Discovery Map** — Browse open gigs within configurable radius (10–100 km) with GPS, search, or map-tap location; auto-clustering for dense areas
+- **Smart Recommendations** — Toggle between "Nearest" and "Best Match" sort (skill overlap reordering)
 - **OSRM Road Routing** — Walk/cycle/drive routes with travel times and CO₂ savings overlay with glow-effect polylines
 - **Weather Planner** — Open-Meteo forecast for gig date with smart advisory banners
 - **Skill Matching** — Percentage badge showing overlap between your skills and gig requirements
+- **In-App Notifications** — Bell icon with unread count, realtime dropdown for match alerts and updates
+- **Add to Calendar** — One-click .ics download for gig dates
+- **Leaderboard** — Karma point rankings with Recharts bar chart, top-50 volunteer standings
 - **Impact Portfolio** — Karma points, streak, hours, eco-savings (haversine-based carbon offset), inline editable bio/skills, shareable slug
 - **Certificates** — Printable "Certificate of Impact" with gold border design, confetti celebration on completion
 - **Public Portfolio** — Shareable `/p/:slug` page with verified impact timeline
@@ -36,7 +40,7 @@
 - **Dashboard** — Analytics (total hours, completed gigs, total hosted), bar/area charts, gig management with search/filter/tabs
 - **Gig Publisher** — Create gigs with interactive map pin placement, required skills tag editor, date/time with min-date constraint
 - **Smart Matching** — Algorithm scores volunteers 50% by proximity, 50% by skill overlap; automated email + in-app notifications
-- **Gig Management** — Inline editing, status transitions (open → in_progress → completed / cancelled), feature/unfeature for boosted visibility
+- **Gig Management** — Inline editing (including lat/lng location), status transitions (open → in_progress → completed / cancelled), feature/unfeature for boosted visibility
 - **Photo Verification** — Volunteers upload before/after photos for completion validation
 
 ---
@@ -53,6 +57,7 @@
 | `/portfolio` | Volunteer Portfolio | Volunteer |
 | `/gigs/:id` | Gig Detail | Public |
 | `/gigs/:id/participate` | Participate / Complete Gig | Volunteer |
+| `/leaderboard` | Volunteer Leaderboard | Auth'd |
 | `/ngo/dashboard` | NGO Dashboard | NGO |
 | `/ngo/create-gig` | Create Gig | NGO |
 
@@ -81,17 +86,21 @@ KarmaMap/
 │   └── dist/                   # Compiled JS
 ├── frontend/                   # React SPA (port 5173)
 │   └── src/
-│       ├── App.tsx             # 10 routes + AuthProvider + Navbar
-│       ├── pages/              # 10 route pages
+│       ├── App.tsx             # 11 routes + AuthProvider + Navbar
+│       ├── pages/              # 12 pages (Home, Login, Signup, VolunteerMap,
+│       │                       #   GigDetail, ParticipateGig, NgoDashboard,
+│       │                       #   CreateGig, VolunteerPortfolio, PublicPortfolio,
+│       │                       #   Leaderboard)
 │       ├── components/
 │       │   ├── ui/             # 10 shadcn/ui (Button, Card, Badge, Input,
 │       │   │                   #   Avatar, Progress, Skeleton, Separator,
 │       │   │                   #   Tabs, Chart)
-│       │   ├── MapView.tsx     # Leaflet map + OSRM routing + markers
+│       │   ├── NotificationBell.tsx # In-app notification dropdown (realtime)
+│       │   ├── MapView.tsx     # Leaflet map + OSRM routing + cluster markers
 │       │   ├── LocationPicker.tsx
 │       │   ├── PlaceSearch.tsx # Photon geocoding
 │       │   ├── GigCard.tsx     # Volunteer-facing card
-│       │   ├── NgoGigCard.tsx  # NGO management card w/ inline edit
+│       │   ├── NgoGigCard.tsx  # NGO management w/ inline edit + location
 │       │   ├── DashboardCard.tsx
 │       │   ├── AnalyticsCharts.tsx # Recharts bar/area
 │       │   ├── Certificate.tsx     # Printable impact certificate
@@ -100,7 +109,8 @@ KarmaMap/
 │       │   └── ProtectedRoute.tsx
 │       ├── context/            # AuthContext.tsx
 │       ├── hooks/              # useGeolocation, useLocationPicker,
-│       │                       #   useRealtimeGigs, useRealtimeParticipations
+│       │                       #   useRealtimeGigs, useRealtimeParticipations,
+│       │                       #   useRealtimeNotifications
 │       ├── services/           # gigs.ts, geocoding.ts, storage.ts
 │       ├── types/              # database.ts (TS types + DB namespace)
 │       ├── lib/                # supabase.ts, utils.ts (cn)
@@ -131,7 +141,12 @@ KarmaMap/
 
 - **Reads**: Frontend uses Supabase anon client (RPCs, direct `select` queries)
 - **Writes**: Backend uses `service_role` client; REST API calls inject JWT via `utils/api.ts`
-- **Realtime**: `gigs`, `participations`, `notifications` published to `supabase_realtime`
+- **Realtime**: `gigs`, `participations`, `notifications` published to `supabase_realtime`; `useRealtimeNotifications(userId)` hook for live notification updates
+- **Marker clustering**: `react-leaflet-cluster` wraps `<Marker>` children in `<MarkerClusterGroup>` — auto-clusters at zoom < 16, `maxClusterRadius=60`
+- **Leaderboard**: `/leaderboard` route queries `profiles WHERE role=volunteer ORDER BY karma_points DESC LIMIT 50`; Recharts horizontal bar chart for top 10
+- **Best Match sort**: Toggle on VolunteerMap re-sorts gigg via `skillOverlapScore()` — fallback to distance on tie
+- **NotificationBell**: Lucide `Bell` icon + unread count badge; dropdown lists notifications from `notifications` table; `markRead` / `markAllRead` support
+- **Add to Calendar**: Inline .ics generator on GigDetail — 3-hour default duration, GeoJSON/EWKT location parsing
 - **Auth**: `AuthContext` listens to `onAuthStateChange`; backend verifies via `supabaseAdmin.auth.getUser()`
 
 ---
