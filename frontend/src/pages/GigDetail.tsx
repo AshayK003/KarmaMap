@@ -180,7 +180,14 @@ export function GigDetail() {
   };
 
   if (!gig) {
-    return <p className="p-8 text-center text-gray-500 dark:text-slate-400">Loading gig…</p>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <p className="text-xs font-bold text-slate-400">Loading gig details…</p>
+        </div>
+      </div>
+    );
   }
 
   const overlap =

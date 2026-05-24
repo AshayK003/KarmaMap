@@ -156,11 +156,12 @@ export function CreateGig() {
 
             {/* Title */}
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+              <label htmlFor="create-gig-title" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                 Gig Title
               </label>
               <input
                 {...register('title')}
+                id="create-gig-title"
                 type="text"
                 placeholder="e.g. Community Garden Planting Day"
                 className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -170,11 +171,12 @@ export function CreateGig() {
 
             {/* Description */}
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+              <label htmlFor="create-gig-desc" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                 Description & Impact Context
               </label>
               <textarea
                 {...register('description')}
+                id="create-gig-desc"
                 rows={5}
                 placeholder="Detail what volunteers will do, requirements, meeting spots and other essential guidelines..."
                 className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -184,11 +186,12 @@ export function CreateGig() {
 
             {/* Skills */}
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+              <label htmlFor="create-gig-skills" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                 Required Skills
               </label>
               <input
                 {...register('required_skills')}
+                id="create-gig-skills"
                 type="text"
                 placeholder="e.g. cleanup, botany, teaching (comma separated)"
                 className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -203,11 +206,12 @@ export function CreateGig() {
             <div className="grid gap-4 sm:grid-cols-3">
               {/* Volunteers Count */}
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                <label htmlFor="create-gig-spots" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                   Spots Available
                 </label>
                 <input
                   {...register('volunteers_needed')}
+                  id="create-gig-spots"
                   type="number"
                   min={1}
                   max={500}
@@ -220,7 +224,7 @@ export function CreateGig() {
 
               {/* Date */}
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+                <label htmlFor="create-gig-date" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
                   Gig Date
                 </label>
                 <div className="relative">
@@ -231,6 +235,7 @@ export function CreateGig() {
                   </span>
                   <Input
                     {...register('gig_date')}
+                    id="create-gig-date"
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
                     className="pl-10"
@@ -241,7 +246,7 @@ export function CreateGig() {
 
               {/* Time */}
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+                <label htmlFor="create-gig-time" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
                   Gig Time
                 </label>
                 <div className="relative">
@@ -252,6 +257,7 @@ export function CreateGig() {
                   </span>
                   <Input
                     {...register('gig_time')}
+                    id="create-gig-time"
                     type="time"
                     className="pl-10"
                   />
@@ -261,8 +267,11 @@ export function CreateGig() {
             </div>
 
             {errors.root && (
-              <div className="rounded-2xl border border-rose-100 dark:border-slate-700 bg-rose-50 dark:bg-rose-900/30 p-4 text-xs font-bold text-rose-700 dark:text-rose-300">
-                ⚠️ {errors.root.message}
+              <div className="rounded-2xl border border-rose-100 dark:border-slate-700 bg-rose-50 dark:bg-rose-900/30 p-4 text-xs font-bold text-rose-700 dark:text-rose-300" role="alert">
+                <svg className="h-4 w-4 inline mr-1.5 -mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {errors.root.message}
               </div>
             )}
 

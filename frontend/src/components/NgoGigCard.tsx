@@ -198,7 +198,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
       </div>
 
       {error && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400">
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400" role="alert">
           <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -286,8 +286,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
 
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Gig Title</label>
+              <label htmlFor="ngo-edit-title" className="text-xs font-bold text-gray-500 dark:text-slate-400">Gig Title</label>
               <input
+                id="ngo-edit-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
@@ -296,8 +297,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Description</label>
+              <label htmlFor="ngo-edit-desc" className="text-xs font-bold text-gray-500 dark:text-slate-400">Description</label>
               <textarea
+                id="ngo-edit-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -307,8 +309,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Required Skills (comma separated)</label>
+              <label htmlFor="ngo-edit-skills" className="text-xs font-bold text-gray-500 dark:text-slate-400">Required Skills (comma separated)</label>
               <input
+                id="ngo-edit-skills"
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
@@ -316,10 +319,11 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Volunteers Needed</label>
+                <label htmlFor="ngo-edit-spots" className="text-xs font-bold text-gray-500 dark:text-slate-400">Volunteers Needed</label>
                 <input
+                  id="ngo-edit-spots"
                   type="number"
                   min={1}
                   value={volunteersNeeded}
@@ -328,50 +332,52 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Date</label>
+              <label htmlFor="ngo-edit-date" className="text-xs font-bold text-gray-500 dark:text-slate-400">Date</label>
                 <input
+                  id="ngo-edit-date"
                   type="date"
                   value={datePart}
                   onChange={(e) => setDatePart(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Time</label>
+            <div>
+              <label htmlFor="ngo-edit-time" className="text-xs font-bold text-gray-500 dark:text-slate-400">Time</label>
               <input
+                id="ngo-edit-time"
                 type="time"
                 value={timePart}
                 onChange={(e) => setTimePart(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Latitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={lat}
-                  onChange={(e) => setLat(Number(e.target.value))}
-                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                  placeholder="e.g. 28.6139"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-slate-400">Longitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={lng}
-                  onChange={(e) => setLng(Number(e.target.value))}
-                  className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                  placeholder="e.g. 77.209"
-                />
-              </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="ngo-edit-lat" className="text-xs font-bold text-gray-500 dark:text-slate-400">Latitude</label>
+              <input
+                id="ngo-edit-lat"
+                type="number"
+                step="any"
+                value={lat}
+                onChange={(e) => setLat(Number(e.target.value))}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
+                placeholder="e.g. 28.6139"
+              />
             </div>
+            <div>
+              <label htmlFor="ngo-edit-lng" className="text-xs font-bold text-gray-500 dark:text-slate-400">Longitude</label>
+              <input
+                id="ngo-edit-lng"
+                type="number"
+                step="any"
+                value={lng}
+                onChange={(e) => setLng(Number(e.target.value))}
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
+                placeholder="e.g. 77.209"
+              />
+            </div>
+          </div>
           </div>
 
           <div className="flex gap-2 pt-2">
