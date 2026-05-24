@@ -185,7 +185,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('in_progress')}
-                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm shadow-blue-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2.5 text-xs font-bold text-white hover:bg-blue-700 shadow-sm shadow-blue-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
                 >
                   {busy && (
                     <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -201,7 +201,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('completed')}
-                  className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50"
                 >
                   {busy && (
                     <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -217,7 +217,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => setStatus('cancelled')}
-                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all duration-200 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3.5 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all duration-200 disabled:opacity-50"
                 >
                   Close Gig
                 </button>
@@ -229,7 +229,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               type="button"
               disabled={busy}
               onClick={() => setStatus('open')}
-              className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3.5 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3.5 py-2.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 disabled:opacity-50"
             >
               Reopen Gig
             </button>
@@ -239,7 +239,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               type="button"
               disabled={busy}
               onClick={() => setEditing(true)}
-              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all duration-200 disabled:opacity-50 mr-auto"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all duration-200 disabled:opacity-50 mr-auto"
             >
               Edit Details
             </button>
@@ -325,7 +325,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               type="button"
               disabled={busy}
               onClick={saveEdits}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 transition-all duration-200 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 transition-all duration-200 disabled:opacity-50"
             >
               {busy && (
                 <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -345,7 +345,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                 setVolunteersNeeded(gig.volunteers_needed);
                 setSkills(gig.required_skills.join(', '));
               }}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all duration-200"
+              className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all duration-200"
             >
               Cancel
             </button>

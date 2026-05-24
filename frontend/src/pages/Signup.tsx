@@ -71,7 +71,7 @@ export function Signup() {
       <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl pointer-events-none" />
 
       {/* Premium Glassmorphic card container */}
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center space-y-2 mb-6">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl text-emerald-700 shadow-sm shadow-emerald-500/10">
             🌱
@@ -84,7 +84,7 @@ export function Signup() {
           {/* Beautiful Segmented Role Toggles */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">I am joining as a</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleRoleSelect('volunteer')}

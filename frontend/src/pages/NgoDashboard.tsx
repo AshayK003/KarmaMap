@@ -82,11 +82,11 @@ export function NgoDashboard() {
           </div>
           
           {/* Quick Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link to="/ngo/create-gig">
-              <Button>Create a Gig</Button>
+              <Button size="sm" className="sm:size-default">Create a Gig</Button>
             </Link>
-            <Button variant="outline" onClick={handlePrint}>Export Impact Report</Button>
+            <Button variant="outline" size="sm" className="sm:size-default" onClick={handlePrint}>Export Report</Button>
           </div>
         </div>
       </Card>

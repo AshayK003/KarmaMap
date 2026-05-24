@@ -52,7 +52,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         <button
           type="button"
           onClick={() => setChartType('bar')}
-          className={`rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide transition-all duration-200 ${
+          className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
             chartType === 'bar'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -63,7 +63,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         <button
           type="button"
           onClick={() => setChartType('area')}
-          className={`rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide transition-all duration-200 ${
+          className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
             chartType === 'area'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -73,10 +73,10 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         </button>
       </div>
 
-      <div className="h-72 w-full transition-all duration-500">
-        <ChartContainer config={chartConfig} height={288}>
+      <div className="h-64 sm:h-72 w-full transition-all duration-500">
+        <ChartContainer config={chartConfig} height={256}>
           {chartType === 'bar' ? (
-            <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 8 }}>
+            <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -90,7 +90,8 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                 tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
-                dx={-6}
+                dx={-4}
+                width={24}
               />
               <Tooltip content={<ChartTooltipContent />} cursor={{ fill: '#f8fafc', opacity: 0.8 }} />
               <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} content={<ChartLegendContent />} />
@@ -98,7 +99,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
               <Bar dataKey="completed" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           ) : (
-            <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 8 }}>
+            <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
               <defs>
                 <linearGradient id="colorVolunteers" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
@@ -122,7 +123,8 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                 tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
-                dx={-6}
+                dx={-4}
+                width={24}
               />
               <Tooltip content={<ChartTooltipContent />} />
               <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} content={<ChartLegendContent />} />

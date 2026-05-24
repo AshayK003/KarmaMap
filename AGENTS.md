@@ -10,8 +10,8 @@ A hyper-local, real-time PWA connecting local NGOs with nearby volunteers. Uses 
 | Backend | Node.js + Express 4 + TypeScript (ESM) |
 | Database | Supabase (PostgreSQL + PostGIS), service_role key for backend |
 | Mapping | React-Leaflet, OpenStreetMap tiles, OSRM routing, Photon geocoding |
-| Weather | Open-Meteo API |
-| Email | EmailJS |
+| Weather | Open-Meteo API (free, no key) |
+| Email | EmailJS (REST API via `fetch`, not SDK) |
 | PWA | vite-plugin-pwa (Workbox, OSM tile caching) |
 | Auth | Supabase Auth (JWT) |
 | Charts | Recharts |
@@ -20,31 +20,60 @@ A hyper-local, real-time PWA connecting local NGOs with nearby volunteers. Uses 
 ```
 KarmaMap/
 ├── backend/                  # Express REST API (port 3001)
-│   ├── index.ts              # Entry point
+│   ├── index.ts              # Entry point + global error handler
 │   ├── routes/               # gigs.ts, participations.ts
 │   ├── controllers/          # gigController.ts, participationController.ts
-│   ├── middleware/            # auth.ts (JWT+role), validate.ts (Zod)
-│   ├── services/             # supabase.ts, matchingService.ts, emailService.ts
+│   ├── middleware/
+│   │   ├── auth.ts           # verifyJwt + requireRole (Supabase Auth)
+│   │   ├── validate.ts       # Zod body validation
+│   │   └── asyncHandler.ts   # Async error wrapper for Express
+│   ├── services/
+│   │   ├── supabase.ts       # service_role admin client
+│   │   ├── matchingService.ts # 0.5*proximity + 0.5*skill, 3-tier fallback
+│   │   └── emailService.ts   # EmailJS REST via native fetch
 │   └── dist/                 # Compiled JS
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
-│       ├── App.tsx            # Router + layout
-│       ├── pages/             # 11 route pages (Home, Login, Signup, VolunteerMap, GigDetail, ParticipateGig, NgoDashboard, CreateGig, VolunteerPortfolio, PublicPortfolio)
-│       ├── components/        # MapView, LocationPicker, PlaceSearch, GigCard, NgoGigCard, DashboardCard, AnalyticsCharts, Certificate, PhotoUpload, Navbar, ProtectedRoute
-│       │   └── ui/            # shadcn/ui (Button, Card, Badge, Input — cn() from lib/utils)
+│       ├── App.tsx            # 10 routes + AuthProvider + Navbar
+│       ├── pages/             # Home, Login, Signup, VolunteerMap, GigDetail,
+│       │                      #   ParticipateGig, NgoDashboard, CreateGig,
+│       │                      #   VolunteerPortfolio, PublicPortfolio
+│       ├── components/
+│       │   ├── ui/            # 10 shadcn/ui components: Button, Card, Badge,
+│       │   │                  #   Input, Avatar, Progress, Skeleton, Separator,
+│       │   │                  #   Tabs, Chart (cn() from lib/utils)
+│       │   ├── MapView.tsx    # Leaflet + OSRM routing + CO₂ calc
+│       │   ├── LocationPicker.tsx
+│       │   ├── PlaceSearch.tsx # Photon geocoding w/ debounce
+│       │   ├── GigCard.tsx    # Volunteer-facing discovery card
+│       │   ├── NgoGigCard.tsx # NGO management w/ inline edit + status
+│       │   ├── DashboardCard.tsx
+│       │   ├── AnalyticsCharts.tsx # Recharts bar/area
+│       │   ├── Certificate.tsx # Printable gold-bordered certificate
+│       │   ├── PhotoUpload.tsx # Camera capture + local preview
+│       │   ├── Navbar.tsx
+│       │   └── ProtectedRoute.tsx # Role-based route guard
 │       ├── context/           # AuthContext.tsx
-│       ├── hooks/             # useGeolocation, useLocationPicker, useRealtimeGigs
+│       ├── hooks/             # useGeolocation, useLocationPicker,
+│       │                      #   useRealtimeGigs, useRealtimeParticipations
 │       ├── services/          # gigs.ts, geocoding.ts, storage.ts
-│       ├── types/             # database.ts (TS types)
+│       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
 │       └── utils/             # api.ts, geo.ts, gigStatus.ts
-├── supabase/migrations/      # SQL migrations (schema, functions, RLS, storage)
+├── supabase/migrations/      # 7 SQL files
+│   ├── 00_schema_core.sql
+│   ├── 01_functions_and_realtime.sql
+│   ├── 02_featured_gigs.sql
+│   ├── 20240523000000_initial_schema.sql  # Combined (lacks featured_until)
+│   ├── fix_matching_functions.sql
+│   ├── fix_postgis_functions.sql
+│   └── storage_policies.sql
 ├── render.yaml               # Backend deploy (Render)
 ├── vercel.json               # Frontend deploy (Vercel)
 └── .env.example
 ```
 
-## Roles & Routing
+## Roles & Routing (10 pages)
 - **Volunteer**: `/map` (discovery), `/portfolio`, `/gigs/:id`, `/gigs/:id/participate`
 - **NGO**: `/ngo/dashboard`, `/ngo/create-gig`
 - **Public**: `/` (home), `/login`, `/signup`, `/p/:slug` (public portfolio)
@@ -53,35 +82,91 @@ KarmaMap/
 | Method | Path | Auth | Role | Description |
 |---|---|---|---|---|
 | GET | `/health` | — | — | Health check |
-| POST | `/api/gigs` | JWT | ngo | Create gig + trigger matching |
-| GET | `/api/gigs/analytics` | JWT | ngo | Dashboard analytics |
-| POST | `/api/gigs/:gigId/match` | JWT | ngo | Manual re-match |
-| POST | `/api/participations/join/:gigId` | JWT | volunteer | Join a gig (returns 409 if already joined) |
-| PATCH | `/api/participations/:id/complete` | JWT | volunteer | Complete with photos/hours |
+| POST | `/api/gigs` | JWT | ngo | Create gig + trigger matching + email |
+| GET | `/api/gigs/analytics` | JWT | ngo | Dashboard analytics (hours, chart data) |
+| POST | `/api/gigs/:gigId/match` | JWT | ngo | Manual re-match + notify |
 | PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | Feature a gig for N hours (sets `featured_until`) |
+| POST | `/api/participations/join/:gigId` | JWT | volunteer | Join a gig (returns 409 if already joined) |
+| PATCH | `/api/participations/:participationId/complete` | JWT | volunteer | Complete with photos/hours + award karma |
 
 **Data flow**: Frontend uses Supabase anon client for reads (RPCs, direct queries). Backend uses service_role client for writes. REST API calls inject JWT via `utils/api.ts`.
 
+## Backend Exports Reference
+
+### Controllers
+- **gigController.ts**: `createGigSchema` (Zod), `featureGigSchema` (Zod), `createGig`, `getNgoAnalytics`, `featureGig`, `triggerMatching`
+- **participationController.ts**: `completeGigSchema` (Zod), `joinGig`, `completeParticipation`
+
+### Middleware
+- **auth.ts**: `AuthRequest` (interface), `verifyJwt`, `requireRole(...roles)`
+- **validate.ts**: `validateBody<T>(schema)`
+- **asyncHandler.ts**: `asyncHandler(fn)` — wraps async Express handlers
+
+### Services
+- **supabase.ts**: `supabaseAdmin` (service_role SupabaseClient)
+- **matchingService.ts**: `MatchedVolunteer` (interface), `findMatchedVolunteers(gigId, radius?, limit?)`, `notifyMatchedVolunteers(gigId, volunteers, gigTitle)`
+- **emailService.ts**: `sendEmail(params)`, `sendGigMatchEmails(volunteers, gigTitle)`, `sendCompletionEmail(email, name, gigTitle)`
+
 ## Database (PostgreSQL + PostGIS)
-**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, portfolio_slug), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, status), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status).
+**Custom enums**: `user_role` (volunteer, ngo), `gig_status` (open, in_progress, completed, cancelled), `participation_status` (pending, joined, checked_in, completed, cancelled)
 
-**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)`, `insert_gig(...)`, `update_profile_location(lat, lng)`, `match_volunteers_for_gig(gig_id, radius)`.
+**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
 
-**Triggers**: auto-create profile on signup, auto-update `updated_at`, increment `volunteers_joined` on participation insert.
+**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `match_volunteers_for_gig(gig_id, radius)`, `nearby_volunteers_for_gig(gig_id, radius)`.
+
+**Triggers**: auto-create profile on signup (`handle_new_user`), auto-update `updated_at` (`set_updated_at`), increment `volunteers_joined` on participation insert (`increment_gig_volunteers`).
 
 **Realtime**: `gigs`, `participations`, `notifications` published to `supabase_realtime`.
 
+**RLS**: 13 policies across all 4 tables + 4 storage policies on `participation-photos` bucket.
+
+## Matching Algorithm (`matchingService.ts`)
+```
+final_score = 0.5 * proximityScore + 0.5 * skillOverlap
+```
+**Fallback chain** (3 tiers):
+1. `match_volunteers_for_gig` RPC (primary — ordered by distance)
+2. `nearby_volunteers_for_gig` RPC (if primary fails)
+3. All volunteer profiles with fixed 5000m distance (last resort)
+
+**Notifications**: `notifyMatchedVolunteers` inserts into `notifications` table; `sendGigMatchEmails` calls EmailJS via `fetch`.
+
 ## Key Architecture Notes
-- **Matching algorithm** (backend `matchingService.ts`): `0.5 * proximityScore + 0.5 * skillOverlap`
-- **Auth middleware**: `verifyJwt` (checks Bearer token via Supabase Auth) + `requireRole(...roles)`
-- **Frontend auth state**: AuthContext listens to `onAuthStateChange`
-- **shadcn/ui**: Button, Card, Badge, Input in `src/components/ui/` — import via `@/components/ui/button`
+
+### Frontend
+- **Auth state**: AuthContext listens to `onAuthStateChange`; `signUp` passes role/skills via `user_metadata`
+- **Map center**: DEFAULT_CENTER = Delhi (28.6139, 77.209), NOT Lucknow. Lucknow RDSO preset = (26.8193, 80.8853) exported as `PRESET_LUCKNOW_RDSO` from `useLocationPicker.ts`. Map zoom = 13.
+- **shadcn/ui**: 10 components in `src/components/ui/` — import via `@/components/ui/button`
+- **Location**: Use `useLocationPicker()` hook which wraps `useGeolocation()` for GPS; supports GPS, preset, manual coords, search (Photon), and map click sources
+- **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail
+- **Carbon offset**: `calculateHaversineDistance` × 0.12 kg CO₂/km, rendered in VolunteerPortfolio as eco-savings
+- **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` via dynamic CDN import)
+- **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket
+- **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
 - **No testing framework** configured
 - **No external state library** — React Context + hooks only
-- **Vite proxy**: `/api` -> `localhost:3001` in dev
+- **Vite proxy**: `/api` → `localhost:3001` in dev
 - **`@/` path alias**: configured in `tsconfig.app.json` and `vite.config.ts`
-- **Map zoom** defaults to 12, centered on Lucknow India (26.8467, 80.9462)
 - **PWA**: auto-update with registration; OSM tiles cached (CacheFirst, 200 max, 30 days)
-- **Home stats**: dynamically fetched from Supabase (total hours, open gigs, NGO count)
-- **Duplicate join**: backend returns 409 with "You have already joined this gig."
+- **Home stats**: dynamically fetched from Supabase (total hours, open gigs, NGO count via direct queries)
+- **Duplicate join**: backend returns 409; frontend handles in `JoinGig` with try/catch
 - **OSRM profiles**: uses `walking`, `cycling`, `driving` (not `foot`, `bicycle`, `car`)
+- **GEarth radius**: 6371km used in haversine formula (`utils/geo.ts`)
+
+### Backend
+- **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table; `jsonwebtoken` package is imported but NEVER called (dead code)
+- **Email**: `emailService.ts` uses native `fetch` to POST to EmailJS API (not `@emailjs/node`); gracefully skips if env vars not configured
+- **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500)
+- **Duplicate join detection**: first checks via `select`, then catches `23505` unique constraint violation as fallback
+- **Karma award**: `hours * 10` awarded on participation completion
+- **Feature gig**: sets `featured_until` column; `nearby_gigs` RPC sorts featured (future) gigs first
+- **Nodemon discrepancy**: `nodemon` is a devDependency but unused; dev script uses `tsx watch index.ts` instead
+
+### Corrupted / Unused Files
+- **4 Responsive* components** exist but are BROKEN (encoding corruption, non-functional): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx` — do not import or use
+- **`jsonwebtoken`** (backend) and **`@emailjs/browser`** (frontend) are unused dependencies
+
+### Migrations
+- **Migration order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql`
+- **Combined file**: `20240523000000_initial_schema.sql` merges 00+01 but lacks `featured_until` from 02
+- **Fix scripts**: `fix_matching_functions.sql` (missing matching RPCs), `fix_postgis_functions.sql` (missing geometry type in search path)

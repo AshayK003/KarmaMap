@@ -7,7 +7,6 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { PhotoUpload } from '../components/PhotoUpload';
 import { Certificate } from '../components/Certificate';
-import { uploadParticipationPhoto } from '../services/storage';
 import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
 import type { Participation } from '../types/database';
 import { Button } from '@/components/ui/button';
@@ -26,12 +25,12 @@ export function ParticipateGig() {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
   const [participation, setParticipation] = useState<Participation | null>(null);
-  const [beforeFile, setBeforeFile] = useState<File | null>(null);
-  const [afterFile, setAfterFile] = useState<File | null>(null);
   const [completed, setCompleted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingParticipation, setLoadingParticipation] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [beforeUrl, setBeforeUrl] = useState<string | null>(null);
+  const [afterUrl, setAfterUrl] = useState<string | null>(null);
 
   const {
     register,
@@ -60,6 +59,8 @@ export function ParticipateGig() {
     } else if (data) {
       setParticipation(data as Participation);
       if (data.status === 'completed') setCompleted(true);
+      if (data.before_photo_url) setBeforeUrl(data.before_photo_url);
+      if (data.after_photo_url) setAfterUrl(data.after_photo_url);
     } else {
       setParticipation(null);
     }
@@ -83,40 +84,18 @@ export function ParticipateGig() {
     }
   };
 
+  const canSubmit = !submitting && beforeUrl && afterUrl;
+
   const onSubmit = async (data: FormData) => {
-    if (!user) {
-      setError('root', { message: 'You must be logged in' });
-      return;
-    }
-    if (!participation) {
-      setError('root', { message: 'Join this gig before completing it' });
-      return;
-    }
+    if (!user || !participation) return;
 
     setSubmitting(true);
     setPageError(null);
     try {
-      let beforeUrl = participation.before_photo_url;
-      let afterUrl = participation.after_photo_url;
-
-      if (beforeFile) {
-        beforeUrl = await uploadParticipationPhoto(user.id, beforeFile, 'before');
-      }
-      if (afterFile) {
-        afterUrl = await uploadParticipationPhoto(user.id, afterFile, 'after');
-      }
-
-      if (!beforeUrl || !afterUrl) {
-        setError('root', {
-          message: 'Please upload both before and after photos',
-        });
-        return;
-      }
-
       const result = await completeParticipationViaApi(participation.id, {
         hours: data.hours,
-        before_photo_url: beforeUrl,
-        after_photo_url: afterUrl,
+        before_photo_url: beforeUrl!,
+        after_photo_url: afterUrl!,
       });
 
       const updated = (result as { participation?: Participation }).participation;
@@ -127,17 +106,15 @@ export function ParticipateGig() {
           ...participation,
           status: 'completed',
           hours: data.hours,
-          before_photo_url: beforeUrl,
-          after_photo_url: afterUrl,
+          before_photo_url: beforeUrl!,
+          after_photo_url: afterUrl!,
         });
       }
 
       setCompleted(true);
       await refreshProfile();
 
-      // Confetti fire!
       try {
-        // @ts-ignore
         const module = await import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm');
         const confetti = module.default || module;
         confetti({
@@ -195,14 +172,14 @@ export function ParticipateGig() {
           completedDate={new Date().toLocaleDateString()}
         />
         {(participation.before_photo_url || participation.after_photo_url) && (
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {participation.before_photo_url && (
               <div>
                 <p className="mb-1 text-xs font-medium text-gray-500">Before</p>
                 <img
                   src={participation.before_photo_url}
                   alt="Before"
-                  className="rounded-lg"
+                  className="w-full rounded-lg object-cover max-h-48"
                 />
               </div>
             )}
@@ -212,7 +189,7 @@ export function ParticipateGig() {
                 <img
                   src={participation.after_photo_url}
                   alt="After"
-                  className="rounded-lg"
+                  className="w-full rounded-lg object-cover max-h-48"
                 />
               </div>
             )}
@@ -229,13 +206,13 @@ export function ParticipateGig() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-xl font-bold">Complete: {gigTitle}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Upload before/after photos to verify your impact.
+        Upload photos while you fill in the details — they'll start uploading right away.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6" noValidate>
-        <div className="grid grid-cols-2 gap-4">
-          <PhotoUpload label="Before photo" onFileSelect={setBeforeFile} />
-          <PhotoUpload label="After photo" onFileSelect={setAfterFile} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <PhotoUpload label="Before photo" onUploadComplete={setBeforeUrl} />
+          <PhotoUpload label="After photo" onUploadComplete={setAfterUrl} />
         </div>
 
         <div>
@@ -260,8 +237,16 @@ export function ParticipateGig() {
           </p>
         )}
 
-        <Button type="submit" disabled={submitting} className="w-full">
-          {submitting ? 'Submitting…' : 'Complete gig & earn karma'}
+        <Button
+          type="submit"
+          disabled={!canSubmit}
+          className="w-full"
+        >
+          {submitting
+            ? 'Submitting…'
+            : !beforeUrl || !afterUrl
+              ? 'Wait for photo uploads…'
+              : 'Complete gig & earn karma'}
         </Button>
       </form>
     </div>

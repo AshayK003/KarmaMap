@@ -57,7 +57,7 @@ export function Login() {
       <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl pointer-events-none" />
 
       {/* Premium Glassmorphic card container */}
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center space-y-2 mb-6">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl text-emerald-700 shadow-sm shadow-emerald-500/10">
             🌱

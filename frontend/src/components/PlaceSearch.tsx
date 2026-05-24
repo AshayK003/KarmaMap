@@ -76,7 +76,7 @@ export function PlaceSearch({
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        className="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         autoComplete="off"
       />
       {loading && (
@@ -94,7 +94,7 @@ export function PlaceSearch({
                 type="button"
                 role="option"
                 onClick={() => handleSelect(place)}
-                className="w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-emerald-50"
+                className="w-full px-3 py-3 text-left text-sm text-gray-800 hover:bg-emerald-50 border-b border-slate-50 last:border-0"
               >
                 {place.label}
               </button>
@@ -102,7 +102,7 @@ export function PlaceSearch({
           ))}
         </ul>
       )}
-      <p className="mt-1 text-[10px] text-gray-400">
+      <p className="mt-1 text-[10px] sm:text-xs text-gray-400">
         Powered by OpenStreetMap (Photon) · type 3+ letters
       </p>
     </div>

@@ -14,7 +14,7 @@ export function Certificate({
   completedDate,
 }: CertificateProps) {
   return (
-    <div className="certificate relative mx-auto max-w-lg overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50 to-white p-8 text-center shadow-lg">
+    <div className="certificate relative mx-auto max-w-lg overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50 to-white p-6 sm:p-8 text-center shadow-lg">
       {/* Decorative corner ornaments */}
       <div className="absolute top-3 left-3 text-2xl opacity-30 select-none">✦</div>
       <div className="absolute top-3 right-3 text-2xl opacity-30 select-none">✦</div>

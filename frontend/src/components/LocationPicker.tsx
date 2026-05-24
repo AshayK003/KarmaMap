@@ -58,21 +58,21 @@ export function LocationPicker({
         <button
           type="button"
           onClick={onUseGps}
-          className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
         >
           Use GPS
         </button>
         <button
           type="button"
           onClick={() => onPreset(PRESET_LUCKNOW_RDSO)}
-          className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
         >
           {PRESET_LUCKNOW_RDSO.label}
         </button>
       </div>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-xs font-medium text-gray-600">
+        <summary className="cursor-pointer text-xs font-medium text-gray-600 py-1">
           Manual coordinates
         </summary>
         <form
@@ -90,7 +90,7 @@ export function LocationPicker({
               step="any"
               defaultValue={lat.toFixed(5)}
               key={`lat-${lat}`}
-              className="mt-0.5 w-full rounded border px-2 py-1.5 text-sm"
+              className="mt-0.5 w-full rounded border px-2 py-2 text-sm"
             />
           </div>
           <div>
@@ -101,12 +101,12 @@ export function LocationPicker({
               step="any"
               defaultValue={lng.toFixed(5)}
               key={`lng-${lng}`}
-              className="mt-0.5 w-full rounded border px-2 py-1.5 text-sm"
+              className="mt-0.5 w-full rounded border px-2 py-2 text-sm"
             />
           </div>
           <button
             type="submit"
-            className="col-span-2 rounded-lg bg-emerald-100 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-200"
+            className="col-span-2 rounded-lg bg-emerald-100 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-200"
           >
             Apply coordinates
           </button>

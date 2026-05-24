@@ -25,31 +25,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Custom green pin icon for gig markers
 const gigIcon = L.divIcon({
   className: '',
-  html: `<div style="
-    width: 28px; height: 28px;
-    background: linear-gradient(135deg, #059669, #0d9488);
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 2.5px solid white;
-    box-shadow: 0 2px 8px rgba(5,150,105,0.4);
-  "></div>`,
+  html: '<div style="width: 28px; height: 28px; background: linear-gradient(135deg, #059669, #0d9488); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2.5px solid white; box-shadow: 0 2px 8px rgba(5,150,105,0.4);"></div>',
   iconSize: [28, 28],
   iconAnchor: [14, 28],
   popupAnchor: [0, -30],
 });
 
+// Custom "you are here" pulse icon
 const youIcon = L.divIcon({
   className: '',
-  html: `<div style="position:relative; width:20px; height:20px;">
-    <div style="
-      position:absolute; inset:0;
-      background:#059669; border-radius:50%;
-      border: 3px solid white;
-      box-shadow: 0 0 0 4px rgba(5,150,105,0.25);
-    "></div>
-  </div>`,
+  html: '<div style="position:relative; width:20px; height:20px;"><div style="position:absolute; inset:0; background:#059669; border-radius:50%; border: 3px solid white; box-shadow: 0 0 0 4px rgba(5,150,105,0.25);"></div></div>',
   iconSize: [20, 20],
   iconAnchor: [10, 10],
   popupAnchor: [0, -14],
@@ -78,7 +66,7 @@ function MapClickPicker({
   return null;
 }
 
-interface MapViewProps {
+interface ResponsiveMapViewProps {
   lat: number;
   lng: number;
   gigs: NearbyGig[];
@@ -86,9 +74,10 @@ interface MapViewProps {
   height?: string;
   onMapClick?: (lat: number, lng: number) => void;
   pickMode?: boolean;
+  className?: string;
 }
 
-export function MapView({
+export function ResponsiveMapView({
   lat,
   lng,
   gigs,
@@ -96,7 +85,8 @@ export function MapView({
   height = '400px',
   onMapClick,
   pickMode = false,
-}: MapViewProps) {
+  className = '',
+}: ResponsiveMapViewProps) {
   const [selectedGig, setSelectedGig] = useState<NearbyGig | null>(null);
   const [travelMode, setTravelMode] = useState<'foot' | 'bicycle' | 'car'>('foot');
   const [activeRoute, setActiveRoute] = useState<{
@@ -107,6 +97,7 @@ export function MapView({
   } | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
 
+  // Clear route and selection whenever center point or gig list changes
   useEffect(() => {
     setSelectedGig(null);
     setActiveRoute(null);
@@ -118,6 +109,7 @@ export function MapView({
     car: 'driving',
   };
 
+  // Dynamically calculate route whenever selected gig or travel mode changes
   useEffect(() => {
     if (!selectedGig) {
       setActiveRoute(null);
@@ -130,7 +122,7 @@ export function MapView({
       try {
         const profile = osrmProfile[travelMode] ?? 'walking';
         const res = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${lng},${lat};${selectedGig.lng},${selectedGig.lat}?overview=full&geometries=geojson`
+          \https://router.project-osrm.org/route/v1/\C:\Users\Ashay\OneDrive\??????\WindowsPowerShell\Microsoft.PowerShell_profile.ps1/\,\;\,\?overview=full&geometries=geojson\
         );
         if (!res.ok) throw new Error('OSRM routing request failed');
         const data = await res.json();
@@ -161,43 +153,42 @@ export function MapView({
     };
   }, [selectedGig, travelMode, lat, lng]);
 
+  // Carbon math: Average car emits ~120g of CO2 per kilometer
   const calculateCo2 = (meters: number) => {
     const co2Grams = (meters / 1000) * 120;
     if (co2Grams >= 1000) {
-      return `${(co2Grams / 1000).toFixed(2)} kg`;
+      return \\ kg\;
     }
-    return `${Math.round(co2Grams)} g`;
+    return \\ g\;
   };
+
+  // Mobile-optimized travel mode selector
+  const TravelModeSelector = () => (
+    <div className="absolute top-4 right-4 z-[1000] flex items-center gap-1 rounded-2xl border border-white/20 bg-white/80 p-1.5 shadow-md backdrop-blur-md select-none">
+      {(['foot', 'bicycle', 'car'] as const).map((mode) => {
+        const isActive = travelMode === mode;
+        const label = mode === 'foot' ? '?? Walk' : mode === 'bicycle' ? '?? Cycle' : '?? Drive';
+        return (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setTravelMode(mode)}
+            className={\ounded-xl px-3 py-1.5 text-xs font-black transition-all duration-200 cursor-pointer \\
+              \\}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div
       style={{ height }}
-      className="relative overflow-hidden rounded-2xl border border-emerald-100 shadow-sm"
+      className={\elative overflow-hidden rounded-2xl border border-emerald-100 shadow-sm \\}
     >
-      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1 rounded-2xl border border-white/20 bg-white/80 p-1.5 shadow-md backdrop-blur-md select-none">
-        {(['foot', 'bicycle', 'car'] as const).map((mode) => {
-          const isActive = travelMode === mode;
-          const label = mode === 'foot' ? '🚶 Walk' : mode === 'bicycle' ? '🚲 Cycle' : '🚗 Drive';
-          return (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setTravelMode(mode)}
-              className={`rounded-xl px-3 py-2 text-xs font-black transition-all duration-200 cursor-pointer select-none ${
-                isActive
-                  ? mode === 'foot'
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                    : mode === 'bicycle'
-                    ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-500/20'
-                    : 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <TravelModeSelector />
 
       <MapContainer
         center={[lat, lng]}
@@ -212,8 +203,9 @@ export function MapView({
         <RecenterMap lat={lat} lng={lng} />
         <MapClickPicker enabled={pickMode} onPick={onMapClick} />
 
+        {/* Search radius circle */}
         <Circle
-          key={`circle-${lat}-${lng}-${radiusMeters}`}
+          key={\circle-\-\-\\}
           center={[lat, lng]}
           radius={radiusMeters}
           pathOptions={{
@@ -225,8 +217,10 @@ export function MapView({
           }}
         />
 
+        {/* Route Polyline (Glow Neon Overlay + Core Path) */}
         {activeRoute && (
           <>
+            {/* Glowing path overlay */}
             <Polyline
               positions={activeRoute.coords}
               pathOptions={{
@@ -237,6 +231,7 @@ export function MapView({
                 lineJoin: 'round',
               }}
             />
+            {/* Sleek solid core */}
             <Polyline
               positions={activeRoute.coords}
               pathOptions={{
@@ -250,14 +245,16 @@ export function MapView({
           </>
         )}
 
+        {/* "You are here" marker */}
         <Marker position={[lat, lng]} icon={youIcon}>
           <Popup className="leaflet-popup-custom">
             <div className="min-w-[120px] text-center py-1">
-              <p className="font-extrabold text-sm text-gray-900">📍 You are here</p>
+              <p className="font-extrabold text-sm text-gray-900">?? You are here</p>
             </div>
           </Popup>
         </Marker>
 
+        {/* Gig markers */}
         {gigs.map((gig) => (
           <Marker
             key={gig.id}
@@ -268,67 +265,68 @@ export function MapView({
             }}
           >
             <Popup className="leaflet-popup-custom" minWidth={210}>
-              <div className="space-y-1.5 py-1">
-                <p className="font-extrabold text-sm sm:text-base text-slate-800 leading-snug flex items-center gap-1.5">
+              <div className="min-w-[210px] space-y-1.5 py-1">
+                <p className="font-extrabold text-sm text-slate-800 leading-snug flex items-center gap-1.5">
                   {gig.featured_until && new Date(gig.featured_until) > new Date() && (
-                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800">★ FEATURED</span>
+                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800">? FEATURED</span>
                   )}
                   {gig.title}
                 </p>
-                <p className="text-xs sm:text-sm font-black text-emerald-700">{gig.ngo_name}</p>
+                <p className="text-xs font-black text-emerald-700">{gig.ngo_name}</p>
 
-                <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                {/* Routing & Distance Stats */}
+                <div className="flex flex-col text-[10px] font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
                   <div className="flex items-center justify-between">
-                    <span>📍 Straight line:</span>
+                    <span>?? Straight line:</span>
                     <span className="text-slate-700 font-extrabold">{formatDistance(gig.distance_meters)}</span>
                   </div>
 
                   {activeRoute && activeRoute.gigId === gig.id ? (
                     <>
-                      <div className={`flex items-center justify-between font-black ${
-                        travelMode === 'foot' ? 'text-emerald-700' : travelMode === 'bicycle' ? 'text-cyan-700' : 'text-indigo-700'
-                      }`}>
-                        <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
+                      <div className={\lex items-center justify-between font-black \\
+                        \\}>
+                        <span>{travelMode === 'foot' ? '?? Walking road:' : travelMode === 'bicycle' ? '?? Cycling road:' : '?? Driving road:'}</span>
                         <span>{formatDistance(activeRoute.distance)}</span>
                       </div>
                       <div className="flex items-center justify-between text-teal-600 font-black">
-                        <span>⏱️ Travel time:</span>
+                        <span>?? Travel time:</span>
                         <span>{Math.round(activeRoute.duration / 60)} mins</span>
                       </div>
                       
+                      {/* Eco Savings Display */}
                       {travelMode !== 'car' ? (
                         <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs">
-                          <span>🌱 CO2 Saved:</span>
+                          <span>?? CO2 Saved:</span>
                           <span>{calculateCo2(activeRoute.distance)}</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1">
-                          <span>🚗 CO2 Emitted:</span>
+                          <span>?? CO2 Emitted:</span>
                           <span>{calculateCo2(activeRoute.distance)}</span>
                         </div>
                       )}
                     </>
                   ) : loadingRoute ? (
-                    <div className="text-[10px] sm:text-xs text-emerald-600 animate-pulse font-extrabold py-0.5">
+                    <div className="text-[10px] text-emerald-600 animate-pulse font-extrabold py-0.5">
                       Calculating road route...
                     </div>
                   ) : (
-                    <div className="text-[10px] sm:text-xs text-slate-400 font-medium italic py-0.5">
+                    <div className="text-[9px] text-slate-400 font-medium italic py-0.5">
                       Click marker to calculate road route
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500">
-                    <span>👥 Joined spots:</span>
+                  <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] text-slate-500">
+                    <span>?? Joined spots:</span>
                     <span className="text-slate-700 font-extrabold">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
                   </div>
                 </div>
 
                 <Link
-                  to={`/gigs/${gig.id}`}
-                  className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-center text-xs sm:text-sm font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                  to={/gigs/}
+                  className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2 text-center text-xs font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
-                  View details →
+                  View details ?
                 </Link>
               </div>
             </Popup>

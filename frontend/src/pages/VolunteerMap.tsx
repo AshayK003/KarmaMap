@@ -125,8 +125,21 @@ export function VolunteerMap() {
       <div className="mx-auto max-w-7xl px-4 py-5">
         <div className="flex flex-col lg:flex-row gap-5 lg:items-start">
 
-          {/* ─── Left Sidebar ─── */}
-          <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 space-y-4 lg:sticky lg:top-[76px] lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto lg:pr-1">
+          {/* ─── Map (renders first on mobile, second on desktop) ─── */}
+          <div className="flex-1 order-first lg:order-2 lg:sticky lg:top-[76px] h-[50vh] min-h-[300px] lg:h-[calc(100vh-96px)]">
+            <MapView
+              lat={lat}
+              lng={lng}
+              gigs={gigs}
+              radiusMeters={radius}
+              height="100%"
+              pickMode
+              onMapClick={setFromMap}
+            />
+          </div>
+
+          {/* ─── Sidebar (renders second on mobile, first on desktop) ─── */}
+          <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 space-y-4 order-last lg:order-1 lg:sticky lg:top-[76px] lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto lg:pr-1">
 
             {/* Location Picker Card */}
             <LocationPicker
@@ -201,19 +214,6 @@ export function VolunteerMap() {
                 ))
               )}
             </div>
-          </div>
-
-          {/* ─── Right: Full-Height Sticky Map ─── */}
-          <div className="flex-1 lg:sticky lg:top-[76px]">
-            <MapView
-              lat={lat}
-              lng={lng}
-              gigs={gigs}
-              radiusMeters={radius}
-              height="calc(100vh - 96px)"
-              pickMode
-              onMapClick={setFromMap}
-            />
           </div>
 
         </div>

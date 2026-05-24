@@ -13,7 +13,7 @@ interface GigCardProps {
 function SkillMatchBadge({ overlap }: { overlap: number }) {
   const variant = overlap >= 75 ? 'default' as const : overlap >= 40 ? 'amber' as const : 'secondary' as const;
   return (
-    <Badge variant={variant} className="gap-1 text-[10px]">
+    <Badge variant={variant} className="gap-1 text-[10px] sm:text-xs">
       <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d={overlap >= 40 ? 'M9 12l2 2 4-4' : 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'} />
       </svg>
@@ -59,18 +59,18 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
           {gig.title}
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
-          <Badge variant="secondary" className="text-[10px] px-2.5 py-0.5">{formatDistance(gig.distance_meters)}</Badge>
-          <span className="text-[9px] font-black text-emerald-600 tracking-wide uppercase select-none">
+          <Badge variant="secondary" className="text-[10px] sm:text-xs px-2.5 py-0.5">{formatDistance(gig.distance_meters)}</Badge>
+          <span className="text-[10px] sm:text-xs font-black text-emerald-600 tracking-wide uppercase select-none">
             {travelTime}
           </span>
         </div>
       </div>
 
       {/* NGO name */}
-      <p className="mt-1.5 text-xs font-black text-emerald-700 opacity-90">{gig.ngo_name}</p>
+      <p className="mt-1.5 text-xs sm:text-sm font-black text-emerald-700 opacity-90">{gig.ngo_name}</p>
 
       {/* Description */}
-      <p className="mt-2 line-clamp-2 text-xs font-semibold text-slate-400 leading-relaxed flex-1">
+      <p className="mt-2 line-clamp-2 text-xs sm:text-sm font-semibold text-slate-400 leading-relaxed flex-1">
         {gig.description}
       </p>
 
@@ -82,7 +82,7 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
               (s) => s.toLowerCase() === skill.toLowerCase()
             );
             return (
-              <Badge key={skill} variant={hasSkill ? 'default' : 'secondary'} className="gap-0.5 text-[10px] px-2.5 py-0.5">
+              <Badge key={skill} variant={hasSkill ? 'default' : 'secondary'} className="gap-0.5 text-[10px] sm:text-xs px-2.5 py-0.5">
                 {hasSkill && (
                   <svg className="h-2.5 w-2.5 mr-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" />
@@ -97,7 +97,7 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
 
       {/* Volunteer spots progress bar */}
       <div className="mt-4.5 space-y-1.5">
-        <div className="flex items-center justify-between text-[10px] font-bold">
+        <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold">
           <span className="text-slate-400">Spots filled</span>
           <span className="text-slate-600 font-extrabold">
             {gig.volunteers_joined}/{gig.volunteers_needed}

@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   ResponsiveContainer,
   type ResponsiveContainerProps,
+  Tooltip,
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +38,7 @@ export function ChartContainer({
   return (
     <ChartContext.Provider value={{ config }}>
       <div className={cn('w-full', className)}>
-        <ResponsiveContainer width="100%" height={props.height ?? 300} {...props}>
+        <ResponsiveContainer width="100%" height={props.height ?? 260} {...props}>
           {children}
         </ResponsiveContainer>
       </div>
@@ -79,7 +80,7 @@ export function ChartTooltipContent({
           const cfg = config[entry.name];
           const color = entry.color ?? entry.fill ?? cfg?.color ?? '#059669';
           return (
-            <div key={i} className="flex items-center justify-between gap-4 text-[11px] font-medium">
+            <div key={i} className="flex items-center justify-between gap-4 text-xs font-medium">
               <div className="flex items-center gap-1.5">
                 {indicator === 'dot' ? (
                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
