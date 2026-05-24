@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRealtimeNotifications } from '../hooks/useRealtimeGigs';
 import { Link } from 'react-router-dom';
@@ -26,7 +25,9 @@ export function NotificationBell() {
         className="relative flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         aria-label="Notifications"
       >
-        <Bell className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+        <svg className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white px-1 shadow-md">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -52,7 +53,9 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-center px-4">
-                <Bell className="h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
+                <svg className="h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500">No notifications yet</p>
                 <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-0.5">Match alerts and updates will appear here.</p>
               </div>
