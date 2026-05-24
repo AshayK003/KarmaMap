@@ -18,27 +18,35 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     return false;
   }
 
-  try {
-    const res = await fetch(EMAILJS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: publicKey,
-        template_params: {
-          to_email: params.to_email,
-          to_name: params.to_name,
-          subject: params.subject,
-          message: params.message,
-          gig_title: params.gig_title ?? '',
-        },
-      }),
-    });
-    return res.ok;
-  } catch (err) {
-    console.error('Email send failed:', err);
-    return false;
+  const res = await fetch(EMAILJS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: publicKey,
+      template_params: {
+        to_email: params.to_email,
+        to_name: params.to_name,
+        subject: params.subject,
+        message: params.message,
+        gig_title: params.gig_title ?? '',
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => 'Unknown error');
+    console.error('Email send failed:', text);
+  }
+
+  return res.ok;
+}
+
+export async function sendEmailOrThrow(params: EmailParams): Promise<void> {
+  const ok = await sendEmail(params);
+  if (!ok) {
+    throw new Error(`Failed to send email to ${params.to_email}`);
   }
 }
 
@@ -46,7 +54,7 @@ export async function sendGigMatchEmails(
   volunteers: Array<{ email: string; name: string }>,
   gigTitle: string
 ): Promise<void> {
-  await Promise.all(
+  const results = await Promise.allSettled(
     volunteers
       .filter((v) => v.email)
       .map((v) =>
@@ -59,6 +67,11 @@ export async function sendGigMatchEmails(
         })
       )
   );
+
+  const failures = results.filter((r) => r.status === 'rejected');
+  if (failures.length > 0) {
+    console.warn(`${failures.length}/${results.length} match emails failed`);
+  }
 }
 
 export async function sendCompletionEmail(
@@ -66,11 +79,15 @@ export async function sendCompletionEmail(
   name: string,
   gigTitle: string
 ): Promise<void> {
-  await sendEmail({
+  const ok = await sendEmail({
     to_email: email,
     to_name: name,
     subject: `Gig completed: ${gigTitle}`,
     message: `Thank you for completing "${gigTitle}"! Your karma points have been updated.`,
     gig_title: gigTitle,
   });
+
+  if (!ok) {
+    console.warn(`Completion email to ${email} failed (may be unconfigured)`);
+  }
 }

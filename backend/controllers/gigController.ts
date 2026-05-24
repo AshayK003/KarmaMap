@@ -4,6 +4,12 @@ import { AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import {
+  createGig as createGigService,
+  getNgoAnalytics as getAnalyticsService,
+  verifyGigOwnership,
+  type CreateGigInput,
+} from '../services/gigService.js';
+import {
   findMatchedVolunteers,
   notifyMatchedVolunteers,
 } from '../services/matchingService.js';
@@ -20,69 +26,17 @@ export const createGigSchema = z.object({
 });
 
 async function _createGig(req: AuthRequest, res: Response): Promise<void> {
-  const body = req.body as z.infer<typeof createGigSchema>;
+  const body = req.body as CreateGigInput;
   const ngoId = req.user!.id;
 
-  const { data, error } = await supabaseAdmin.rpc('insert_gig', {
-    p_title: body.title,
-    p_description: body.description,
-    p_ngo_id: ngoId,
-    p_lat: body.lat,
-    p_lng: body.lng,
-    p_required_skills: body.required_skills,
-    p_volunteers_needed: body.volunteers_needed,
-    p_gig_date: body.gig_date,
-  });
-
-  if (error) {
-    res.status(400).json({ error: error.message });
-    return;
-  }
-
-  try {
-    const matched = await findMatchedVolunteers(data.id);
-    await notifyMatchedVolunteers(data.id, matched, body.title);
-    await sendGigMatchEmails(matched, body.title);
-    res.status(201).json({ gig: data, matched_count: matched.length });
-  } catch (matchErr) {
-    console.warn('Matching skipped:', matchErr);
-    res.status(201).json({ gig: data, matched_count: 0 });
-  }
+  const result = await createGigService(ngoId, body);
+  res.status(201).json(result);
 }
 
 async function _getNgoAnalytics(req: AuthRequest, res: Response): Promise<void> {
   const ngoId = req.user!.id;
-
-  const { data: gigs } = await supabaseAdmin
-    .from('gigs')
-    .select('id, title, status, volunteers_joined, gig_date')
-    .eq('ngo_id', ngoId);
-
-  const gigIds = (gigs ?? []).map((g) => g.id);
-
-  const { data: participations } = await supabaseAdmin
-    .from('participations')
-    .select('hours, status, gig_id')
-    .in('gig_id', gigIds.length ? gigIds : ['00000000-0000-0000-0000-000000000000']);
-
-  const totalHours = (participations ?? [])
-    .filter((p) => p.status === 'completed')
-    .reduce((sum, p) => sum + Number(p.hours ?? 0), 0);
-
-  const completedGigs = (gigs ?? []).filter((g) => g.status === 'completed').length;
-
-  const chartData = (gigs ?? []).map((g) => ({
-    name: g.title.slice(0, 20),
-    volunteers: g.volunteers_joined,
-    completed: g.status === 'completed' ? 1 : 0,
-  }));
-
-  res.json({
-    total_hours: totalHours,
-    completed_gigs: completedGigs,
-    total_gigs: gigs?.length ?? 0,
-    chart_data: chartData,
-  });
+  const result = await getAnalyticsService(ngoId);
+  res.json(result);
 }
 
 export const featureGigSchema = z.object({
@@ -93,16 +47,7 @@ async function _featureGig(req: AuthRequest, res: Response): Promise<void> {
   const gigId = String(req.params.gigId);
   const { hours } = req.body as z.infer<typeof featureGigSchema>;
 
-  const { data: gig } = await supabaseAdmin
-    .from('gigs')
-    .select('ngo_id, featured_until')
-    .eq('id', gigId)
-    .single();
-
-  if (!gig || gig.ngo_id !== req.user!.id) {
-    res.status(403).json({ error: 'Not authorized' });
-    return;
-  }
+  await verifyGigOwnership(gigId, req.user!.id);
 
   const featuredUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
@@ -121,16 +66,7 @@ async function _featureGig(req: AuthRequest, res: Response): Promise<void> {
 
 async function _triggerMatching(req: AuthRequest, res: Response): Promise<void> {
   const gigId = String(req.params.gigId);
-  const { data: gig } = await supabaseAdmin
-    .from('gigs')
-    .select('title, ngo_id')
-    .eq('id', gigId)
-    .single();
-
-  if (!gig || gig.ngo_id !== req.user!.id) {
-    res.status(403).json({ error: 'Not authorized' });
-    return;
-  }
+  const gig = await verifyGigOwnership(gigId, req.user!.id);
 
   const matched = await findMatchedVolunteers(gigId);
   await notifyMatchedVolunteers(gigId, matched, gig.title);
