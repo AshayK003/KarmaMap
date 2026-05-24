@@ -33,7 +33,7 @@ function App() {
         <BrowserRouter>
         <div className="flex min-h-screen flex-col">
           <Navbar />
-          <main className="flex-1">
+          <main className="flex-1 animate-fade-in">
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />

@@ -7,7 +7,6 @@ import { MapView } from '../components/MapView';
 import { LocationPicker } from '../components/LocationPicker';
 import { useLocationPicker } from '../hooks/useLocationPicker';
 import { createGigViaApi } from '../services/gigs';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -77,6 +76,7 @@ export function CreateGig() {
           .filter(Boolean),
         volunteers_needed: data.volunteers_needed,
         gig_date: gigDate.toISOString(),
+        location_label: placeLabel || undefined,
       });
       toast.success('Gig created! Matching volunteers...');
       navigate('/ngo/dashboard');

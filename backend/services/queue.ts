@@ -1,4 +1,4 @@
-import { PgBoss } from 'pg-boss';
+import PgBoss from 'pg-boss';
 import { logger } from '../src/lib/logger.js';
 
 let boss: PgBoss | null = null;
@@ -14,10 +14,10 @@ export async function getQueue() {
 
   boss = new PgBoss(connectionString);
 
-  boss.on('error', (err) => logger.error(err, 'pg-boss error'));
+  boss.on('error', (err: Error) => logger.error(err, 'pg-boss error'));
 
   await boss.start();
-  await boss.createQueue('matching', { retryLimit: 3, retryDelay: 30, retryBackoff: true });
+  await boss.createQueue('matching', { name: 'matching', retryLimit: 3, retryDelay: 30, retryBackoff: true });
 
   logger.info('Job queue started');
   return boss;
@@ -35,8 +35,10 @@ export async function startWorker() {
   const q = await getQueue();
   if (!q) return;
 
-  await q.work('matching', async (job) => {
-    const { gigId, gigTitle } = job.data as { gigId: string; gigTitle: string };
+  await q.work<{ gigId: string; gigTitle: string }>('matching', async (jobs) => {
+    const job = jobs[0];
+    if (!job) return;
+    const { gigId, gigTitle } = job.data;
     logger.info({ gigId }, 'Processing matching job');
 
     const { findMatchedVolunteers, notifyMatchedVolunteers } = await import('./matchingService.js');

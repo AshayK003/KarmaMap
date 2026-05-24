@@ -2,18 +2,18 @@ import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
 import { sendCompletionEmail } from './emailService.js';
 
-export interface CompleteGigInput {
+interface CompleteGigInput {
   hours: number;
   before_photo_url?: string;
   after_photo_url?: string;
 }
 
-export interface CompleteGigResult {
+interface CompleteGigResult {
   participation: Record<string, unknown>;
   karma_earned: number;
 }
 
-export interface JoinGigResult {
+interface JoinGigResult {
   participation: Record<string, unknown>;
 }
 
@@ -59,9 +59,13 @@ export async function completeParticipation(
     logger.warn({ participationId, error: notifError.message }, 'Failed to insert completion notification');
   }
 
-  const { data: user } = await supabaseAdmin.auth.admin.getUserById(volunteerId);
-  if (user.user?.email) {
-    await sendCompletionEmail(user.user.email, profile?.name ?? 'Volunteer', gigTitle);
+  try {
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(volunteerId);
+    if (user?.user?.email) {
+      await sendCompletionEmail(user.user.email, profile?.name ?? 'Volunteer', gigTitle);
+    }
+  } catch {
+    logger.warn({ volunteerId }, 'Failed to send completion email');
   }
 
   return { participation, karma_earned: karmaEarned };
@@ -71,17 +75,6 @@ export async function joinGig(
   gigId: string,
   volunteerId: string
 ): Promise<JoinGigResult> {
-  const { data: existing } = await supabaseAdmin
-    .from('participations')
-    .select('id')
-    .eq('volunteer_id', volunteerId)
-    .eq('gig_id', gigId)
-    .maybeSingle();
-
-  if (existing) {
-    throw Object.assign(new Error('You have already joined this gig.'), { statusCode: 409 });
-  }
-
   const { data, error } = await supabaseAdmin
     .from('participations')
     .insert({
@@ -117,23 +110,18 @@ export async function awardKarma(
     return data;
   }
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('karma_points, streak')
-    .eq('id', volunteerId)
-    .single();
+  logger.warn({ volunteerId, error: error?.message }, 'award_karma RPC failed, retrying once');
+  const { data: data2, error: error2 } = await supabaseAdmin.rpc('award_karma', {
+    p_user_id: volunteerId,
+    p_hours: hours,
+  });
 
-  const { error: updateError } = await supabaseAdmin
-    .from('profiles')
-    .update({
-      karma_points: (profile?.karma_points ?? 0) + karmaEarned,
-      streak: (profile?.streak ?? 0) + 1,
-    })
-    .eq('id', volunteerId);
-
-  if (updateError) {
-    throw new Error(updateError.message);
+  if (!error2 && typeof data2 === 'number') {
+    return data2;
   }
 
-  return karmaEarned;
+  throw Object.assign(
+    new Error(error2?.message ?? 'award_karma RPC unavailable — apply migration 03_atomic_karma.sql'),
+    { statusCode: 400 }
+  );
 }

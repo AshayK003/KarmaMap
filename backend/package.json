@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
-    "date-fns": "^4.3.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg-boss": "^10.4.2",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.10",

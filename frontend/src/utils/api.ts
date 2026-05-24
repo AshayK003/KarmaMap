@@ -8,17 +8,17 @@ const API_BASE =
     ? ''
     : (configured ?? '');
 
+let cachedToken: string | null = null;
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  cachedToken = session?.access_token ?? null;
+});
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  let session;
-  try {
-    const { data } = await supabase.auth.getSession();
-    session = data;
-  } catch {}
-
-  const token = session?.session?.access_token;
+  const token = cachedToken;
 
   let res: Response;
   try {

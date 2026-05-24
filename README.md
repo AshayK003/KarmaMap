@@ -31,7 +31,7 @@ Hyper-local, real-time PWA connecting NGOs with nearby volunteers. Uses PostGIS 
 **Key design decisions**:
 - **Reads via anon client** — the frontend queries Supabase directly for reads (RPCs, `SELECT`). Only writes go through the backend.
 - **Backend uses `service_role` key** — bypasses RLS for writes. Never expose this key to the client.
-- **No testing framework** — not yet configured. Controllers are thin wrappers; business logic lives in services for future unit testing.
+- **Testing** — Vitest + Supertest for backend API tests; Vitest for frontend. Business logic lives in services for unit testability.
 - **No icon library** — all icons are inline SVGs. Zero cost to add a new icon.
 - **No external state library** — plain React Context + hooks.
 
@@ -159,10 +159,14 @@ Notifications: in-app (`notifications` table) + email (EmailJS via `fetch`).
 
 ## Testing
 
-No testing framework is configured. To add tests:
-- **Unit tests**: Services (`services/*.ts`) are the right boundary — pure business logic, no Express dependency
-- **Integration tests**: Hit REST endpoints with a test Supabase project
-- **E2E tests**: Playwright or Cypress against the full stack
+Tests use **Vitest** with **Supertest** for API integration tests. Run from either directory:
+
+```bash
+cd backend   && npx vitest run
+cd frontend  && npx vitest run
+```
+
+See `docs/testing-strategy.md` for the test plan.
 
 ## Migrations
 
@@ -173,14 +177,13 @@ Run in `supabase/migrations/` in this exact order:
 01_functions_and_realtime.sql   → helper RPCs + realtime publication
 02_featured_gigs.sql            → featured_until column + sort order
 storage_policies.sql            → storage bucket RLS policies
-03_atomic_karma.sql             → award_karma function (optional; fallback exists)
+03_atomic_karma.sql             → award_karma function
+04_analytics_optimization.sql   → aggregated analytics RPC
+06_location_label.sql           → location_label support
+07_fix_location_drift.sql       → conditional update_gic location fix
 ```
 
-Fix scripts (run if matching fails):
-- `fix_matching_functions.sql` — recreates matching RPCs
-- `fix_postgis_functions.sql` — fixes geometry type search path
-
-Combined file `20240523000000_initial_schema.sql` merges steps 1–3 but **lacks** `featured_until`.
+Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
 
 ## Deployment
 
@@ -191,7 +194,7 @@ Combined file `20240523000000_initial_schema.sql` merges steps 1–3 but **lacks
 
 ### Backend (Render)
 
-- `render.yaml` defines Node 20 service, build/start commands
+- `render.yaml` defines Node 22 service, build/start commands
 - Set env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, EmailJS vars
 
 ## Common Troubleshooting
@@ -209,7 +212,7 @@ Combined file `20240523000000_initial_schema.sql` merges steps 1–3 but **lacks
 
 - **Branch from `main`**, PR back to `main`
 - Run `npm run build` in both projects before committing — the build must pass
-- No testing framework exists yet; any contribution that adds tests is doubly welcome
+- Run `npx vitest run` in both projects; add tests for new code
 - Business logic goes in `services/`, not controllers
 - All icons are inline SVGs — don't add an icon library
 - No external state library — React Context + hooks is the pattern

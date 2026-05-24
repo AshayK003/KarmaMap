@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -168,37 +168,36 @@ export function VolunteerPortfolio() {
     }
   };
 
-  const totalHours = completed.reduce((s, p) => s + Number(p.hours ?? 0), 0);
+  const totalHours = useMemo(
+    () => completed.reduce((s, p) => s + Number(p.hours ?? 0), 0),
+    [completed]
+  );
 
-  // Parse volunteer location coordinates
-  const volLocation = profile?.location;
-  const volMatch = volLocation ? String(volLocation).match(/POINT\(([^ ]+) ([^ ]+)\)/) : null;
-  const volLng = volMatch ? parseFloat(volMatch[1]) : null;
-  const volLat = volMatch ? parseFloat(volMatch[2]) : null;
+  const { co2SavedKg, treesPlanted } = useMemo(() => {
+    const volLocation = profile?.location;
+    const volMatch = volLocation ? String(volLocation).match(/POINT\(([^ ]+) ([^ ]+)\)/) : null;
+    const volLng = volMatch ? parseFloat(volMatch[1]) : null;
+    const volLat = volMatch ? parseFloat(volMatch[2]) : null;
 
-  let totalCo2SavedMeters = 0;
-  completed.forEach((p) => {
-    const gigLoc = (p as any).gigs?.location;
-    if (volLat !== null && volLng !== null && gigLoc) {
-      const gigMatch = String(gigLoc).match(/POINT\(([^ ]+) ([^ ]+)\)/);
-      if (gigMatch) {
-        const gigLng = parseFloat(gigMatch[1]);
-        const gigLat = parseFloat(gigMatch[2]);
-        if (!isNaN(gigLng) && !isNaN(gigLat)) {
-          // Calculate round-trip distance (2x straight-line distance)
-          const distance = calculateHaversineDistance(volLat, volLng, gigLat, gigLng);
-          totalCo2SavedMeters += distance * 2;
+    let totalCo2SavedMeters = 0;
+    for (const p of completed) {
+      const gigLoc = (p as Record<string, unknown> & { gigs?: { location?: unknown } })?.gigs?.location;
+      if (volLat !== null && volLng !== null && gigLoc) {
+        const gigMatch = String(gigLoc).match(/POINT\(([^ ]+) ([^ ]+)\)/);
+        if (gigMatch) {
+          const gigLng = parseFloat(gigMatch[1]);
+          const gigLat = parseFloat(gigMatch[2]);
+          if (!isNaN(gigLng) && !isNaN(gigLat)) {
+            const distance = calculateHaversineDistance(volLat, volLng, gigLat, gigLng);
+            totalCo2SavedMeters += distance * 2;
+          }
         }
       }
     }
-  });
+    const c = (totalCo2SavedMeters / 1000) * 0.120;
+    return { co2SavedKg: c, treesPlanted: c / 22 };
+  }, [completed, profile?.location]);
 
-  // Calculate carbon footprint saved (average typical car emits ~120g of CO2 per kilometer)
-  const co2SavedKg = (totalCo2SavedMeters / 1000) * 0.120;
-  // A mature tree absorbs roughly 22kg of CO2 per year
-  const treesPlanted = co2SavedKg / 22;
-
-  // Dynamic Karma Level calculation
   const getKarmaLevel = (points: number) => {
     if (points >= 1000) return { title: 'Legendary Leader 🌟', color: 'from-purple-600 to-indigo-600', max: 5000 };
     if (points >= 500) return { title: 'Community Champion 🟣', color: 'from-violet-500 to-fuchsia-500', max: 1000 };
@@ -207,8 +206,8 @@ export function VolunteerPortfolio() {
   };
 
   const karma = profile?.karma_points ?? 0;
-  const level = getKarmaLevel(karma);
-  const nextMilestonePercent = Math.min(100, (karma / level.max) * 100);
+  const level = useMemo(() => getKarmaLevel(karma), [karma]);
+  const nextMilestonePercent = useMemo(() => Math.min(100, (karma / level.max) * 100), [karma, level.max]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

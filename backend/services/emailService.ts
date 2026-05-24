@@ -1,4 +1,3 @@
-import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
 
 const EMAILJS_API = 'https://api.emailjs.com/api/v1.0/email/send';

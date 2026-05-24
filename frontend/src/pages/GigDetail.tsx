@@ -127,6 +127,18 @@ export function GigDetail() {
 
     if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return;
 
+    const cacheKey = `karmamap-weather-${lat.toFixed(2)}-${lng.toFixed(2)}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.ts < 30 * 60 * 1000) {
+          setWeather(parsed.data);
+          return;
+        }
+      } catch { /* ignore stale cache */ }
+    }
+
     setLoadingWeather(true);
     fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`
@@ -142,25 +154,27 @@ export function GigDetail() {
 
           // Try to find the matching forecast day
           const dayIndex = data.daily.time.indexOf(gigDateStr);
+          let wf: WeatherForecast;
 
           if (dayIndex !== -1) {
-            setWeather({
+            wf = {
               date: data.daily.time[dayIndex],
               weathercode: data.daily.weathercode[dayIndex],
               tempMax: data.daily.temperature_2m_max[dayIndex],
               tempMin: data.daily.temperature_2m_min[dayIndex],
               isGigDay: true,
-            });
+            };
           } else {
-            // Fallback: show today's forecast
-            setWeather({
+            wf = {
               date: data.daily.time[0],
               weathercode: data.daily.weathercode[0],
               tempMax: data.daily.temperature_2m_max[0],
               tempMin: data.daily.temperature_2m_min[0],
               isGigDay: false,
-            });
+            };
           }
+          setWeather(wf);
+          sessionStorage.setItem(cacheKey, JSON.stringify({ data: wf, ts: Date.now() }));
         }
       })
       .catch((err) => console.error('Error fetching weather:', err))
@@ -171,6 +185,8 @@ export function GigDetail() {
     if (!id) return;
     setJoining(true);
     setJoinError(null);
+    // Optimistic: show success immediately
+    toast.success('Joining gig...');
     try {
       await joinGigViaApi(id);
       toast.success('Joined the gig! Head to participate page to upload photos.');

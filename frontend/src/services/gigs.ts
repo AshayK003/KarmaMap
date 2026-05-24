@@ -25,6 +25,7 @@ export async function createGigViaApi(payload: {
   required_skills: string[];
   volunteers_needed: number;
   gig_date: string;
+  location_label?: string;
 }) {
   return apiFetch<{ gig: unknown }>('/api/gigs', {
     method: 'POST',
@@ -69,39 +70,29 @@ export async function updateGigStatus(gigId: string, status: GigStatus) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('[updateGigStatus] Supabase error:', JSON.stringify(error));
+    throw error;
+  }
   return data as Gig;
 }
 
 export async function updateGigDetails(
   gigId: string,
   updates: {
-    title?: string;
-    description?: string;
-    volunteers_needed?: number;
-    gig_date?: string;
-    required_skills?: string[];
-    lat?: number;
-    lng?: number;
+    title: string;
+    description: string;
+    volunteers_needed: number;
+    gig_date: string;
+    required_skills: string[];
+    lat: number;
+    lng: number;
   }
 ) {
-  const payload: Record<string, unknown> = { ...updates };
-  delete payload.lat;
-  delete payload.lng;
-
-  if (updates.lat !== undefined && updates.lng !== undefined) {
-    payload.location = { type: 'Point', coordinates: [updates.lng, updates.lat] };
-  }
-
-  const { data, error } = await supabase
-    .from('gigs')
-    .update(payload)
-    .eq('id', gigId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Gig;
+  return apiFetch(`/api/gigs/${gigId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  });
 }
 
 export async function fetchNgoAnalytics() {

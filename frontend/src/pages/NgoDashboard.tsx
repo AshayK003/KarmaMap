@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { DashboardCard } from '../components/DashboardCard';
@@ -29,27 +29,41 @@ export function NgoDashboard() {
   const { gigs, refetch } = useRealtimeGigs(profile?.id);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   const [analytics, setAnalytics] = useState<{
     total_hours: number;
     completed_gigs: number;
     total_gigs: number;
     chart_data: Array<{ name: string; volunteers: number; completed: number }>;
   } | null>(null);
+  const analyticsTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    fetchNgoAnalytics()
-      .then(setAnalytics)
-      .catch(console.error);
+    if (analyticsTimer.current) clearTimeout(analyticsTimer.current);
+    analyticsTimer.current = setTimeout(() => {
+      fetchNgoAnalytics()
+        .then(setAnalytics)
+        .catch(console.error);
+    }, 2000);
+    return () => { if (analyticsTimer.current) clearTimeout(analyticsTimer.current); };
   }, [gigs]);
 
-  // Combine category filter AND search filter for high-performance reactive matching
+  // Debounce search input by 250ms to avoid filtering on every keystroke
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setDebouncedQuery(searchQuery), 250);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [searchQuery]);
+
+  // Combine category filter AND debounced search filter
   const filteredGigs = useMemo(() => {
     let result = gigs;
     if (filter !== 'all') {
       result = result.filter((g) => g.status === filter);
     }
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
+    if (debouncedQuery.trim() !== '') {
+      const q = debouncedQuery.toLowerCase();
       result = result.filter(
         (g) =>
           g.title.toLowerCase().includes(q) ||
@@ -58,7 +72,7 @@ export function NgoDashboard() {
       );
     }
     return result;
-  }, [gigs, filter, searchQuery]);
+  }, [gigs, filter, debouncedQuery]);
 
   const handlePrint = () => window.print();
 
@@ -174,7 +188,10 @@ export function NgoDashboard() {
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setDebouncedQuery('');
+                  }}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-300 font-black text-xs cursor-pointer"
                 >
                   ✕
@@ -205,16 +222,17 @@ export function NgoDashboard() {
             </span>
             <h3 className="text-sm font-black text-slate-700 dark:text-slate-200">No gigs matched</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed font-semibold">
-              {searchQuery || filter !== 'all'
+              {debouncedQuery || filter !== 'all'
                 ? "We couldn't find any opportunities matching your active query or category filter. Try clearing your filters!"
                 : "You haven't posted any gigs yet. Tap 'Create a Gig' at the top to publish your first opportunity!"}
             </p>
-            {(searchQuery || filter !== 'all') && (
+            {(debouncedQuery || filter !== 'all') && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   setSearchQuery('');
+                  setDebouncedQuery('');
                   setFilter('all');
                 }}
               >

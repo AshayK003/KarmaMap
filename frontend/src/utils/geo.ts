@@ -39,10 +39,19 @@ export function parseGigLocation(location: unknown): { lat: number; lng: number 
       return { lng: Number(obj.coordinates[0]), lat: Number(obj.coordinates[1]) };
     }
   }
-  // E/WKT format: "SRID=4326;POINT(lng lat)" or "POINT(lng lat)"
   if (typeof location === 'string') {
-    const match = location.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/i);
-    if (match) return { lng: Number(match[1]), lat: Number(match[2]) };
+    // E/WKT format: "SRID=4326;POINT(lng lat)" or "POINT(lng lat)"
+    const wktMatch = location.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/i);
+    if (wktMatch) return { lng: Number(wktMatch[1]), lat: Number(wktMatch[2]) };
+    // Hex WKB format (from Supabase Realtime): 0101000020E6100000XXXX...YYYY...
+    if (/^01[01]000020e6100000/i.test(location) && location.length >= 50) {
+      const buf = new Uint8Array(8);
+      for (let i = 0; i < 8; i++) buf[i] = parseInt(location.slice(18 + i * 2, 20 + i * 2), 16);
+      const lng = new DataView(buf.buffer).getFloat64(0, true);
+      for (let i = 0; i < 8; i++) buf[i] = parseInt(location.slice(34 + i * 2, 36 + i * 2), 16);
+      const lat = new DataView(buf.buffer).getFloat64(0, true);
+      if (isFinite(lng) && isFinite(lat)) return { lng, lat };
+    }
   }
   return null;
 }

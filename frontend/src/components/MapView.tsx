@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -109,6 +109,7 @@ export const MapView = memo(function MapView({
     duration: number;
   } | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
+  const routeCache = useRef<Map<string, { coords: [number, number][]; distance: number; duration: number }>>(new Map());
 
   useEffect(() => {
     setSelectedGig(null);
@@ -124,6 +125,13 @@ export const MapView = memo(function MapView({
   useEffect(() => {
     if (!selectedGig) {
       setActiveRoute(null);
+      return;
+    }
+
+    const cacheKey = `${selectedGig.id}-${travelMode}`;
+    const cached = routeCache.current.get(cacheKey);
+    if (cached) {
+      setActiveRoute({ gigId: selectedGig.id, ...cached });
       return;
     }
 
@@ -143,11 +151,11 @@ export const MapView = memo(function MapView({
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0];
           const coords = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+          const routeData = { coords, distance: route.distance, duration: route.duration };
+          routeCache.current.set(cacheKey, routeData);
           setActiveRoute({
             gigId: selectedGig.id,
-            coords,
-            distance: route.distance,
-            duration: route.duration,
+            ...routeData,
           });
         }
       } catch (err) {

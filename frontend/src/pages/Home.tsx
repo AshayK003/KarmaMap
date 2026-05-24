@@ -17,17 +17,24 @@ export function Home() {
   const [stats, setStats] = useState<Stats>({ totalHours: 0, ngoCount: 0, openGigs: 0 });
 
   useEffect(() => {
+    const CACHE_KEY = 'karmamap-home-stats';
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try { setStats(JSON.parse(cached)); } catch { /* ignore */ }
+    }
     Promise.all([
       supabase.from('participations').select('hours').eq('status', 'completed'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'ngo'),
       supabase.from('gigs').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     ]).then(([hoursRes, ngoRes, gigsRes]) => {
       const totalHours = (hoursRes.data ?? []).reduce((s, p) => s + Number(p.hours ?? 0), 0);
-      setStats({
+      const newStats = {
         totalHours,
         ngoCount: ngoRes.count ?? 0,
         openGigs: gigsRes.count ?? 0,
-      });
+      };
+      setStats(newStats);
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(newStats));
     }).catch((err) => console.error('Failed to fetch home stats:', err));
   }, []);
 

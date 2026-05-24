@@ -19,6 +19,19 @@ export function Leaderboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const CACHE_KEY = 'karmamap-leaderboard';
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.ts < 60000) {
+          setVolunteers(parsed.data);
+          setLoading(false);
+          return;
+        }
+      } catch { /* ignore */ }
+    }
+
     supabase
       .from('profiles')
       .select('name, karma_points, streak')
@@ -27,7 +40,9 @@ export function Leaderboard() {
       .order('karma_points', { ascending: false })
       .limit(50)
       .then(({ data }) => {
-        setVolunteers((data as LeaderboardEntry[]) ?? []);
+        const entries = (data as LeaderboardEntry[]) ?? [];
+        setVolunteers(entries);
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
       })
       .catch(console.error)
       .finally(() => setLoading(false));

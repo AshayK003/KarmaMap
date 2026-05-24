@@ -1,7 +1,7 @@
 import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
 
-export interface MatchedVolunteer {
+interface MatchedVolunteer {
   id: string;
   name: string;
   email: string;
@@ -39,10 +39,6 @@ export async function findMatchedVolunteers(
     throw new Error('Gig not found');
   }
 
-  const { data: locationRow } = await supabaseAdmin.rpc('get_gig_location', {
-    gig_uuid: gigId,
-  }).maybeSingle();
-
   const { data: volunteers, error } = await supabaseAdmin.rpc(
     'match_volunteers_for_gig',
     {
@@ -56,8 +52,7 @@ export async function findMatchedVolunteers(
       gigId,
       gig.required_skills ?? [],
       radiusMeters,
-      limit,
-      locationRow
+      limit
     );
   }
 
@@ -85,8 +80,7 @@ async function matchVolunteersFallback(
   gigId: string,
   requiredSkills: string[],
   radiusMeters: number,
-  limit: number,
-  _locationRow: unknown
+  limit: number
 ): Promise<MatchedVolunteer[]> {
   const { data: gigData } = await supabaseAdmin
     .from('gigs')
@@ -100,11 +94,7 @@ async function matchVolunteersFallback(
     .eq('role', 'volunteer')
     .not('location', 'is', null);
 
-  const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const emailMap = new Map(
-    authUsers.users.map((u) => [u.id, u.email ?? ''])
-  );
-
+  // Try nearby RPC first
   const { data: nearby } = await supabaseAdmin.rpc('nearby_volunteers_for_gig', {
     p_gig_id: gigId,
     p_radius_meters: radiusMeters,
@@ -123,7 +113,7 @@ async function matchVolunteersFallback(
         return {
           id: v.id,
           name: v.name,
-          email: emailMap.get(v.id) ?? '',
+          email: '',
           skills: v.skills ?? [],
           distance_meters: v.distance_meters,
           skill_overlap: overlap,
@@ -140,7 +130,7 @@ async function matchVolunteersFallback(
       return {
         id: v.id,
         name: v.name,
-        email: emailMap.get(v.id) ?? '',
+        email: '',
         skills: v.skills ?? [],
         distance_meters: 5000,
         skill_overlap: overlap,

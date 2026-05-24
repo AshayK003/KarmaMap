@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import ws from 'ws';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+dotenv.config({ path: resolve(dirname(__filename), '..', '.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

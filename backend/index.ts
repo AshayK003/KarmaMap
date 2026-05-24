@@ -1,16 +1,21 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import gigRoutes from './routes/gigs.js';
 import participationRoutes from './routes/participations.js';
 import { logger } from './src/lib/logger.js';
 
-dotenv.config();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, '.env') });
 
 export function createApp() {
   const app = express();
   const isDev = process.env.NODE_ENV !== 'production';
 
+  app.use(compression());
   app.use(
     cors({
       origin: isDev
@@ -37,7 +42,7 @@ export function createApp() {
     ) => {
       logger.error(err);
 
-      if (err.name === 'ZodError' || (err.constructor?.name === 'ZodError')) {
+      if (err.name === 'ZodError') {
         res.status(400).json({ error: 'Validation error', details: (err as Error & { issues?: unknown }).issues });
         return;
       }

@@ -10,6 +10,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    target: 'es2020',
+    cssMinify: 'lightningcss',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-leaflet': ['leaflet', 'react-leaflet', 'react-leaflet-cluster'],
+          'vendor-charts': ['recharts'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

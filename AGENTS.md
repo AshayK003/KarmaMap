@@ -33,7 +33,6 @@ KarmaMap/
 │   │   ├── emailService.ts   # EmailJS REST via native fetch
 │   │   ├── gigService.ts     # createGig, getNgoAnalytics, verifyGigOwnership
 │   │   └── participationService.ts # joinGig, completeParticipation, awardKarma
-│   └── dist/                 # Compiled JS
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
 │       ├── App.tsx            # 11 routes + AuthProvider + Navbar
@@ -42,9 +41,9 @@ KarmaMap/
 │       │                      #   VolunteerPortfolio, PublicPortfolio,
 │       │                      #   Leaderboard
 │       ├── components/
-│       │   ├── ui/            # 10 shadcn/ui components: Button, Card, Badge,
-│       │   │                  #   Input, Avatar, Progress, Skeleton, Separator,
-│       │   │                  #   Tabs, Chart (cn() from lib/utils)
+│   │   ├── ui/            # 9 shadcn/ui components: Button, Card, Badge,
+│   │   │                  #   Input, Avatar, Progress, Skeleton,
+│   │   │                  #   Tabs, Chart (cn() from lib/utils)
 │       │   ├── NotificationBell.tsx # In-app notification dropdown (realtime)
 │       │   ├── MapView.tsx    # Leaflet + OSRM routing + cluster markers
 │       │   ├── LocationPicker.tsx
@@ -64,16 +63,16 @@ KarmaMap/
 │       ├── services/          # gigs.ts, geocoding.ts, storage.ts
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
-│       └── utils/             # api.ts, geo.ts, gigStatus.ts
-├── supabase/migrations/      # 8 SQL files
+│       └── utils/             # api.ts, geo.ts
+├── supabase/migrations/      # 6 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
-│   ├── 20240523000000_initial_schema.sql  # Combined (lacks featured_until)
-│   ├── fix_matching_functions.sql
-│   ├── fix_postgis_functions.sql
-│   ├── storage_policies.sql
-│   └── 03_atomic_karma.sql
+│   ├── 03_atomic_karma.sql
+│   ├── 04_analytics_optimization.sql
+│   ├── 06_location_label.sql
+│   ├── 07_fix_location_drift.sql
+│   └── storage_policies.sql
 ├── render.yaml               # Backend deploy (Render)
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
@@ -155,7 +154,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 ### Frontend
 - **Auth state**: AuthContext listens to `onAuthStateChange`; `signUp` passes role/skills via `user_metadata`
 - **Map center**: DEFAULT_CENTER = Delhi (28.6139, 77.209), NOT Lucknow. Lucknow RDSO preset = (26.8193, 80.8853) exported as `PRESET_LUCKNOW_RDSO` from `useLocationPicker.ts`. Map zoom = 13.
-- **shadcn/ui**: 10 components in `src/components/ui/` — import via `@/components/ui/button`
+- **shadcn/ui**: 9 components in `src/components/ui/` — import via `@/components/ui/button`
 - **Location**: Use `useLocationPicker()` hook which wraps `useGeolocation()` for GPS; supports GPS, preset, manual coords, search (Photon), and map click sources
 - **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail; `useRealtimeNotifications(userId?)` subscribes to `notifications` channel
 - **Marker clustering**: `react-leaflet-cluster` (v4.1.3) wraps `<Marker>` children in `<MarkerClusterGroup>` — `chunkedLoading`, `maxClusterRadius=60`, `disableClusteringAtZoom=16`; CSS imported from `leaflet.markercluster/dist/`
@@ -170,10 +169,10 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
 - **Testing**: 75 tests across 9 files — Vitest + Supertest + happy-dom. See `docs/testing-strategy.md`.
-- **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, date-fns, OpenObserve) with integration guides.
+- **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, OpenObserve) with integration guides.
 - **No toast library** — sonner is the shadcn/ui default, install it for form feedback
 - **No icon library** — lucide-react referenced in components.json but not installed; currently using inline SVGs
-- **No date library** — date-fns v4 recommended for tree-shakable date formatting
+- **date-fns** — used in frontend only; removed from backend as unused dependency
 - **No external state library** — React Context + hooks only
 - **No structured logging** — pino recommended (5-8x faster than Winston, JSON to stdout)
 - **Vite proxy**: `/api` → `localhost:3001` in dev
@@ -185,7 +184,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **GEarth radius**: 6371km used in haversine formula (`utils/geo.ts`)
 
 ### Backend
-- **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table; `jsonwebtoken` package is imported but NEVER called (dead code, removed)
+- **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table
 - **Email**: `emailService.ts` uses native `fetch` to POST to EmailJS API (not `@emailjs/node`); gracefully skips if env vars not configured
 - **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500)
 - **Duplicate join detection**: first checks via `select`, then catches `23505` unique constraint violation as fallback
@@ -193,14 +192,15 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Feature gig**: sets `featured_until` column; `nearby_gigs` RPC sorts featured (future) gigs first
 - **Nodemon**: was an unused devDependency; dev script uses `tsx watch index.ts`; removed from package.json
 
-### Removed / Unused Files (cleaned up)
-- **4 Responsive* components** were BROKEN (encoding corruption, non-functional) and have been **deleted**: `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
-- **`jsonwebtoken`**, **`@types/jsonwebtoken`**, **`nodemon`** (backend) and **`@emailjs/browser`** (frontend) have been **removed** as unused dependencies
+### Cleanup History
+- **4 Responsive* components** deleted (broken encoding): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
+- **Removed unused deps**: `jsonwebtoken`, `@types/jsonwebtoken`, `nodemon` (backend); `@emailjs/browser` (frontend); `date-fns` (backend)
+- **Removed dead code**: unused `supabaseAdmin` import in `emailService.ts`, unused `useDefault` callback in `useLocationPicker.ts`, redundant `dotenv.config()` in `supabase.ts`, duplicate ZodError check in `index.ts`, dead CSS classes (`glass-panel`, `mobile-nav-open`), dead UI components (`Separator`, `TabsContent`, `CardHeader`/`CardTitle`/`CardDescription`/`CardFooter`), unused `gigStatus.ts` constants, stale `_apply_mig*.mjs` scripts
+- **Removed stale migration files**: `20240523000000_initial_schema.sql` (obsolete combined file, missing columns), `fix_matching_functions.sql` (band-aid), `fix_postgis_functions.sql` (outdated), `05_update_gig.sql` (superseded)
 
 ### Migrations
-- **Migration order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql`
-- **Combined file**: `20240523000000_initial_schema.sql` merges 00+01 but lacks `featured_until` from 02
-- **Fix scripts**: `fix_matching_functions.sql` (missing matching RPCs), `fix_postgis_functions.sql` (missing geometry type in search path)
+- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql`
+- Stale/obsolete migrations deleted: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`
 
 ## 🔴 Security: .env.example MUST use placeholder values only
 Never put real Supabase keys in `.env.example` — they get committed to git.

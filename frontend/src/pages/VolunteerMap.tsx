@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapView } from '../components/MapView';
 import { GigCard } from '../components/GigCard';
 import { LocationPicker } from '../components/LocationPicker';
 import { useLocationPicker } from '../hooks/useLocationPicker';
 import { useAuth } from '../context/AuthContext';
 import { fetchNearbyGigs, updateProfileLocation } from '../services/gigs';
-import type { NearbyGig } from '../types/database';
-import { DEFAULT_RADIUS_METERS, skillOverlapScore } from '../utils/geo';
+import { supabase } from '../lib/supabase';
+import type { NearbyGig, GigStatus } from '../types/database';
+import { DEFAULT_RADIUS_METERS, skillOverlapScore, parseGigLocation } from '../utils/geo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -67,6 +68,90 @@ export function VolunteerMap() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS_METERS);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'nearest' | 'best_match'>('nearest');
+  const lastSavedLoc = useRef<{ lat: number; lng: number } | null>(null);
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadGigs = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const locChanged = !lastSavedLoc.current || lastSavedLoc.current.lat !== lat || lastSavedLoc.current.lng !== lng;
+      if (locChanged) {
+        try {
+          await updateProfileLocation(lat, lng);
+        } catch {
+          // Profile location update is best-effort; don't block gig loading
+        }
+        lastSavedLoc.current = { lat, lng };
+      }
+      const data = await fetchNearbyGigs(lat, lng, radius);
+      setGigs(data);
+    } catch (err) {
+      console.error(err);
+      setLoadError(err instanceof Error ? err.message : 'Could not load gigs');
+      setGigs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [lat, lng, radius]);
+
+  const loadRef = useRef(loadGigs);
+  loadRef.current = loadGigs;
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('gigs-realtime-vo')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'gigs' },
+        () => {
+          if (reloadTimer.current) clearTimeout(reloadTimer.current);
+          reloadTimer.current = setTimeout(() => loadRef.current(), 500);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'gigs' },
+        (payload) => {
+          const updated = payload.new as Record<string, unknown>;
+          const parsed = parseGigLocation(updated.location);
+          if (!parsed) return;
+          setGigs((prev) =>
+            prev.map((g) =>
+              g.id === updated.id
+                ? {
+                    ...g,
+                    title: (updated.title as string) ?? g.title,
+                    description: (updated.description as string) ?? g.description,
+                    required_skills: (updated.required_skills as string[]) ?? g.required_skills,
+                    volunteers_needed: (updated.volunteers_needed as number) ?? g.volunteers_needed,
+                    volunteers_joined: (updated.volunteers_joined as number) ?? g.volunteers_joined,
+                    gig_date: (updated.gig_date as string) ?? g.gig_date,
+                    status: (updated.status as GigStatus) ?? g.status,
+                    featured_until: (updated.featured_until as string | undefined) ?? g.featured_until,
+                    lat: parsed.lat,
+                    lng: parsed.lng,
+                  }
+                : g
+            )
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'gigs' },
+        () => {
+          if (reloadTimer.current) clearTimeout(reloadTimer.current);
+          reloadTimer.current = setTimeout(() => loadRef.current(), 500);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (reloadTimer.current) clearTimeout(reloadTimer.current);
+    };
+  }, []);
 
   const sortedGigs = useMemo(() => {
     if (sortMode === 'nearest' || !profile?.skills) return gigs;
@@ -80,22 +165,6 @@ export function VolunteerMap() {
     });
     return withScore;
   }, [gigs, sortMode, profile?.skills]);
-
-  const loadGigs = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      await updateProfileLocation(lat, lng);
-      const data = await fetchNearbyGigs(lat, lng, radius);
-      setGigs(data);
-    } catch (err) {
-      console.error(err);
-      setLoadError(err instanceof Error ? err.message : 'Could not load gigs');
-      setGigs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [lat, lng, radius]);
 
   useEffect(() => {
     if (geoLoading && source === 'gps') return;
@@ -252,7 +321,9 @@ export function VolunteerMap() {
                 </div>
               ) : (
                 sortedGigs.map((gig) => (
-                  <GigCard key={gig.id} gig={gig} volunteerSkills={profile?.skills} />
+                  <div key={gig.id} style={{ contentVisibility: 'auto' }}>
+                    <GigCard gig={gig} volunteerSkills={profile?.skills} />
+                  </div>
                 ))
               )}
             </div>

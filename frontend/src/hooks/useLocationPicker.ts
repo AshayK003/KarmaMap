@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { useGeolocation } from './useGeolocation';
-import { DEFAULT_CENTER } from '../utils/geo';
 
 /** Lucknow RDSO area — handy preset when GPS differs between devices */
 export const PRESET_LUCKNOW_RDSO = { lat: 26.8193, lng: 80.8853, label: 'Lucknow (RDSO)' };
@@ -35,10 +34,6 @@ export function useLocationPicker() {
     setLocation(preset.lat, preset.lng, 'preset');
   }, [setLocation]);
 
-  const useDefault = useCallback(() => {
-    setLocation(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 'manual');
-  }, [setLocation]);
-
   return {
     lat,
     lng,
@@ -48,7 +43,6 @@ export function useLocationPicker() {
     setLocation,
     useGps,
     usePreset,
-    useDefault,
     placeLabel,
     setFromMap: (newLat: number, newLng: number) => setLocation(newLat, newLng, 'map'),
     setFromSearch: (newLat: number, newLng: number, label: string) =>

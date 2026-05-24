@@ -35,21 +35,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const CACHE_PREFIX = 'karmamap-profile-';
+
   const fetchProfile = async (userId: string) => {
+    const cacheKey = `${CACHE_PREFIX}${userId}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try { setProfile(JSON.parse(cached)); } catch { /* ignore stale cache */ }
+    }
     try {
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      setProfile(data);
+      if (data) {
+        setProfile(data);
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
     }
   };
 
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+    if (user) {
+      sessionStorage.removeItem(`${CACHE_PREFIX}${user.id}`);
+      await fetchProfile(user.id);
+    }
   };
 
   useEffect(() => {
@@ -57,17 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
-        fetchProfile(data.session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
+        fetchProfile(data.session.user.id);
       }
+      setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) fetchProfile(sess.user.id);
-      else setProfile(null);
+      else {
+        setProfile(null);
+      }
     });
 
     return () => sub.subscription.unsubscribe();
@@ -118,6 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Sign out failed:', err);
     }
     setProfile(null);
+    // Clear all sessionStorage caches
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(CACHE_PREFIX)) {
+        sessionStorage.removeItem(key);
+      }
+    }
   };
 
   const value = useMemo(

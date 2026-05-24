@@ -4,6 +4,8 @@ import { validateBody } from '../middleware/validate.js';
 import {
   createGig,
   createGigSchema,
+  updateGig,
+  updateGigSchema,
   getNgoAnalytics,
   featureGig,
   featureGigSchema,
@@ -35,6 +37,14 @@ router.patch(
   requireRole('ngo'),
   validateBody(featureGigSchema),
   featureGig
+);
+
+router.patch(
+  '/:gigId',
+  verifyJwt,
+  requireRole('ngo'),
+  validateBody(updateGigSchema),
+  updateGig
 );
 
 export default router;

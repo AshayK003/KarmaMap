@@ -27,6 +27,7 @@ export interface Gig {
   description: string;
   ngo_id: string;
   location?: unknown;
+  location_label?: string;
   required_skills: string[];
   volunteers_needed: number;
   volunteers_joined: number;
