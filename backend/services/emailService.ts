@@ -18,22 +18,28 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     return false;
   }
 
-  const res = await fetch(EMAILJS_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      service_id: serviceId,
-      template_id: templateId,
-      user_id: publicKey,
-      template_params: {
-        to_email: params.to_email,
-        to_name: params.to_name,
-        subject: params.subject,
-        message: params.message,
-        gig_title: params.gig_title ?? '',
-      },
-    }),
-  });
+  let res;
+  try {
+    res = await fetch(EMAILJS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: serviceId,
+        template_id: templateId,
+        user_id: publicKey,
+        template_params: {
+          to_email: params.to_email,
+          to_name: params.to_name,
+          subject: params.subject,
+          message: params.message,
+          gig_title: params.gig_title ?? '',
+        },
+      }),
+    });
+  } catch {
+    console.error('Email send: network error');
+    return false;
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => 'Unknown error');

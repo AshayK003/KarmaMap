@@ -12,17 +12,29 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const { data: session } = await supabase.auth.getSession();
-  const token = session.session?.access_token;
+  let session;
+  try {
+    const { data } = await supabase.auth.getSession();
+    session = data;
+  } catch {}
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  const token = session?.session?.access_token;
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error(
+      'Cannot reach the API server. Start the backend: cd backend && npm run dev'
+    );
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));

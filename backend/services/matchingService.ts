@@ -10,7 +10,7 @@ export interface MatchedVolunteer {
   final_score: number;
 }
 
-function skillOverlap(required: string[], volunteer: string[]): number {
+export function skillOverlap(required: string[], volunteer: string[]): number {
   if (required.length === 0) return 1;
   const requiredLower = required.map((s) => s.toLowerCase());
   const matches = volunteer.filter((s) =>
@@ -19,8 +19,8 @@ function skillOverlap(required: string[], volunteer: string[]): number {
   return matches / required.length;
 }
 
-function normalizeDistance(distanceMeters: number, maxMeters = 50000): number {
-  return Math.max(0, 1 - distanceMeters / maxMeters);
+export function normalizeDistance(distanceMeters: number, maxMeters = 50000): number {
+  return Math.min(1, Math.max(0, 1 - distanceMeters / maxMeters));
 }
 
 export async function findMatchedVolunteers(
