@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { joinGigViaApi } from '../services/gigs';
 import { useRealtimeParticipations } from '../hooks/useRealtimeGigs';
+import { toast } from 'sonner';
 import type { Gig } from '../types/database';
 import { skillOverlapScore, parseGigLocation } from '../utils/geo';
 import { Button } from '@/components/ui/button';
@@ -171,9 +173,12 @@ export function GigDetail() {
     setJoinError(null);
     try {
       await joinGigViaApi(id);
+      toast.success('Joined the gig! Head to participate page to upload photos.');
       navigate(`/gigs/${id}/participate`);
     } catch (err) {
-      setJoinError(err instanceof Error ? err.message : 'Failed to join');
+      const message = err instanceof Error ? err.message : 'Failed to join';
+      toast.error(message);
+      setJoinError(message);
     } finally {
       setJoining(false);
     }
@@ -324,15 +329,10 @@ export function GigDetail() {
             <div className="space-y-1">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Date & Planning</span>
               <p className="text-sm font-black text-slate-800 dark:text-slate-100 leading-snug">
-                {new Date(gig.gig_date).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                {format(gig.gig_date, 'EEEE, MMMM d, yyyy')}
               </p>
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                🕒 {new Date(gig.gig_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                🕒 {format(gig.gig_date, 'h:mm a')}
               </p>
               <button
                 type="button"

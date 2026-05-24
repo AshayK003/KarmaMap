@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Profile, Participation } from '../types/database';
@@ -237,11 +238,7 @@ export function PublicPortfolio() {
                   const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
                   const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
                   const dateStr = rawDate
-                    ? new Date(rawDate).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })
+                    ? format(rawDate, 'MMM d, yyyy')
                     : 'Verified Date';
 
                   return (

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase.js';
+import { logger } from '../src/lib/logger.js';
 
 export interface MatchedVolunteer {
   id: string;
@@ -42,7 +43,6 @@ export async function findMatchedVolunteers(
     gig_uuid: gigId,
   }).maybeSingle();
 
-  // Fallback: query volunteers with raw SQL via rpc
   const { data: volunteers, error } = await supabaseAdmin.rpc(
     'match_volunteers_for_gig',
     {
@@ -52,7 +52,6 @@ export async function findMatchedVolunteers(
   );
 
   if (error) {
-    // Use inline query if RPC not deployed yet
     return matchVolunteersFallback(
       gigId,
       gig.required_skills ?? [],
@@ -135,7 +134,6 @@ async function matchVolunteersFallback(
       .slice(0, limit);
   }
 
-  // Last resort: score all volunteers without geo (dev mode)
   return (profiles ?? [])
     .map((v) => {
       const overlap = skillOverlap(requiredSkills, v.skills ?? []);
@@ -168,6 +166,6 @@ export async function notifyMatchedVolunteers(
   if (notifications.length === 0) return;
   const { error } = await supabaseAdmin.from('notifications').insert(notifications);
   if (error) {
-    console.warn('Failed to notify matched volunteers:', error.message);
+    logger.warn({ gigId, error: error.message }, 'Failed to notify matched volunteers');
   }
 }

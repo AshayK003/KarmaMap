@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { generatePortfolioSlug, calculateHaversineDistance } from '../utils/geo';
@@ -522,11 +523,7 @@ export function VolunteerPortfolio() {
                   const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
                   const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
                   const dateStr = rawDate
-                    ? new Date(rawDate).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })
+                    ? format(rawDate, 'MMM d, yyyy')
                     : 'Verified Date';
 
                   return (
@@ -590,11 +587,7 @@ export function VolunteerPortfolio() {
                 volunteerName={profile?.name || ''}
                 participation={selectedCert.participation}
                 gigTitle={selectedCert.title}
-                completedDate={new Date(selectedCert.date).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                completedDate={format(selectedCert.date, 'MMMM d, yyyy')}
               />
             </div>
 

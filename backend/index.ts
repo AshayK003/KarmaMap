@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import gigRoutes from './routes/gigs.js';
 import participationRoutes from './routes/participations.js';
+import { logger } from './src/lib/logger.js';
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ export function createApp() {
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'karmamap-api' });
@@ -34,7 +35,7 @@ export function createApp() {
       res: express.Response,
       _next: express.NextFunction
     ) => {
-      console.error(err);
+      logger.error(err);
 
       if (err.name === 'ZodError' || (err.constructor?.name === 'ZodError')) {
         res.status(400).json({ error: 'Validation error', details: (err as Error & { issues?: unknown }).issues });
@@ -66,6 +67,7 @@ const PORT = process.env.PORT || 3001;
 if (process.env.NODE_ENV !== 'test') {
   const app = createApp();
   app.listen(PORT, () => {
-    console.log(`KarmaMap API running on port ${PORT}`);
+    logger.info({ port: PORT }, 'KarmaMap API running');
   });
+  import('./services/queue.js').then(({ startWorker }) => startWorker());
 }

@@ -1,3 +1,6 @@
+import { supabaseAdmin } from './supabase.js';
+import { logger } from '../src/lib/logger.js';
+
 const EMAILJS_API = 'https://api.emailjs.com/api/v1.0/email/send';
 
 interface EmailParams {
@@ -14,7 +17,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   const templateId = process.env.EMAILJS_TEMPLATE_ID;
 
   if (!publicKey || !serviceId || !templateId) {
-    console.warn('EmailJS not configured, skipping email');
+    logger.warn('EmailJS not configured, skipping email');
     return false;
   }
 
@@ -37,23 +40,16 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       }),
     });
   } catch {
-    console.error('Email send: network error');
+    logger.error({ to_email: params.to_email }, 'Email send: network error');
     return false;
   }
 
   if (!res.ok) {
     const text = await res.text().catch(() => 'Unknown error');
-    console.error('Email send failed:', text);
+    logger.error({ to_email: params.to_email, status: res.status }, 'Email send failed');
   }
 
   return res.ok;
-}
-
-export async function sendEmailOrThrow(params: EmailParams): Promise<void> {
-  const ok = await sendEmail(params);
-  if (!ok) {
-    throw new Error(`Failed to send email to ${params.to_email}`);
-  }
 }
 
 export async function sendGigMatchEmails(
@@ -76,7 +72,7 @@ export async function sendGigMatchEmails(
 
   const failures = results.filter((r) => r.status === 'rejected');
   if (failures.length > 0) {
-    console.warn(`${failures.length}/${results.length} match emails failed`);
+    logger.warn({ total: results.length, failures: failures.length }, 'Match emails had failures');
   }
 }
 
@@ -94,6 +90,6 @@ export async function sendCompletionEmail(
   });
 
   if (!ok) {
-    console.warn(`Completion email to ${email} failed (may be unconfigured)`);
+    logger.warn({ email }, 'Completion email failed (may be unconfigured)');
   }
 }

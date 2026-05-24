@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { PhotoUpload } from '../components/PhotoUpload';
 import { Certificate } from '../components/Certificate';
 import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
+import { toast } from 'sonner';
 import type { Participation } from '../types/database';
 import { Button } from '@/components/ui/button';
 
@@ -76,9 +78,12 @@ export function ParticipateGig() {
     setSubmitting(true);
     try {
       await joinGigViaApi(gigId);
+      toast.success('Joined gig! Now upload photos when ready.');
       await loadParticipation();
     } catch (err) {
-      setPageError(err instanceof Error ? err.message : 'Could not join gig');
+      const message = err instanceof Error ? err.message : 'Could not join gig';
+      toast.error(message);
+      setPageError(message);
     } finally {
       setSubmitting(false);
     }
@@ -112,6 +117,7 @@ export function ParticipateGig() {
       }
 
       setCompleted(true);
+      toast.success(`You earned ${result.karma_earned ?? '?'} karma points!`);
       await refreshProfile();
 
       try {
@@ -128,6 +134,7 @@ export function ParticipateGig() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete';
+      toast.error(message);
       setError('root', { message });
     } finally {
       setSubmitting(false);
@@ -172,7 +179,7 @@ export function ParticipateGig() {
           volunteerName={profile.name}
           participation={participation}
           gigTitle={gigTitle}
-          completedDate={new Date().toLocaleDateString()}
+          completedDate={format(new Date(), 'MMM d, yyyy')}
         />
         {(participation.before_photo_url || participation.after_photo_url) && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

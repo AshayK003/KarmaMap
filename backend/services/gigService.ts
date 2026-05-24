@@ -1,9 +1,6 @@
 import { supabaseAdmin } from './supabase.js';
-import {
-  findMatchedVolunteers,
-  notifyMatchedVolunteers,
-} from './matchingService.js';
-import { sendGigMatchEmails } from './emailService.js';
+import { logger } from '../src/lib/logger.js';
+import { enqueueMatching } from './queue.js';
 
 export interface CreateGigInput {
   title: string;
@@ -71,15 +68,22 @@ export async function createGig(
     throw new Error(error.message);
   }
 
-  try {
-    const matched = await findMatchedVolunteers(data.id);
-    await notifyMatchedVolunteers(data.id, matched, input.title);
-    await sendGigMatchEmails(matched, input.title);
-    return { gig: data, matched_count: matched.length };
-  } catch (matchErr) {
-    console.warn('Matching skipped:', matchErr);
-    return { gig: data, matched_count: 0 };
+  const queued = await enqueueMatching(data.id, input.title);
+  if (!queued) {
+    try {
+      const { findMatchedVolunteers, notifyMatchedVolunteers } = await import('./matchingService.js');
+      const { sendGigMatchEmails } = await import('./emailService.js');
+      const matched = await findMatchedVolunteers(data.id);
+      await notifyMatchedVolunteers(data.id, matched, input.title);
+      await sendGigMatchEmails(matched, input.title);
+      return { gig: data, matched_count: matched.length };
+    } catch (matchErr) {
+      logger.warn({ gigId: data.id, error: (matchErr as Error).message }, 'Matching skipped after gig creation');
+      return { gig: data, matched_count: 0 };
+    }
   }
+
+  return { gig: data, matched_count: 0 };
 }
 
 export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {

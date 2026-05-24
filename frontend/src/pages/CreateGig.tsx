@@ -7,6 +7,8 @@ import { MapView } from '../components/MapView';
 import { LocationPicker } from '../components/LocationPicker';
 import { useLocationPicker } from '../hooks/useLocationPicker';
 import { createGigViaApi } from '../services/gigs';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -76,11 +78,12 @@ export function CreateGig() {
         volunteers_needed: data.volunteers_needed,
         gig_date: gigDate.toISOString(),
       });
+      toast.success('Gig created! Matching volunteers...');
       navigate('/ngo/dashboard');
     } catch (err) {
-      setError('root', {
-        message: err instanceof Error ? err.message : 'Failed to create gig',
-      });
+      const message = err instanceof Error ? err.message : 'Failed to create gig';
+      toast.error(message);
+      setError('root', { message });
     }
   };
 

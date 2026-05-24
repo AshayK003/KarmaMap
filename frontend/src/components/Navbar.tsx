@@ -5,6 +5,20 @@ import { useTheme } from '../context/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from './NotificationBell';
+import {
+  MapPin,
+  Award,
+  ClipboardList,
+  PlusCircle,
+  LogOut,
+  LogIn,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  LayoutDashboard,
+  UserCircle,
+} from 'lucide-react';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
@@ -30,10 +44,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         <Link to="/" className="flex items-center gap-2 group transition-all" onClick={closeMobile}>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/10 group-hover:scale-105 transition-transform duration-200">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <MapPin className="h-5 w-5" />
           </div>
           <span className="text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
             Karma<span className="text-emerald-600">Map</span>
@@ -46,16 +57,16 @@ export function Navbar() {
             <>
               {profile.role === 'volunteer' && (
                 <>
-                  <Link to="/map" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200">Discovery Map</Link>
-                  <Link to="/portfolio" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200">My Portfolio</Link>
-                  <Link to="/leaderboard" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200">Leaderboard</Link>
+                  <Link to="/map" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><MapPin className="h-4 w-4" /> Discovery Map</Link>
+                  <Link to="/portfolio" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UserCircle className="h-4 w-4" /> My Portfolio</Link>
+                  <Link to="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><Award className="h-4 w-4" /> Leaderboard</Link>
                   <Badge variant="default" className="px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
                 </>
               )}
               {profile.role === 'ngo' && (
                 <>
-                  <Link to="/ngo/dashboard" className="px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200">NGO Dashboard</Link>
-                  <Link to="/ngo/create-gig"><Button size="sm">Create Opportunity</Button></Link>
+                  <Link to="/ngo/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><LayoutDashboard className="h-4 w-4" /> NGO Dashboard</Link>
+                  <Link to="/ngo/create-gig"><Button size="sm"><PlusCircle className="h-4 w-4 mr-1" /> Create Opportunity</Button></Link>
                 </>
               )}
               <button
@@ -65,21 +76,17 @@ export function Navbar() {
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? (
-                  <svg className="h-5 w-5 text-slate-400 hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
+                  <Sun className="h-5 w-5 text-slate-400 hover:text-amber-400 transition-colors" />
                 ) : (
-                  <svg className="h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
+                  <Moon className="h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
                 )}
               </button>
               <NotificationBell />
-              <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
+              <Button variant="ghost" onClick={handleSignOut}><LogOut className="h-4 w-4 mr-1" /> Sign Out</Button>
             </>
           ) : (
             <>
-              <Link to="/login"><Button variant="ghost" size="sm">Sign In</Button></Link>
+              <Link to="/login"><Button variant="ghost" size="sm"><LogIn className="h-4 w-4 mr-1" /> Sign In</Button></Link>
               <Link to="/signup"><Button size="sm">Get Started</Button></Link>
             </>
           )}
@@ -93,13 +100,9 @@ export function Navbar() {
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
         >
           {mobileOpen ? (
-            <svg className="h-5 w-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5 text-slate-700 dark:text-slate-200" />
           ) : (
-            <svg className="h-5 w-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
           )}
         </button>
       </div>
@@ -113,22 +116,15 @@ export function Navbar() {
                 {profile.role === 'volunteer' && (
                   <>
                     <Link to="/map" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <MapPin className="h-4 w-4 shrink-0" />
                       Discovery Map
                     </Link>
                     <Link to="/portfolio" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
+                      <ClipboardList className="h-4 w-4 shrink-0" />
                       My Portfolio
                     </Link>
                     <Link to="/leaderboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+                      <Award className="h-4 w-4 shrink-0" />
                       Leaderboard
                     </Link>
                     <div className="px-3 py-2"><Badge variant="default" className="text-xs">{profile.karma_points} Karma Points</Badge></div>
@@ -137,15 +133,11 @@ export function Navbar() {
                 {profile.role === 'ngo' && (
                   <>
                     <Link to="/ngo/dashboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      </svg>
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
                       NGO Dashboard
                     </Link>
                     <Link to="/ngo/create-gig" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                      </svg>
+                      <PlusCircle className="h-4 w-4 shrink-0" />
                       Create Opportunity
                     </Link>
                   </>
@@ -158,13 +150,9 @@ export function Navbar() {
                     aria-label="Toggle theme"
                   >
                     {theme === 'dark' ? (
-                    <svg className="h-5 w-5 text-slate-400 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
+                      <Sun className="h-5 w-5 text-slate-400 dark:text-slate-300" />
+                    ) : (
+                      <Moon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     )}
                   </button>
                   <NotificationBell />
@@ -175,7 +163,7 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">Sign In</Link>
+                <Link to="/login" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"><LogIn className="h-4 w-4 mr-2" /> Sign In</Link>
                 <Link to="/signup" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-emerald-700 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/40 transition-colors">Get Started</Link>
               </>
             )}

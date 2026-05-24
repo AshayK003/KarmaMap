@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { DashboardCard } from '../components/DashboardCard';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { NgoGigCard } from '../components/NgoGigCard';
@@ -94,7 +95,7 @@ export function NgoDashboard() {
       {/* Print-only simple header to save ink and look professional */}
       <div className="print-only hidden border-b border-gray-200 dark:border-slate-700 pb-4">
         <h1 className="text-3xl font-bold text-emerald-800 dark:text-emerald-400">{profile?.name || 'NGO'} Impact Summary</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400">Generated on {new Date().toLocaleDateString()}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Generated on {format(new Date(), 'MMM d, yyyy')}</p>
       </div>
 
       {/* 2. Premium Analytics Grid */}

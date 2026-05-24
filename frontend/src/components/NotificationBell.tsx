@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useRealtimeNotifications } from '../hooks/useRealtimeGigs';
 import { Link } from 'react-router-dom';
@@ -74,7 +75,7 @@ export function NotificationBell() {
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">{n.message}</p>
                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
-                      {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {format(n.created_at, 'MMM d, h:mm a')}
                     </p>
                   </div>
                   {n.gig_id && (

@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Toaster } from './components/ui/sonner';
 
 const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -93,6 +94,7 @@ function App() {
           </main>
         </div>
         </BrowserRouter>
+      <Toaster richColors closeButton position="top-right" />
       </AuthProvider>
     </ThemeProvider>
   );

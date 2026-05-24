@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase.js';
+import { logger } from '../src/lib/logger.js';
 import { sendCompletionEmail } from './emailService.js';
 
 export interface CompleteGigInput {
@@ -55,7 +56,7 @@ export async function completeParticipation(
   });
 
   if (notifError) {
-    console.warn('Failed to insert completion notification:', notifError.message);
+    logger.warn({ participationId, error: notifError.message }, 'Failed to insert completion notification');
   }
 
   const { data: user } = await supabaseAdmin.auth.admin.getUserById(volunteerId);

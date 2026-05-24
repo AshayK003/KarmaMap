@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('../../src/lib/logger.js', () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
+
 const originalEnv = process.env;
 
 beforeEach(() => {
@@ -13,8 +17,8 @@ describe('sendEmail', () => {
     delete process.env.EMAILJS_SERVICE_ID;
     delete process.env.EMAILJS_TEMPLATE_ID;
 
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { sendEmail } = await import('../emailService.js');
+    const { logger } = await import('../../src/lib/logger.js');
 
     const result = await sendEmail({
       to_email: 'test@test.com',
@@ -24,8 +28,7 @@ describe('sendEmail', () => {
     });
 
     expect(result).toBe(false);
-    expect(warn).toHaveBeenCalledWith('EmailJS not configured, skipping email');
-    warn.mockRestore();
+    expect(logger.warn).toHaveBeenCalledWith('EmailJS not configured, skipping email');
   });
 
   it('returns true when fetch succeeds', async () => {
