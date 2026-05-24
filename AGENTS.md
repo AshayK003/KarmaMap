@@ -76,7 +76,18 @@ KarmaMap/
 │   └── 03_atomic_karma.sql
 ├── render.yaml               # Backend deploy (Render)
 ├── vercel.json               # Frontend deploy (Vercel)
-└── .env.example
+├── docs/
+│   ├── deployment.md          # Docker Compose + Caddy + VPS deploy guide
+│   ├── testing-strategy.md    # 75-test plan, test pyramid, sprint breakdown
+│   └── recommendations.md     # Full audit with prioritized fixes
+├── .env.example
+├── AGENTS.md
+├── Dockerfile.frontend
+├── Dockerfile.backend
+├── docker-compose.yml
+├── nginx.conf
+├── Caddyfile
+└── .github/workflows/deploy.yml
 ```
 
 ## Roles & Routing (11 pages)
@@ -158,7 +169,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` via dynamic CDN import)
 - **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
-- **No testing framework** configured
+- **Testing**: 75 tests across 9 files — Vitest + Supertest + happy-dom. See `docs/testing-strategy.md`.
 - **No external state library** — React Context + hooks only
 - **Vite proxy**: `/api` → `localhost:3001` in dev
 - **`@/` path alias**: configured in `tsconfig.app.json` and `vite.config.ts`
@@ -185,3 +196,8 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Migration order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql`
 - **Combined file**: `20240523000000_initial_schema.sql` merges 00+01 but lacks `featured_until` from 02
 - **Fix scripts**: `fix_matching_functions.sql` (missing matching RPCs), `fix_postgis_functions.sql` (missing geometry type in search path)
+
+## 🔴 Security: .env.example MUST use placeholder values only
+Never put real Supabase keys in `.env.example` — they get committed to git.
+Current `.env.example` files have been sanitized, but the leaked keys must be **rotated** in Supabase dashboard.
+See `docs/recommendations.md` for full audit and priority list.
