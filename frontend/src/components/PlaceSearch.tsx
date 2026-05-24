@@ -24,23 +24,31 @@ export function PlaceSearch({
       return;
     }
 
+    const controller = new AbortController();
+
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
       try {
-        const places = await searchPlaces(query);
+        const places = await searchPlaces(query, controller.signal);
         setResults(places);
         setOpen(places.length > 0);
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Search failed');
         setResults([]);
         setOpen(false);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }, 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   useEffect(() => {

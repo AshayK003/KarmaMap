@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import { sendCompletionEmail } from '../services/emailService.js';
 
@@ -10,7 +11,7 @@ export const completeGigSchema = z.object({
   after_photo_url: z.string().min(1).optional(),
 });
 
-export async function completeParticipation(
+async function _completeParticipation(
   req: AuthRequest,
   res: Response
 ): Promise<void> {
@@ -67,8 +68,20 @@ export async function completeParticipation(
   res.json({ participation, karma_earned: karmaEarned });
 }
 
-export async function joinGig(req: AuthRequest, res: Response): Promise<void> {
+async function _joinGig(req: AuthRequest, res: Response): Promise<void> {
   const gigId = String(req.params.gigId);
+
+  const { data: existing } = await supabaseAdmin
+    .from('participations')
+    .select('id')
+    .eq('volunteer_id', req.user!.id)
+    .eq('gig_id', gigId)
+    .maybeSingle();
+
+  if (existing) {
+    res.status(409).json({ error: 'You have already joined this gig.' });
+    return;
+  }
 
   const { data, error } = await supabaseAdmin
     .from('participations')
@@ -81,9 +94,16 @@ export async function joinGig(req: AuthRequest, res: Response): Promise<void> {
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      res.status(409).json({ error: 'You have already joined this gig.' });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
 
   res.status(201).json({ participation: data });
 }
+
+export const completeParticipation = asyncHandler(_completeParticipation);
+export const joinGig = asyncHandler(_joinGig);

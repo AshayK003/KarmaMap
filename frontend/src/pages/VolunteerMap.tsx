@@ -7,6 +7,10 @@ import { useAuth } from '../context/AuthContext';
 import { fetchNearbyGigs, updateProfileLocation } from '../services/gigs';
 import type { NearbyGig } from '../types/database';
 import { DEFAULT_RADIUS_METERS } from '../utils/geo';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const RADIUS_OPTIONS = [
   { label: '10 km', value: 10000 },
@@ -17,22 +21,28 @@ const RADIUS_OPTIONS = [
 
 function GigCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs animate-pulse">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
       <div className="flex items-start justify-between gap-2">
-        <div className="h-4 w-3/4 rounded-full bg-slate-200" />
-        <div className="h-4 w-14 rounded-full bg-slate-100 shrink-0" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-14 shrink-0" />
       </div>
-      <div className="mt-2 h-3 w-1/3 rounded-full bg-slate-100" />
+      <div className="mt-2">
+        <Skeleton className="h-3 w-1/3" />
+      </div>
       <div className="mt-3 space-y-1.5">
-        <div className="h-3 w-full rounded-full bg-slate-100" />
-        <div className="h-3 w-4/5 rounded-full bg-slate-100" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
       </div>
       <div className="mt-4 flex gap-1.5">
-        <div className="h-5 w-16 rounded-lg bg-slate-100" />
-        <div className="h-5 w-16 rounded-lg bg-slate-100" />
+        <Skeleton className="h-5 w-16 rounded-lg" />
+        <Skeleton className="h-5 w-16 rounded-lg" />
       </div>
-      <div className="mt-4 h-1.5 w-full rounded-full bg-slate-100" />
-      <div className="mt-4 h-8 w-full rounded-xl bg-slate-100" />
+      <div className="mt-4">
+        <Skeleton className="h-1.5 w-full" />
+      </div>
+      <div className="mt-4">
+        <Skeleton className="h-8 w-full rounded-xl" />
+      </div>
     </div>
   );
 }
@@ -99,29 +109,14 @@ export function VolunteerMap() {
           <div className="flex items-center gap-3">
             {/* Gig count badge */}
             {!loading && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-700">
+              <Badge variant="default" className="gap-1.5 px-3 py-1 text-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {gigs.length} {gigs.length === 1 ? 'gig' : 'gigs'} found
-              </span>
+              </Badge>
             )}
-            <button
-              type="button"
-              onClick={loadGigs}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-sm shadow-emerald-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50 active:scale-95 cursor-pointer"
-            >
-              {loading ? (
-                <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89" />
-                </svg>
-              )}
+            <Button size="sm" onClick={loadGigs} disabled={loading}>
               {loading ? 'Searching…' : 'Refresh'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -148,25 +143,21 @@ export function VolunteerMap() {
             />
 
             {/* Radius pills */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+            <Card className="p-4">
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-3">Search Radius</p>
               <div className="flex flex-wrap gap-2">
                 {RADIUS_OPTIONS.map((opt) => (
-                  <button
+                  <Button
                     key={opt.value}
-                    type="button"
+                    variant={radius === opt.value ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => setRadius(opt.value)}
-                    className={`rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all duration-200 ${
-                      radius === opt.value
-                        ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                        : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
-                    }`}
                   >
                     {opt.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
-            </div>
+            </Card>
 
             {/* Gig list in sidebar */}
             <div className="space-y-3">

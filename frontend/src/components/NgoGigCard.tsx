@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Gig, GigStatus } from '../types/database';
 import { updateGigDetails, updateGigStatus } from '../services/gigs';
+import { Progress } from '@/components/ui/progress';
 
 interface NgoGigCardProps {
   gig: Gig;
@@ -149,12 +150,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                 {gig.volunteers_joined} / {gig.volunteers_needed} spots ({Math.round(fillRate)}%)
               </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-slate-200/60 overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${progressTheme}`} 
-                style={{ width: `${cappedFillRate}%` }}
-              />
-            </div>
+            <Progress value={cappedFillRate} indicatorClassName={progressTheme} />
           </div>
 
           {/* Required skills tags */}

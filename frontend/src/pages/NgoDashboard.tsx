@@ -7,6 +7,11 @@ import { useAuth } from '../context/AuthContext';
 import { useRealtimeGigs } from '../hooks/useRealtimeGigs';
 import { fetchNgoAnalytics } from '../services/gigs';
 import type { GigStatus } from '../types/database';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Avatar } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type FilterKey = 'all' | GigStatus;
 
@@ -56,22 +61,16 @@ export function NgoDashboard() {
 
   const handlePrint = () => window.print();
 
-  // Create avatar initial
-  const ngoInitial = profile?.name ? profile.name.charAt(0).toUpperCase() : 'N';
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 print:p-8">
       {/* 1. Stunning Hero Welcome Banner */}
-      <div className="no-print relative overflow-hidden rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-6 shadow-md">
-        {/* Soft decorative background gradient orb */}
+      <Card className="no-print relative overflow-hidden p-6">
         <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-emerald-100/40 blur-3xl pointer-events-none select-none" />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            {/* Avatar initial badge with custom gradient */}
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 text-2xl font-black text-white shadow-md shadow-emerald-500/10 select-none">
-              {ngoInitial}
-            </div>
+            <Avatar size="lg" alt={profile?.name ?? 'NGO'} />
+
             <div className="space-y-0.5">
               <h1 className="text-2xl font-black tracking-tight text-slate-800">
                 Welcome back, {profile?.name || 'NGO'}
@@ -84,22 +83,13 @@ export function NgoDashboard() {
           
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-2">
-            <Link
-              to="/ngo/create-gig"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-4.5 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-500/10 hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
-            >
-              Create a Gig
+            <Link to="/ngo/create-gig">
+              <Button>Create a Gig</Button>
             </Link>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4.5 py-2.5 text-xs font-black text-slate-700 hover:text-emerald-700 hover:border-emerald-200/50 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
-            >
-              Export Impact Report
-            </button>
+            <Button variant="outline" onClick={handlePrint}>Export Impact Report</Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Print-only simple header to save ink and look professional */}
       <div className="print-only hidden border-b border-gray-200 pb-4">
@@ -192,22 +182,15 @@ export function NgoDashboard() {
             </div>
 
             {/* Pill Filters */}
-            <div className="flex flex-wrap gap-1 bg-slate-100/50 border border-slate-200/30 p-1 rounded-xl">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilter(f.key)}
-                  className={`rounded-lg px-3.5 py-2 text-xs font-black transition-all duration-200 cursor-pointer ${
-                    filter === f.key
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterKey)}>
+              <TabsList>
+                {FILTERS.map((f) => (
+                  <TabsTrigger key={f.key} value={f.key}>
+                    {f.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
         </div>
 
@@ -226,16 +209,16 @@ export function NgoDashboard() {
                 : "You haven't posted any gigs yet. Tap 'Create a Gig' at the top to publish your first opportunity!"}
             </p>
             {(searchQuery || filter !== 'all') && (
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setSearchQuery('');
                   setFilter('all');
                 }}
-                className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-100/80 transition-colors cursor-pointer"
               >
                 Reset Filter & Search
-              </button>
+              </Button>
             )}
           </div>
         ) : (

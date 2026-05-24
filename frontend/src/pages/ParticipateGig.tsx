@@ -10,6 +10,7 @@ import { Certificate } from '../components/Certificate';
 import { uploadParticipationPhoto } from '../services/storage';
 import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
 import type { Participation } from '../types/database';
+import { Button } from '@/components/ui/button';
 
 const schema = z.object({
   hours: z.coerce
@@ -133,6 +134,21 @@ export function ParticipateGig() {
 
       setCompleted(true);
       await refreshProfile();
+
+      // Confetti fire!
+      try {
+        // @ts-ignore
+        const module = await import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm');
+        const confetti = module.default || module;
+        confetti({
+          particleCount: 150,
+          spread: 85,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
+        });
+      } catch (e) {
+        console.error('Failed to launch confetti:', e);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete';
       setError('root', { message });
@@ -160,16 +176,9 @@ export function ParticipateGig() {
         <p className="mt-4 text-gray-600">You need to join this gig before uploading photos.</p>
         {pageError && <p className="mt-2 text-sm text-red-600">{pageError}</p>}
         <div className="mt-4 flex gap-3">
-          <button
-            type="button"
-            onClick={handleJoin}
-            disabled={submitting}
-            className="rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-50"
-          >
-            Join gig
-          </button>
-          <Link to={`/gigs/${gigId}`} className="rounded-xl border px-4 py-2 text-gray-700">
-            Back to gig
+          <Button onClick={handleJoin} disabled={submitting}>Join gig</Button>
+          <Link to={`/gigs/${gigId}`}>
+            <Button variant="outline">Back to gig</Button>
           </Link>
         </div>
       </div>
@@ -209,13 +218,9 @@ export function ParticipateGig() {
             )}
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => navigate('/portfolio')}
-          className="mt-6 w-full rounded-xl border border-emerald-600 py-2 text-emerald-700"
-        >
+        <Button variant="outline" className="mt-6 w-full" onClick={() => navigate('/portfolio')}>
           View portfolio
-        </button>
+        </Button>
       </div>
     );
   }
@@ -255,13 +260,9 @@ export function ParticipateGig() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-xl bg-emerald-600 py-3 text-white disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? 'Submitting…' : 'Complete gig & earn karma'}
-        </button>
+        </Button>
       </form>
     </div>
   );

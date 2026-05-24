@@ -1,12 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
     navigate('/login');
   };
 
@@ -58,9 +64,7 @@ export function Navbar() {
                 >
                   My Portfolio
                 </Link>
-                <span className="hidden sm:inline-flex items-center rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700">
-                  {profile.karma_points} Karma Points
-                </span>
+                <Badge variant="default" className="hidden sm:inline-flex px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
               </>
             )}
             {profile.role === 'ngo' && (
@@ -71,35 +75,20 @@ export function Navbar() {
                 >
                   NGO Dashboard
                 </Link>
-                <Link
-                  to="/ngo/create-gig"
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-black text-white shadow-sm transition-all active:scale-95 duration-200"
-                >
-                  Create Opportunity
+                <Link to="/ngo/create-gig">
+                  <Button size="sm">Create Opportunity</Button>
                 </Link>
               </>
             )}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="px-3 py-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-all duration-200 cursor-pointer"
-            >
-              Sign Out
-            </button>
+            <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-            <Link
-              to="/login"
-              className="px-4 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 transition-all duration-200"
-            >
-              Sign In
+            <Link to="/login">
+              <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
-            <Link
-              to="/signup"
-              className="inline-flex items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-black text-white shadow-sm transition-all duration-200 active:scale-95"
-            >
-              Get Started
+            <Link to="/signup">
+              <Button variant="secondary" size="sm">Get Started</Button>
             </Link>
           </div>
         )}

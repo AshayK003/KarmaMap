@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -30,16 +32,20 @@ export function Login() {
       setError('root', { message: error.message });
       return;
     }
-    const { data: session } = await import('../lib/supabase').then((m) =>
-      m.supabase.auth.getSession()
-    );
-    const userId = session.session?.user?.id;
-    if (userId) {
-      const { data: prof } = await import('../lib/supabase').then((m) =>
-        m.supabase.from('profiles').select('role').eq('id', userId).single()
+    try {
+      const { data: session } = await import('../lib/supabase').then((m) =>
+        m.supabase.auth.getSession()
       );
-      navigate(prof?.role === 'ngo' ? '/ngo/dashboard' : '/map');
-    } else {
+      const userId = session.session?.user?.id;
+      if (userId) {
+        const { data: prof } = await import('../lib/supabase').then((m) =>
+          m.supabase.from('profiles').select('role').eq('id', userId).single()
+        );
+        navigate(prof?.role === 'ngo' ? '/ngo/dashboard' : '/map');
+      } else {
+        navigate('/map');
+      }
+    } catch {
       navigate('/map');
     }
   };
@@ -51,7 +57,7 @@ export function Login() {
       <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl pointer-events-none" />
 
       {/* Premium Glassmorphic card container */}
-      <div className="w-full max-w-md bg-white/90 border border-emerald-100/80 rounded-2xl p-8 shadow-xl shadow-emerald-950/2 relative z-10 backdrop-blur-xs transition-all hover:shadow-2xl">
+      <Card className="w-full max-w-md p-8">
         <div className="text-center space-y-2 mb-6">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl text-emerald-700 shadow-sm shadow-emerald-500/10">
             🌱
@@ -117,19 +123,9 @@ export function Login() {
           )}
 
           {/* Submit button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-500/10 hover:shadow-md transition-all duration-200 disabled:opacity-50 pt-2.5"
-          >
-            {isSubmitting && (
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            )}
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </button>
+          </Button>
         </form>
 
         {/* Signup Navigation Link */}
@@ -139,7 +135,7 @@ export function Login() {
             Create an Account
           </Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

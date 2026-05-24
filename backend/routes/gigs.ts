@@ -5,6 +5,8 @@ import {
   createGig,
   createGigSchema,
   getNgoAnalytics,
+  featureGig,
+  featureGigSchema,
   triggerMatching,
 } from '../controllers/gigController.js';
 
@@ -25,6 +27,14 @@ router.post(
   verifyJwt,
   requireRole('ngo'),
   triggerMatching
+);
+
+router.patch(
+  '/:gigId/feature',
+  verifyJwt,
+  requireRole('ngo'),
+  validateBody(featureGigSchema),
+  featureGig
 );
 
 export default router;

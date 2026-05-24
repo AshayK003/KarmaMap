@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { generatePortfolioSlug } from '../utils/geo';
+import { generatePortfolioSlug, calculateHaversineDistance } from '../utils/geo';
 import type { Participation } from '../types/database';
 import { Certificate } from '../components/Certificate';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 
 export function VolunteerPortfolio() {
   const { profile, user, refreshProfile } = useAuth();
@@ -13,6 +17,9 @@ export function VolunteerPortfolio() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bioInput, setBioInput] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
+  const [isEditingSkills, setIsEditingSkills] = useState(false);
+  const [workingSkills, setWorkingSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState('');
   const [selectedCert, setSelectedCert] = useState<{
     participation: Participation;
     title: string;
@@ -24,10 +31,11 @@ export function VolunteerPortfolio() {
 
     supabase
       .from('participations')
-      .select('*, gigs(title, gig_date)')
+      .select('*, gigs(title, gig_date, location)')
       .eq('volunteer_id', user.id)
       .eq('status', 'completed')
-      .then(({ data }) => setCompleted((data as Participation[]) ?? []));
+      .then(({ data }) => setCompleted((data as Participation[]) ?? []))
+      .catch((err) => console.error('Failed to fetch completed gigs:', err));
 
     if (profile?.portfolio_slug) {
       setShareUrl(`${window.location.origin}/p/${profile.portfolio_slug}`);
@@ -39,10 +47,28 @@ export function VolunteerPortfolio() {
 
   const enableSharing = async () => {
     if (!user || !profile) return;
-    const slug = profile.portfolio_slug ?? generatePortfolioSlug(profile.name);
-    await supabase.from('profiles').update({ portfolio_slug: slug }).eq('id', user.id);
-    setShareUrl(`${window.location.origin}/p/${slug}`);
-    await refreshProfile();
+    try {
+      const slug = profile.portfolio_slug ?? generatePortfolioSlug(profile.name);
+      await supabase.from('profiles').update({ portfolio_slug: slug }).eq('id', user.id);
+      setShareUrl(`${window.location.origin}/p/${slug}`);
+      await refreshProfile();
+    } catch (err) {
+      console.error('Failed to enable sharing:', err);
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.share({
+        title: `${profile?.name}'s Volunteer Impact Portfolio`,
+        text: `Check out my verified volunteer accomplishments, daily streaks, and logged impact hours on KarmaMap!`,
+        url: shareUrl,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      console.error('Sharing failed', err);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -53,6 +79,45 @@ export function VolunteerPortfolio() {
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
+    }
+  };
+
+  const handleEditSkills = () => {
+    setWorkingSkills([...(profile?.skills ?? [])]);
+    setNewSkill('');
+    setIsEditingSkills(true);
+  };
+
+  const handleAddSkill = () => {
+    const trimmed = newSkill.trim();
+    if (trimmed && !workingSkills.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
+      setWorkingSkills([...workingSkills, trimmed]);
+    }
+    setNewSkill('');
+  };
+
+  const handleRemoveSkill = (index: number) => {
+    setWorkingSkills(workingSkills.filter((_, i) => i !== index));
+  };
+
+  const handleSkillKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
+
+  const handleSaveSkills = async () => {
+    if (!user) return;
+    setSaveLoading(true);
+    try {
+      await supabase.from('profiles').update({ skills: workingSkills }).eq('id', user.id);
+      await refreshProfile();
+      setIsEditingSkills(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaveLoading(false);
     }
   };
 
@@ -70,7 +135,67 @@ export function VolunteerPortfolio() {
     }
   };
 
+  const handleViewCert = async (p: Participation, title: string, date: string) => {
+    setSelectedCert({
+      participation: p,
+      title,
+      date: date || new Date().toISOString(),
+    });
+
+    try {
+      // @ts-ignore
+      const module = await import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm');
+      const confetti = module.default || module;
+      // Cannon from left
+      confetti({
+        particleCount: 50,
+        angle: 60,
+        spread: 60,
+        origin: { x: 0, y: 0.8 },
+        colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
+      });
+      // Cannon from right
+      confetti({
+        particleCount: 50,
+        angle: 120,
+        spread: 60,
+        origin: { x: 1, y: 0.8 },
+        colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
+      });
+    } catch (e) {
+      console.error('Failed to launch confetti:', e);
+    }
+  };
+
   const totalHours = completed.reduce((s, p) => s + Number(p.hours ?? 0), 0);
+
+  // Parse volunteer location coordinates
+  const volLocation = profile?.location;
+  const volMatch = volLocation ? String(volLocation).match(/POINT\(([^ ]+) ([^ ]+)\)/) : null;
+  const volLng = volMatch ? parseFloat(volMatch[1]) : null;
+  const volLat = volMatch ? parseFloat(volMatch[2]) : null;
+
+  let totalCo2SavedMeters = 0;
+  completed.forEach((p) => {
+    const gigLoc = (p as any).gigs?.location;
+    if (volLat !== null && volLng !== null && gigLoc) {
+      const gigMatch = String(gigLoc).match(/POINT\(([^ ]+) ([^ ]+)\)/);
+      if (gigMatch) {
+        const gigLng = parseFloat(gigMatch[1]);
+        const gigLat = parseFloat(gigMatch[2]);
+        if (!isNaN(gigLng) && !isNaN(gigLat)) {
+          // Calculate round-trip distance (2x straight-line distance)
+          const distance = calculateHaversineDistance(volLat, volLng, gigLat, gigLng);
+          totalCo2SavedMeters += distance * 2;
+        }
+      }
+    }
+  });
+
+  // Calculate carbon footprint saved (average typical car emits ~120g of CO2 per kilometer)
+  const co2SavedKg = (totalCo2SavedMeters / 1000) * 0.120;
+  // A mature tree absorbs roughly 22kg of CO2 per year
+  const treesPlanted = co2SavedKg / 22;
 
   // Dynamic Karma Level calculation
   const getKarmaLevel = (points: number) => {
@@ -100,37 +225,28 @@ export function VolunteerPortfolio() {
         {/* Public Share Panel */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 border border-slate-100 rounded-2xl p-2 shadow-xs backdrop-blur-sm">
           {!shareUrl ? (
-            <button
-              type="button"
-              onClick={enableSharing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/10 hover:shadow-lg transition-all duration-200 active:scale-95 cursor-pointer"
-            >
+            <Button onClick={enableSharing}>
               🌐 Generate Public Page
-            </button>
+            </Button>
           ) : (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 select-all overflow-hidden max-w-[240px] truncate">
                 <span>🔗</span> {shareUrl}
               </div>
               <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-sm transition-all duration-200 cursor-pointer active:scale-95 ${
-                    copied
-                      ? 'bg-teal-600 shadow-teal-500/10'
-                      : 'bg-slate-800 hover:bg-slate-900 shadow-slate-900/10'
-                  }`}
-                >
+                <Button variant={copied ? 'default' : 'secondary'} onClick={handleCopyLink}>
                   {copied ? '✅ Copied!' : '📋 Copy'}
-                </button>
-                <a
-                  href={shareUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-black text-slate-700 transition-all duration-200 shadow-2xs cursor-pointer active:scale-95"
-                >
-                  👁️ View
+                </Button>
+                {typeof navigator.share === 'function' && (
+                  <Button onClick={handleNativeShare}>
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 10.742l4.632-2.316m0 4.632l-4.632-2.316m0 0a3 3 0 11-6 0 3 3 0 016 0zm11.368-4.632a3 3 0 11-6 0 3 3 0 016 0zm0 9.264a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Share
+                  </Button>
+                )}
+                <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline">👁️ View</Button>
                 </a>
               </div>
             </>
@@ -145,10 +261,11 @@ export function VolunteerPortfolio() {
           <div className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-6 shadow-md">
             <div className="flex flex-col items-center text-center">
               {/* Profile Avatar Glow ring */}
-              <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-3xl font-black text-slate-700">
-                  {profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'VM'}
-                </div>
+              <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
+                <Avatar
+                  size="xl"
+                  alt={profile?.name ?? 'VM'}
+                />
                 <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-sm shadow-md border-2 border-white select-none">
                   🛡️
                 </span>
@@ -215,22 +332,90 @@ export function VolunteerPortfolio() {
 
             {/* Skills Badges */}
             <div className="mt-6 border-t border-slate-100/80 pt-5">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-3">
-                Expertise & Skills
-              </span>
-              {profile?.skills && profile.skills.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skills.map((s) => (
-                    <span
-                      key={s}
-                      className="inline-flex items-center gap-1 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-100 px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 transition-all duration-200"
-                    >
-                      🌱 {s}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                  Expertise & Skills
+                </span>
+                {!isEditingSkills && (
+                  <button
+                    type="button"
+                    onClick={handleEditSkills}
+                    className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                  >
+                    ✏️ Edit
+                  </button>
+                )}
+              </div>
+
+              {!isEditingSkills ? (
+                profile?.skills && profile.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.skills.map((s) => (
+                      <Badge key={s} variant="secondary" className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                        🌱 {s}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-semibold text-slate-400 italic">No skills registered yet.</p>
+                )
               ) : (
-                <p className="text-xs font-semibold text-slate-400 italic">No skills registered yet.</p>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {workingSkills.map((s, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 group"
+                      >
+                        🌱 {s}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(i)}
+                          className="ml-0.5 rounded-full p-0.5 text-emerald-400 hover:bg-emerald-200 hover:text-emerald-700 transition-colors cursor-pointer"
+                        >
+                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      onKeyDown={handleSkillKeyDown}
+                      placeholder="Type a skill and press Enter"
+                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddSkill}
+                      disabled={!newSkill.trim()}
+                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSkills(false)}
+                      className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-600 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveSkills}
+                      disabled={saveLoading}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {saveLoading ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -239,7 +424,7 @@ export function VolunteerPortfolio() {
         {/* ─── Right Pane: Stats and Gigs Timeline ─── */}
         <div className="lg:col-span-8 space-y-6">
           {/* Stats Cards Grid */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Karma Card */}
             <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
@@ -254,12 +439,10 @@ export function VolunteerPortfolio() {
                   <span>Progress to next Rank</span>
                   <span>{karma}/{level.max} XP</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/50">
-                  <div
-                    className={`h-full rounded-full bg-gradient-to-r ${level.color} transition-all duration-500`}
-                    style={{ width: `${nextMilestonePercent}%` }}
-                  />
-                </div>
+                <Progress
+                  value={nextMilestonePercent}
+                  indicatorClassName={`bg-gradient-to-r ${level.color}`}
+                />
               </div>
             </div>
 
@@ -292,6 +475,28 @@ export function VolunteerPortfolio() {
                   : 'Your volunteer logs and time contributions will display here.'}
               </p>
             </div>
+
+            {/* Eco-Hero Card */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-emerald-50/25 backdrop-blur-md p-5 shadow-xs">
+              <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/25 blur-xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Eco-Savings</span>
+                <span className="text-xl animate-bounce">🌳</span>
+              </div>
+              <p className="mt-2 text-3xl font-black text-emerald-700">
+                {co2SavedKg >= 1 ? `${co2SavedKg.toFixed(2)} kg` : `${Math.round(co2SavedKg * 1000)} g`}
+              </p>
+              <div className="mt-4">
+                <div className="flex justify-between text-[9px] font-black uppercase text-emerald-600 mb-1">
+                  <span>Carbon Offset</span>
+                  <span>{treesPlanted.toFixed(2)} Trees Eq.</span>
+                </div>
+                <Progress
+                  value={Math.min(100, treesPlanted * 100)}
+                  indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Completed Gigs List / Timeline */}
@@ -318,10 +523,10 @@ export function VolunteerPortfolio() {
                   const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
                   const dateStr = rawDate
                     ? new Date(rawDate).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })
                     : 'Verified Date';
 
                   return (
@@ -353,13 +558,7 @@ export function VolunteerPortfolio() {
                         </span>
                         <button
                           type="button"
-                          onClick={() =>
-                            setSelectedCert({
-                              participation: p,
-                              title: gigTitle,
-                              date: rawDate || new Date().toISOString(),
-                            })
-                          }
+                          onClick={() => handleViewCert(p, gigTitle, rawDate || '')}
                           className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-xs transition-all cursor-pointer active:scale-95"
                         >
                           📜 View Certificate
@@ -401,7 +600,18 @@ export function VolunteerPortfolio() {
 
             <div className="mt-6 flex justify-center gap-3">
               <button
-                onClick={() => window.print()}
+                onClick={() => {
+                  window.print();
+                  // @ts-ignore
+                  import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm')
+                    .then((m) => (m.default || m)({
+                      particleCount: 80,
+                      spread: 60,
+                      origin: { y: 0.7 },
+                      colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
+                    }))
+                    .catch(() => {});
+                }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
               >
                 🖨️ Print Certificate

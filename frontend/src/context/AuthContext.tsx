@@ -35,12 +35,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    setProfile(data);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      setProfile(data);
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
+    }
   };
 
   const refreshProfile = async () => {
@@ -84,22 +88,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!error && data.user) {
-      await supabase
-        .from('profiles')
-        .update({ role, name, skills })
-        .eq('id', data.user.id);
+      try {
+        await supabase
+          .from('profiles')
+          .update({ role, name, skills })
+          .eq('id', data.user.id);
+      } catch (profileErr) {
+        console.error('Failed to update profile after signup:', profileErr);
+      }
     }
 
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error as Error | null };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error as Error | null };
+    } catch (err) {
+      return { error: err as Error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
     setProfile(null);
   };
 

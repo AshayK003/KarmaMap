@@ -6,16 +6,20 @@ export function useRealtimeGigs(ngoId?: string) {
   const [gigs, setGigs] = useState<Gig[]>([]);
 
   const fetchGigs = useCallback(async () => {
-    let query = supabase.from('gigs').select('*, profiles:ngo_id(name)');
+    try {
+      let query = supabase.from('gigs').select('*, profiles:ngo_id(name)');
 
-    if (ngoId) {
-      query = query.eq('ngo_id', ngoId);
-    } else {
-      query = query.eq('status', 'open');
+      if (ngoId) {
+        query = query.eq('ngo_id', ngoId);
+      } else {
+        query = query.eq('status', 'open');
+      }
+
+      const { data } = await query.order('created_at', { ascending: false });
+      setGigs((data as Gig[]) ?? []);
+    } catch (err) {
+      console.error('Failed to fetch gigs:', err);
     }
-
-    const { data } = await query.order('created_at', { ascending: false });
-    setGigs((data as Gig[]) ?? []);
   }, [ngoId]);
 
   useEffect(() => {
@@ -45,12 +49,16 @@ export function useRealtimeParticipations(gigId?: string) {
     if (!gigId) return;
 
     const fetchCount = async () => {
-      const { count: c } = await supabase
-        .from('participations')
-        .select('*', { count: 'exact', head: true })
-        .eq('gig_id', gigId)
-        .in('status', ['joined', 'checked_in', 'completed']);
-      setCount(c ?? 0);
+      try {
+        const { count: c } = await supabase
+          .from('participations')
+          .select('*', { count: 'exact', head: true })
+          .eq('gig_id', gigId)
+          .in('status', ['joined', 'checked_in', 'completed']);
+        setCount(c ?? 0);
+      } catch (err) {
+        console.error('Failed to fetch participation count:', err);
+      }
     };
 
     fetchCount();

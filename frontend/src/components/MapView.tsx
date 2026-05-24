@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
   Circle,
+  Polyline,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -98,11 +99,112 @@ export function MapView({
   onMapClick,
   pickMode = false,
 }: MapViewProps) {
+  const [selectedGig, setSelectedGig] = useState<NearbyGig | null>(null);
+  const [travelMode, setTravelMode] = useState<'foot' | 'bicycle' | 'car'>('foot');
+  const [activeRoute, setActiveRoute] = useState<{
+    gigId: string;
+    coords: [number, number][];
+    distance: number;
+    duration: number;
+  } | null>(null);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+
+  // Clear route and selection whenever center point or gig list changes
+  useEffect(() => {
+    setSelectedGig(null);
+    setActiveRoute(null);
+  }, [lat, lng, gigs]);
+
+  const osrmProfile: Record<string, string> = {
+    foot: 'walking',
+    bicycle: 'cycling',
+    car: 'driving',
+  };
+
+  // Dynamically calculate route whenever selected gig or travel mode changes
+  useEffect(() => {
+    if (!selectedGig) {
+      setActiveRoute(null);
+      return;
+    }
+
+    let isMounted = true;
+    const calculateRoute = async () => {
+      setLoadingRoute(true);
+      try {
+        const profile = osrmProfile[travelMode] ?? 'walking';
+        const res = await fetch(
+          `https://router.project-osrm.org/route/v1/${profile}/${lng},${lat};${selectedGig.lng},${selectedGig.lat}?overview=full&geometries=geojson`
+        );
+        if (!res.ok) throw new Error('OSRM routing request failed');
+        const data = await res.json();
+        
+        if (!isMounted) return;
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const coords = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+          setActiveRoute({
+            gigId: selectedGig.id,
+            coords,
+            distance: route.distance,
+            duration: route.duration,
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching OSRM route:', err);
+      } finally {
+        if (isMounted) setLoadingRoute(false);
+      }
+    };
+
+    calculateRoute();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedGig, travelMode, lat, lng]);
+
+  // Carbon math: Average car emits ~120g of CO2 per kilometer
+  const calculateCo2 = (meters: number) => {
+    const co2Grams = (meters / 1000) * 120;
+    if (co2Grams >= 1000) {
+      return `${(co2Grams / 1000).toFixed(2)} kg`;
+    }
+    return `${Math.round(co2Grams)} g`;
+  };
+
   return (
     <div
       style={{ height }}
-      className="overflow-hidden rounded-2xl border border-emerald-100 shadow-sm"
+      className="relative overflow-hidden rounded-2xl border border-emerald-100 shadow-sm"
     >
+      {/* Floating Travel Mode Selector */}
+      <div className="absolute top-4 right-4 z-[1000] flex items-center gap-1 rounded-2xl border border-white/20 bg-white/80 p-1.5 shadow-md backdrop-blur-md select-none">
+        {(['foot', 'bicycle', 'car'] as const).map((mode) => {
+          const isActive = travelMode === mode;
+          const label = mode === 'foot' ? '🚶 Walk' : mode === 'bicycle' ? '🚲 Cycle' : '🚗 Drive';
+          return (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setTravelMode(mode)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-black transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? mode === 'foot'
+                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
+                    : mode === 'bicycle'
+                    ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-500/20'
+                    : 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
       <MapContainer
         center={[lat, lng]}
         zoom={13}
@@ -130,6 +232,34 @@ export function MapView({
           }}
         />
 
+        {/* Route Polyline (Glow Neon Overlay + Core Path) */}
+        {activeRoute && (
+          <>
+            {/* Glowing path overlay */}
+            <Polyline
+              positions={activeRoute.coords}
+              pathOptions={{
+                color: travelMode === 'foot' ? '#10b981' : travelMode === 'bicycle' ? '#06b6d4' : '#6366f1',
+                weight: 6,
+                opacity: 0.35,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            {/* Sleek solid core */}
+            <Polyline
+              positions={activeRoute.coords}
+              pathOptions={{
+                color: travelMode === 'foot' ? '#059669' : travelMode === 'bicycle' ? '#0891b2' : '#4f46e5',
+                weight: 3,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          </>
+        )}
+
         {/* "You are here" marker */}
         <Marker position={[lat, lng]} icon={youIcon}>
           <Popup className="leaflet-popup-custom">
@@ -141,20 +271,78 @@ export function MapView({
 
         {/* Gig markers */}
         {gigs.map((gig) => (
-          <Marker key={gig.id} position={[gig.lat, gig.lng]} icon={gigIcon}>
-            <Popup className="leaflet-popup-custom" minWidth={200}>
-              <div className="min-w-[200px] space-y-1.5 py-1">
-                <p className="font-extrabold text-sm text-gray-900 leading-snug">{gig.title}</p>
-                <p className="text-xs font-bold text-emerald-700">{gig.ngo_name}</p>
-                <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
-                  <span>📍 {formatDistance(gig.distance_meters)} away</span>
-                  <span>{gig.volunteers_joined}/{gig.volunteers_needed} spots</span>
+          <Marker
+            key={gig.id}
+            position={[gig.lat, gig.lng]}
+            icon={gigIcon}
+            eventHandlers={{
+              click: () => setSelectedGig(gig),
+            }}
+          >
+            <Popup className="leaflet-popup-custom" minWidth={210}>
+              <div className="min-w-[210px] space-y-1.5 py-1">
+                <p className="font-extrabold text-sm text-slate-800 leading-snug flex items-center gap-1.5">
+                  {gig.featured_until && new Date(gig.featured_until) > new Date() && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800">★ FEATURED</span>
+                  )}
+                  {gig.title}
+                </p>
+                <p className="text-xs font-black text-emerald-700">{gig.ngo_name}</p>
+
+                {/* Routing & Distance Stats */}
+                <div className="flex flex-col text-[10px] font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                  <div className="flex items-center justify-between">
+                    <span>📍 Straight line:</span>
+                    <span className="text-slate-700 font-extrabold">{formatDistance(gig.distance_meters)}</span>
+                  </div>
+
+                  {activeRoute && activeRoute.gigId === gig.id ? (
+                    <>
+                      <div className={`flex items-center justify-between font-black ${
+                        travelMode === 'foot' ? 'text-emerald-700' : travelMode === 'bicycle' ? 'text-cyan-700' : 'text-indigo-700'
+                      }`}>
+                        <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
+                        <span>{formatDistance(activeRoute.distance)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-teal-600 font-black">
+                        <span>⏱️ Travel time:</span>
+                        <span>{Math.round(activeRoute.duration / 60)} mins</span>
+                      </div>
+                      
+                      {/* Eco Savings Display */}
+                      {travelMode !== 'car' ? (
+                        <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs">
+                          <span>🌱 CO2 Saved:</span>
+                          <span>{calculateCo2(activeRoute.distance)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1">
+                          <span>🚗 CO2 Emitted:</span>
+                          <span>{calculateCo2(activeRoute.distance)}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : loadingRoute ? (
+                    <div className="text-[10px] text-emerald-600 animate-pulse font-extrabold py-0.5">
+                      Calculating road route...
+                    </div>
+                  ) : (
+                    <div className="text-[9px] text-slate-400 font-medium italic py-0.5">
+                      Click marker to calculate road route
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] text-slate-500">
+                    <span>👥 Joined spots:</span>
+                    <span className="text-slate-700 font-extrabold">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
+                  </div>
                 </div>
+
                 <Link
                   to={`/gigs/${gig.id}`}
-                  className="mt-2 block w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 py-1.5 text-center text-xs font-extrabold text-white transition-colors"
+                  className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2 text-center text-xs font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
-                  View gig →
+                  View details →
                 </Link>
               </div>
             </Popup>

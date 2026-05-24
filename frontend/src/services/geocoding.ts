@@ -33,7 +33,7 @@ function formatPhotonLabel(props: PhotonFeature['properties']): string {
   return parts.join(', ') || 'Selected place';
 }
 
-export async function searchPlaces(query: string): Promise<PlaceResult[]> {
+export async function searchPlaces(query: string, signal?: AbortSignal): Promise<PlaceResult[]> {
   const q = query.trim();
   if (q.length < 3) return [];
 
@@ -42,7 +42,7 @@ export async function searchPlaces(query: string): Promise<PlaceResult[]> {
   url.searchParams.set('limit', '8');
   url.searchParams.set('lang', 'en');
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), { signal });
   if (!res.ok) {
     throw new Error('Place search unavailable. Try again or use coordinates.');
   }

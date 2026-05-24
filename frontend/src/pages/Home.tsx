@@ -1,8 +1,35 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+interface Stats {
+  totalHours: number;
+  ngoCount: number;
+  openGigs: number;
+}
 
 export function Home() {
   const { user, profile } = useAuth();
+  const [stats, setStats] = useState<Stats>({ totalHours: 0, ngoCount: 0, openGigs: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('participations').select('hours').eq('status', 'completed'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'ngo'),
+      supabase.from('gigs').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    ]).then(([hoursRes, ngoRes, gigsRes]) => {
+      const totalHours = (hoursRes.data ?? []).reduce((s, p) => s + Number(p.hours ?? 0), 0);
+      setStats({
+        totalHours,
+        ngoCount: ngoRes.count ?? 0,
+        openGigs: gigsRes.count ?? 0,
+      });
+    }).catch((err) => console.error('Failed to fetch home stats:', err));
+  }, []);
 
   return (
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-emerald-50/20 via-slate-50 to-white">
@@ -13,10 +40,10 @@ export function Home() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28 relative z-10">
         {/* ─── Hero Section ─── */}
         <section className="text-center space-y-6">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1 text-xs font-black text-emerald-800">
+          <Badge variant="default" className="px-3.5 py-1 text-xs gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Hyper-Local Geospatial Volunteer Network
-          </div>
+          </Badge>
           
           <h1 className="text-4xl font-black tracking-tight text-slate-800 sm:text-6xl max-w-4xl mx-auto leading-[1.1]">
             Volunteer Locally.
@@ -32,26 +59,17 @@ export function Home() {
 
           {user && profile ? (
             <div className="pt-4">
-              <Link
-                to={profile.role === 'ngo' ? '/ngo/dashboard' : '/map'}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-8 py-4 text-sm font-black text-white shadow-lg shadow-emerald-600/15 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-200"
-              >
-                Go to {profile.role === 'ngo' ? 'NGO Dashboard' : 'Discovery Map'}
+              <Link to={profile.role === 'ngo' ? '/ngo/dashboard' : '/map'}>
+                <Button size="lg">Go to {profile.role === 'ngo' ? 'NGO Dashboard' : 'Discovery Map'}</Button>
               </Link>
             </div>
           ) : (
             <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Link
-                to="/signup?role=volunteer"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-slate-900 hover:bg-slate-800 px-7 py-4 text-sm font-black text-white shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200"
-              >
-                Join as Volunteer
+              <Link to="/signup?role=volunteer">
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto">Join as Volunteer</Button>
               </Link>
-              <Link
-                to="/signup?role=ngo"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 px-7 py-4 text-sm font-black text-slate-700 shadow-2xs hover:scale-[1.02] active:scale-95 transition-all duration-200"
-              >
-                Register NGO Organization
+              <Link to="/signup?role=ngo">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">Register NGO Organization</Button>
               </Link>
             </div>
           )}
@@ -60,15 +78,15 @@ export function Home() {
         {/* ─── Stats Grid Section ─── */}
         <section className="mt-20 border-y border-slate-100 py-10 bg-white/40 backdrop-blur-xs rounded-3xl px-6 grid gap-8 sm:grid-cols-3 text-center">
           <div>
-            <p className="text-3xl sm:text-4xl font-black text-slate-800">12,500+</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-800">{stats.totalHours.toLocaleString()}+</p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Hours Logged</p>
           </div>
           <div className="border-y sm:border-y-0 sm:border-x border-slate-100 py-6 sm:py-0">
-            <p className="text-3xl sm:text-4xl font-black text-emerald-600">98.4%</p>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Match Accuracy</p>
+            <p className="text-3xl sm:text-4xl font-black text-emerald-600">{stats.openGigs}+</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Open Opportunities</p>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black text-slate-800">450+</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-800">{stats.ngoCount}+</p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Verified Partners</p>
           </div>
         </section>
@@ -110,16 +128,13 @@ export function Home() {
                 )
               }
             ].map((f) => (
-              <div
-                key={f.title}
-                className="group rounded-3xl border border-slate-100 bg-white p-6 hover:shadow-md hover:border-emerald-100/50 transition-all duration-200"
-              >
+              <Card key={f.title} className="group p-6 hover:shadow-md hover:border-emerald-100/50 transition-all duration-200">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform duration-200">
                   {f.svg}
                 </div>
                 <h3 className="mt-4 text-base font-extrabold text-slate-800">{f.title}</h3>
                 <p className="mt-2 text-xs font-semibold text-slate-500 leading-normal">{f.desc}</p>
-              </div>
+              </Card>
             ))}
           </div>
         </section>

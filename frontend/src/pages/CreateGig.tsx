@@ -7,6 +7,9 @@ import { MapView } from '../components/MapView';
 import { LocationPicker } from '../components/LocationPicker';
 import { useLocationPicker } from '../hooks/useLocationPicker';
 import { createGigViaApi } from '../services/gigs';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 const schema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -96,7 +99,7 @@ export function CreateGig() {
       <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
         {/* ─── Left Column: Geospatial Location Settings ─── */}
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-[76px]">
-          <div className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-sm space-y-4">
+          <Card className="p-5 space-y-4">
             <div>
               <h2 className="text-base font-black text-slate-800">Geospatial Center</h2>
               <p className="text-[11px] font-bold text-slate-400 mt-0.5">
@@ -129,36 +132,21 @@ export function CreateGig() {
                   onMapClick={setFromMap}
                 />
                 <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowMap(false)}
-                    className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                  >
-                    Hide Map Picker
-                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowMap(false)}>Hide Map Picker</Button>
                 </div>
               </div>
             ) : (
               <div className="flex justify-start">
-                <button
-                  type="button"
-                  onClick={() => setShowMap(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-extrabold text-slate-700 transition-all cursor-pointer"
-                >
-                  Show Map Picker
-                </button>
+                <Button variant="outline" size="sm" onClick={() => setShowMap(true)}>Show Map Picker</Button>
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* ─── Right Column: Opportunity Context Form ─── */}
         <div className="lg:col-span-7">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-6 shadow-md space-y-6"
-            noValidate
-          >
+          <Card className="p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             <div>
               <h2 className="text-base font-black text-slate-800">Opportunity Details</h2>
               <p className="text-[11px] font-bold text-slate-400 mt-0.5">
@@ -232,35 +220,42 @@ export function CreateGig() {
 
               {/* Date */}
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
                   Gig Date
                 </label>
-                <input
-                  {...register('gig_date')}
-                  type="date"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                  onChange={(e) => {
-                    register('gig_date').onChange(e);
-                    e.target.blur();
-                  }}
-                />
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </span>
+                  <Input
+                    {...register('gig_date')}
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="pl-10"
+                  />
+                </div>
                 <FieldError message={errors.gig_date?.message} />
               </div>
 
               {/* Time */}
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
                   Gig Time
                 </label>
-                <input
-                  {...register('gig_time')}
-                  type="time"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                  onChange={(e) => {
-                    register('gig_time').onChange(e);
-                    e.target.blur();
-                  }}
-                />
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  <Input
+                    {...register('gig_time')}
+                    type="time"
+                    className="pl-10"
+                  />
+                </div>
                 <FieldError message={errors.gig_time?.message} />
               </div>
             </div>
@@ -272,24 +267,11 @@ export function CreateGig() {
             )}
 
             {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-6 py-4 text-sm font-black text-white shadow-md shadow-emerald-600/10 hover:shadow-lg transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>Broadcasting to Volunteers...</span>
-                </>
-              ) : (
-                'Publish & Match Gig'
-              )}
-            </button>
-          </form>
+            <Button type="submit" disabled={isSubmitting} size="lg" className="w-full">
+              {isSubmitting ? 'Broadcasting to Volunteers...' : 'Publish & Match Gig'}
+            </Button>
+            </form>
+          </Card>
         </div>
       </div>
     </div>

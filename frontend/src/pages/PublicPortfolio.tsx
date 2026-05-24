@@ -29,10 +29,18 @@ export function PublicPortfolio() {
             .then(({ data: parts }) => {
               setCompleted((parts as Participation[]) ?? []);
               setLoading(false);
+            })
+            .catch((err) => {
+              console.error('Failed to fetch participations:', err);
+              setLoading(false);
             });
         } else {
           setLoading(false);
         }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch profile:', err);
+        setLoading(false);
       });
   }, [slug]);
 
@@ -75,10 +83,6 @@ export function PublicPortfolio() {
   const level = getKarmaLevel(karma);
   const nextMilestonePercent = Math.min(100, (karma / level.max) * 100);
 
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-    window.location.href
-  )}`;
-
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/30 via-slate-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       {/* Verified Status Banner */}
@@ -92,7 +96,7 @@ export function PublicPortfolio() {
           </span>
         </div>
         <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
-          Blockchain-backed Volunteer Log
+          Verified Impact Log
         </span>
       </div>
 
@@ -104,9 +108,12 @@ export function PublicPortfolio() {
             {/* Avatar block */}
             <div className="flex flex-col items-center">
               <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-3xl font-black text-slate-700">
-                  {profile.name ? profile.name.slice(0, 2).toUpperCase() : 'VM'}
-                </div>
+                <img
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
+                  alt="Profile Avatar"
+                  className="h-full w-full rounded-full object-cover bg-white"
+                  loading="lazy"
+                />
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-sm shadow-md border-2 border-white select-none">
                   🛡️
                 </span>
@@ -150,25 +157,7 @@ export function PublicPortfolio() {
             )}
           </div>
 
-          {/* QR Code / Share Scanner Card */}
-          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md text-center space-y-4">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
-              Scan to Verify Profile
-            </span>
-            <div className="flex justify-center">
-              <div className="rounded-2xl border-4 border-slate-100 bg-white p-2 shadow-inner">
-                <img
-                  src={qrCodeUrl}
-                  alt={`${profile.name} KarmaMap QR Code`}
-                  className="h-32 w-32 object-contain"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 leading-normal">
-              Scan this dynamic code using any smartphone camera to instantly verify volunteer records on the go.
-            </p>
-          </div>
+
         </div>
 
         {/* ─── Right Column: Stats & Timeline ─── */}

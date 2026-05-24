@@ -32,6 +32,7 @@ export interface Gig {
   volunteers_joined: number;
   gig_date: string;
   status: GigStatus;
+  featured_until?: string;
   created_at: string;
   updated_at: string;
   profiles?: { name: string };
@@ -72,6 +73,7 @@ export interface NearbyGig {
   gig_date: string;
   status: GigStatus;
   distance_meters: number;
+  featured_until?: string;
 }
 
 export type Database = {

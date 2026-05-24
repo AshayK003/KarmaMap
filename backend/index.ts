@@ -37,6 +37,20 @@ app.use(
     _next: express.NextFunction
   ) => {
     console.error(err);
+
+    if (err.name === 'ZodError' || (err.constructor?.name === 'ZodError')) {
+      res.status(400).json({ error: 'Validation error', details: (err as Error & { issues?: unknown }).issues });
+      return;
+    }
+
+    if ('code' in err && typeof (err as Error & { code: string }).code === 'string') {
+      const code = (err as Error & { code: string }).code;
+      if (code.startsWith('PGRST') || code.startsWith('235')) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+    }
+
     res.status(500).json({ error: 'Internal server error' });
   }
 );

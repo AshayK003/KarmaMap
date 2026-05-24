@@ -165,5 +165,9 @@ export async function notifyMatchedVolunteers(
     read_status: false,
   }));
 
-  await supabaseAdmin.from('notifications').insert(notifications);
+  if (notifications.length === 0) return;
+  const { error } = await supabaseAdmin.from('notifications').insert(notifications);
+  if (error) {
+    console.warn('Failed to notify matched volunteers:', error.message);
+  }
 }

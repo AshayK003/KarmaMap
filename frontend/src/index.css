@@ -25,31 +25,74 @@ body {
 }
 
 @media print {
-  .no-print {
+  /* Hide navbar, page headers, grids, and close/action buttons */
+  nav,
+  .no-print,
+  .mb-8,
+  .grid {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
-  }
+
+  /* Reset page rules */
+  html,
   body {
-    background: white;
-  }
-  body * {
-    visibility: hidden;
-  }
-  .certificate, .certificate * {
-    visibility: visible;
-  }
-  .certificate {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    max-width: 600px;
-    border: 4px double #d97706 !important;
-    box-shadow: none !important;
     background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Make fixed modal transparent and full-page for print */
+  .fixed.inset-0 {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Reset modal content wrapper box */
+  .fixed.inset-0 > div {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide confetti canvas during print */
+  canvas {
+    display: none !important;
+  }
+
+  /* Optimize certificate card styles for print layout */
+  .certificate {
+    border: 2px solid #d4a843 !important;
+    outline: 4px solid #065f46 !important;
+    outline-offset: 2px !important;
+    background: #fffbeb !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  .certificate .bg-gradient-to-r {
+    background: #d4a843 !important;
   }
 }
 

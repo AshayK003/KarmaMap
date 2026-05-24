@@ -1,100 +1,113 @@
 # KarmaMap
 
-Hyper-local volunteer and skill-matching PWA. Connects NGOs with nearby volunteers using PostGIS geospatial matching, real-time Supabase updates, verified photo uploads, and karma tracking.
+> A hyper-local, real-time PWA connecting local NGOs with nearby volunteers using PostGIS geospatial queries, smart proximity+skill matching, OSRM road routing, and verified impact portfolios.
 
-## Stack
+---
+
+## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Frontend | React, Vite, Tailwind CSS, PWA |
-| Backend | Node.js, Express |
-| Database | Supabase (Postgres + PostGIS) |
-| Maps | Leaflet, OpenStreetMap |
+|---|---|
+| Frontend | React 19 + TypeScript 6, Vite 6, Tailwind CSS v4, shadcn/ui |
+| Backend | Node.js + Express 4 + TypeScript (ESM) |
+| Database | Supabase (PostgreSQL + PostGIS), service_role key for backend |
+| Mapping | React-Leaflet, OpenStreetMap tiles, OSRM routing, Photon geocoding |
+| Weather | Open-Meteo API |
 | Email | EmailJS |
-| Hosting | Vercel (frontend), Render (backend) |
+| PWA | vite-plugin-pwa (Workbox, OSM tile caching) |
+| Auth | Supabase Auth (JWT) |
+| Charts | Recharts |
 
-## Project structure
+---
+
+## Features
+
+### Volunteer
+- **Discovery Map** — Browse open gigs within configurable radius (10–100 km) with GPS, search, or map-tap location
+- **OSRM Road Routing** — Walk/cycle/drive routes with travel times and CO₂ savings overlay
+- **Weather Planner** — Open-Meteo forecast for gig date with smart advisories
+- **Skill Matching** — Badge showing overlap between your skills and gig requirements
+- **Impact Portfolio** — Track karma points, streaks, hours; edit bio and skills inline with tag-based editor
+- **Certificates** — Printable impact certificates with gold border design, confetti celebration
+- **Public Portfolio** — Shareable `/p/:slug` page with verified impact log
+
+### NGO
+- **Dashboard** — Analytics (hours, completed gigs), charts, gig management with search/filter
+- **Gig Publisher** — Create gigs with map pin placement, required skills, date/time with min-date constraint
+- **Smart Matching** — Algorithm scores volunteers 50% by proximity, 50% by skill overlap; automated email notifications
+- **Photo Verification** — Before/after photo upload pipeline for completion validation
+
+---
+
+## Project Structure
 
 ```
-frontend/          React PWA
-backend/           Express REST API
-supabase/migrations/   Database schema, RLS, PostGIS
+KarmaMap/
+├── backend/                  # Express REST API (port 3001)
+│   ├── index.ts              # Entry point
+│   ├── routes/               # gigs.ts, participations.ts
+│   ├── controllers/          # gigController.ts, participationController.ts
+│   ├── middleware/            # auth.ts (JWT+role), validate.ts (Zod)
+│   ├── services/             # supabase.ts, matchingService.ts, emailService.ts
+│   └── dist/                 # Compiled JS
+├── frontend/                 # React SPA (port 5173)
+│   └── src/
+│       ├── App.tsx            # Router + layout
+│       ├── pages/             # 11 route pages
+│       ├── components/        # Reusable components
+│       │   ├── ui/            # shadcn/ui (Button, Card, Badge, Input)
+│       │   └── ...            # MapView, LocationPicker, GigCard, Certificate, etc.
+│       ├── context/           # AuthContext.tsx
+│       ├── hooks/             # useGeolocation, useLocationPicker, useRealtimeGigs
+│       ├── services/          # gigs.ts, geocoding.ts, storage.ts
+│       ├── types/             # database.ts
+│       ├── lib/               # supabase.ts, utils.ts (cn helper)
+│       └── utils/             # api.ts, geo.ts, gigStatus.ts
+├── supabase/migrations/      # SQL migrations (schema, functions, RLS, storage)
+├── render.yaml               # Backend deploy (Render)
+├── vercel.json               # Frontend deploy (Vercel)
+└── .env.example
 ```
 
-## Setup
+---
+
+## Development Setup
 
 ### 1. Supabase
-
-Run SQL files **in this order** in the SQL Editor:
-
-1. Enable **postgis** under Database → Extensions.
-2. `supabase/migrations/00_schema_core.sql` — tables, RLS, `nearby_gigs`.
-3. `supabase/migrations/01_functions_and_realtime.sql` — backend functions + realtime.
-4. **Storage** → New bucket `participation-photos` (public) → run `storage_policies.sql`.
-5. Enable **Email** auth under Authentication → Providers.
-
-Optional fix scripts (only if a step failed): `fix_postgis_functions.sql`, `fix_matching_functions.sql`.
-
-Alternatively run the combined `20240523000000_initial_schema.sql` if starting fresh.
-
-Copy **Project URL** and **anon key** (frontend); **service role key** (backend only).
+1. Create a Supabase project, enable **PostGIS** extension.
+2. Run migrations in order: `00_schema_core.sql`, `01_functions_and_realtime.sql`.
+3. Create `participation-photos` storage bucket, apply `storage_policies.sql`.
+4. Enable Email auth provider.
 
 ### 2. Frontend
-
 ```bash
 cd frontend
 cp .env.example .env
-# Fill VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
+# Fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 npm install
 npm run dev
 ```
 
 ### 3. Backend
-
 ```bash
 cd backend
 cp .env.example .env
-# Fill SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, EmailJS vars
+# Fill in PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, EmailJS vars
 npm install
 npm run dev
 ```
 
-API runs at `http://localhost:3001`. Vite proxies `/api` in development.
+---
 
-### 4. EmailJS
+## Architecture Notes
+- **Data flow**: Frontend reads via Supabase anon client (RPCs, direct queries). Backend writes via service_role client. REST API calls inject JWT via `utils/api.ts`.
+- **Matching algorithm** (`matchingService.ts`): `0.5 * proximityScore + 0.5 * skillOverlap`
+- **Auth middleware**: `verifyJwt` + `requireRole(...roles)` using Supabase Auth.
+- **No testing framework** — React Context + hooks only for state.
+- **Vite proxy**: `/api` -> `localhost:3001` in dev.
+- **Map center**: Lucknow, India (26.8467, 80.9462), zoom 12.
 
-Create templates with variables: `to_email`, `to_name`, `subject`, `message`, `gig_title`.
-
-## MVP workflow
-
-1. **NGO** signs up → creates a gig at their location.
-2. Backend runs **smart matching** (50% distance + 50% skill overlap).
-3. Top volunteers get **in-app notifications** and **EmailJS** emails.
-4. **Volunteer** discovers gigs on the map → joins → uploads before/after photos.
-5. **Realtime** updates NGO dashboard volunteer counts.
-6. Volunteer **completes** gig → earns karma + **certificate**.
-7. NGO **exports analytics** via browser print/PDF.
-
-## Deployment
-
-### Vercel (frontend)
-
-- Root directory: `frontend` (or use root `vercel.json`)
-- Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` (Render API URL)
-
-### Render (backend)
-
-- Use `render.yaml` or create a Web Service from `backend/`
-- Set `FRONTEND_URL` to your Vercel domain for CORS
-- Never expose `SUPABASE_SERVICE_ROLE_KEY` in the frontend
-
-## Security
-
-- Row Level Security enabled on all tables
-- NGOs manage only their gigs; volunteers edit only their participations
-- Service role key used **only** on the backend
-- User roles stored in `profiles` table (updated on signup)
+---
 
 ## License
-
 MIT
