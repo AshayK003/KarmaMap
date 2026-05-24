@@ -43,11 +43,11 @@ async function _createGig(req: AuthRequest, res: Response): Promise<void> {
     const matched = await findMatchedVolunteers(data.id);
     await notifyMatchedVolunteers(data.id, matched, body.title);
     await sendGigMatchEmails(matched, body.title);
+    res.status(201).json({ gig: data, matched_count: matched.length });
   } catch (matchErr) {
     console.warn('Matching skipped:', matchErr);
+    res.status(201).json({ gig: data, matched_count: 0 });
   }
-
-  res.status(201).json({ gig: data, matched_count: 0 });
 }
 
 async function _getNgoAnalytics(req: AuthRequest, res: Response): Promise<void> {

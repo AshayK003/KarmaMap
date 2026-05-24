@@ -15,6 +15,6 @@ if (!supabaseUrl || !serviceRoleKey) {
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
   realtime: {
-    transport: ws,
+    transport: ws as any,
   },
 });

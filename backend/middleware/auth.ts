@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { supabaseAdmin } from '../services/supabase.js';
 
 export interface AuthRequest extends Request {
