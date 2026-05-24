@@ -175,9 +175,9 @@ export function MapView({
   return (
     <div
       style={{ height }}
-      className="relative overflow-hidden rounded-2xl border border-emerald-100 shadow-sm"
+      className="relative overflow-hidden rounded-2xl border border-emerald-100 shadow-sm dark:border-slate-700 dark:shadow-none dark:shadow-slate-900/50"
     >
-      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1 rounded-2xl border border-white/20 bg-white/80 p-1.5 shadow-md backdrop-blur-md select-none">
+      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1 rounded-2xl border border-white/20 bg-white/80 p-1.5 shadow-md backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-800/80 dark:shadow-none dark:shadow-slate-900/50 select-none">
         {(['foot', 'bicycle', 'car'] as const).map((mode) => {
           const isActive = travelMode === mode;
           const label = mode === 'foot' ? '🚶 Walk' : mode === 'bicycle' ? '🚲 Cycle' : '🚗 Drive';
@@ -193,7 +193,7 @@ export function MapView({
                     : mode === 'bicycle'
                     ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-500/20'
                     : 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
               }`}
             >
               {label}
@@ -256,7 +256,7 @@ export function MapView({
         <Marker position={[lat, lng]} icon={youIcon}>
           <Popup className="leaflet-popup-custom">
             <div className="min-w-[120px] text-center py-1">
-              <p className="font-extrabold text-sm text-gray-900">📍 You are here</p>
+              <p className="font-extrabold text-sm text-gray-900 dark:text-slate-100">📍 You are here</p>
             </div>
           </Popup>
         </Marker>
@@ -279,64 +279,64 @@ export function MapView({
             >
               <Popup className="leaflet-popup-custom" minWidth={210}>
                 <div className="space-y-1.5 py-1">
-                  <p className="font-extrabold text-sm sm:text-base text-slate-800 leading-snug flex items-center gap-1.5">
+                  <p className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-snug flex items-center gap-1.5">
                     {gig.featured_until && new Date(gig.featured_until) > new Date() && (
-                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800">★ FEATURED</span>
+                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">★ FEATURED</span>
                     )}
                     {gig.title}
                   </p>
-                  <p className="text-xs sm:text-sm font-black text-emerald-700">{gig.ngo_name}</p>
+                  <p className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">{gig.ngo_name}</p>
 
-                  <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                  <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 gap-1 border-t border-slate-100 dark:border-slate-700 pt-1.5 mt-1.5">
                     <div className="flex items-center justify-between">
                       <span>📍 Straight line:</span>
-                      <span className="text-slate-700 font-extrabold">{formatDistance(gig.distance_meters)}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{formatDistance(gig.distance_meters)}</span>
                     </div>
 
                     {activeRoute && activeRoute.gigId === gig.id ? (
                       <>
                         <div className={`flex items-center justify-between font-black ${
-                          travelMode === 'foot' ? 'text-emerald-700' : travelMode === 'bicycle' ? 'text-cyan-700' : 'text-indigo-700'
+                          travelMode === 'foot' ? 'text-emerald-700 dark:text-emerald-400' : travelMode === 'bicycle' ? 'text-cyan-700 dark:text-cyan-400' : 'text-indigo-700 dark:text-indigo-400'
                         }`}>
                           <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
                           <span>{formatDistance(activeRoute.distance)}</span>
                         </div>
-                        <div className="flex items-center justify-between text-teal-600 font-black">
+                        <div className="flex items-center justify-between text-teal-600 dark:text-teal-400 font-black">
                           <span>⏱️ Travel time:</span>
                           <span>{Math.round(activeRoute.duration / 60)} mins</span>
                         </div>
                         
                         {travelMode !== 'car' ? (
-                          <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs">
+                          <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs dark:text-emerald-400 dark:bg-emerald-900/30 dark:border-slate-700 dark:shadow-none dark:shadow-slate-900/50">
                             <span>🌱 CO2 Saved:</span>
                             <span>{calculateCo2(activeRoute.distance)}</span>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1">
+                          <div className="flex items-center justify-between text-slate-500 font-black bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/50 mt-1 dark:text-slate-400 dark:bg-slate-800/50 dark:border-slate-700/50">
                             <span>🚗 CO2 Emitted:</span>
                             <span>{calculateCo2(activeRoute.distance)}</span>
                           </div>
                         )}
                       </>
                     ) : loadingRoute ? (
-                      <div className="text-[10px] sm:text-xs text-emerald-600 animate-pulse font-extrabold py-0.5">
+                      <div className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 animate-pulse font-extrabold py-0.5">
                         Calculating road route...
                       </div>
                     ) : (
-                      <div className="text-[10px] sm:text-xs text-slate-400 font-medium italic py-0.5">
+                      <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium italic py-0.5">
                         Click marker to calculate road route
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between border-t border-slate-50 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500">
+                    <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-700 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                       <span>👥 Joined spots:</span>
-                      <span className="text-slate-700 font-extrabold">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
                     </div>
                   </div>
 
                   <Link
                     to={`/gigs/${gig.id}`}
-                    className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-center text-xs sm:text-sm font-black text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                    className="mt-2.5 block w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-center text-xs sm:text-sm font-black text-white shadow-sm dark:shadow-none dark:shadow-slate-900/50 transition-all active:scale-95 cursor-pointer"
                   >
                     View details →
                   </Link>

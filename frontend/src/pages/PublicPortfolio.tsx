@@ -46,9 +46,9 @@ export function PublicPortfolio() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white">
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-emerald-600 dark:border-t-emerald-400" />
           <p className="text-xs font-bold text-slate-400">Loading verified portfolio...</p>
         </div>
       </div>
@@ -57,10 +57,10 @@ export function PublicPortfolio() {
 
   if (!profile) {
     return (
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white">
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="text-center space-y-2">
           <span className="text-4xl select-none">🗺️</span>
-          <h2 className="text-lg font-black text-slate-700">Portfolio Not Found</h2>
+          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">Portfolio Not Found</h2>
           <p className="text-xs font-semibold text-slate-400">
             The profile link may be incorrect, or the volunteer has disabled sharing.
           </p>
@@ -84,7 +84,7 @@ export function PublicPortfolio() {
   const nextMilestonePercent = Math.min(100, (karma / level.max) * 100);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/30 via-slate-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/30 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       {/* Verified Status Banner */}
       <div className="mx-auto max-w-5xl mb-6 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3 shadow-md text-white">
         <div className="flex items-center gap-2">
@@ -104,34 +104,34 @@ export function PublicPortfolio() {
         {/* ─── Left Column: Profile Card & QR Share ─── */}
         <div className="lg:col-span-4 space-y-6">
           {/* Main Public Profile Info Card */}
-          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md text-center">
+          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50 text-center">
             {/* Avatar block */}
             <div className="flex flex-col items-center">
               <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
                 <img
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
                   alt="Profile Avatar"
-                  className="h-full w-full rounded-full object-cover bg-white"
+                  className="h-full w-full rounded-full object-cover bg-white dark:bg-slate-700"
                   loading="lazy"
                 />
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-sm shadow-md border-2 border-white select-none">
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
                   🛡️
                 </span>
               </div>
 
-              <h1 className="mt-4 text-2xl font-black text-slate-800">{profile.name}</h1>
-              <span className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-xs font-extrabold text-white shadow-xs`}>
+              <h1 className="mt-4 text-2xl font-black text-slate-800 dark:text-slate-100">{profile.name}</h1>
+              <span className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-xs font-extrabold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50`}>
                 {level.title}
               </span>
             </div>
 
             {/* Bio Section */}
             {profile.bio && (
-              <div className="mt-6 border-t border-slate-100/80 pt-5 text-left">
+              <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5 text-left">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2">
                   Biography
                 </span>
-                <p className="text-sm font-medium leading-relaxed text-slate-600 italic">
+                <p className="text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300 italic">
                   "{profile.bio}"
                 </p>
               </div>
@@ -139,7 +139,7 @@ export function PublicPortfolio() {
 
             {/* Skills Badges */}
             {profile.skills && profile.skills.length > 0 && (
-              <div className="mt-6 border-t border-slate-100/80 pt-5 text-left">
+              <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5 text-left">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-3">
                   Registered Skills
                 </span>
@@ -147,7 +147,7 @@ export function PublicPortfolio() {
                   {profile.skills.map((s) => (
                     <span
                       key={s}
-                      className="inline-flex items-center gap-1 rounded-xl bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600"
+                      className="inline-flex items-center gap-1 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300"
                     >
                       🌱 {s}
                     </span>
@@ -165,20 +165,20 @@ export function PublicPortfolio() {
           {/* Metrics Overview Grid */}
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Karma */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Karma</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
                 <span className="text-xl">✨</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-emerald-700">{profile.karma_points ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{profile.karma_points ?? 0}</p>
               {/* Level Progress */}
               <div className="mt-4">
                 <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 mb-1">
                   <span>Next Milestone</span>
                   <span>{karma}/{level.max} XP</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/50">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200/50 dark:border-slate-600/50">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${level.color} transition-all duration-500`}
                     style={{ width: `${nextMilestonePercent}%` }}
@@ -188,26 +188,26 @@ export function PublicPortfolio() {
             </div>
 
             {/* Streak */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-amber-800">Active Streak</span>
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Active Streak</span>
                 <span className="text-xl animate-float">🔥</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-amber-600">{profile.streak ?? 0} days</p>
+              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{profile.streak ?? 0} days</p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Shows active engagement and reliable daily community service.
               </p>
             </div>
 
             {/* Hours */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-800">Verified Time</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Verified Time</span>
                 <span className="text-xl">⏳</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-slate-800">{totalHours}h</p>
+              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">{totalHours}h</p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Total accumulated volunteer time verified across open NGO projects.
               </p>
@@ -215,8 +215,8 @@ export function PublicPortfolio() {
           </div>
 
           {/* Completed Gigs list */}
-          <div className="rounded-3xl border border-white/20 bg-white p-6 shadow-md">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-1.5">
+          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <span>📋</span> Volunteer History & Accomplishments
             </h2>
             <p className="text-xs font-bold text-slate-400 mt-0.5">
@@ -225,9 +225,9 @@ export function PublicPortfolio() {
 
             <div className="mt-6 space-y-4">
               {completed.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/50 p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
                   <span className="text-3xl select-none">🌱</span>
-                  <p className="mt-2 text-sm font-extrabold text-slate-600">No verified history found</p>
+                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">No verified history found</p>
                   <p className="text-xs font-medium text-slate-400 mt-1 max-w-xs mx-auto">
                     This volunteer has not logged any completed events on their public page yet.
                   </p>
@@ -247,20 +247,20 @@ export function PublicPortfolio() {
                   return (
                     <div
                       key={p.id}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl font-bold text-emerald-600 animate-float">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-xl font-bold text-emerald-600 dark:text-emerald-400 animate-float">
                           🏅
                         </span>
                         <div>
-                          <h3 className="text-sm font-extrabold text-slate-800">
+                          <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
                             <span>📅 {dateStr}</span>
                             <span className="text-slate-300">•</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified Accomplishment
                             </span>
                           </div>
@@ -268,7 +268,7 @@ export function PublicPortfolio() {
                       </div>
 
                       <div className="flex items-center justify-end">
-                        <span className="text-xs font-extrabold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/50">
+                        <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-600/50">
                           ⏱️ {p.hours ?? 0} hours contributed
                         </span>
                       </div>

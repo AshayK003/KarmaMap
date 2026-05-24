@@ -51,25 +51,25 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-tr from-emerald-50 via-white to-teal-50 px-4 py-12 relative overflow-hidden select-none">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-tr from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 px-4 py-12 relative overflow-hidden select-none">
       {/* Blurred decorative background meshes */}
-      <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-100/50 blur-3xl dark:bg-emerald-900/20 pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl dark:bg-slate-800/30 pointer-events-none" />
 
       {/* Premium Glassmorphic card container */}
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center space-y-2 mb-6">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl text-emerald-700 shadow-sm shadow-emerald-500/10">
+          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-2xl text-emerald-700 dark:text-emerald-400 shadow-sm dark:shadow-none dark:shadow-slate-900/50 shadow-emerald-500/10">
             🌱
           </span>
-          <h1 className="text-2xl font-black tracking-tight text-gray-900">Welcome Back</h1>
-          <p className="text-xs font-semibold text-gray-400">Enter your credentials to access your KarmaMap hub</p>
+          <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-slate-100">Welcome Back</h1>
+          <p className="text-xs font-semibold text-gray-400 dark:text-slate-400">Enter your credentials to access your KarmaMap hub</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Email input field */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Email Address</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                 ✉️
@@ -78,7 +78,7 @@ export function Login() {
                 {...register('email')}
                 type="email"
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
             {errors.email && (
@@ -90,7 +90,7 @@ export function Login() {
 
           {/* Password input field */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Password</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                 🔒
@@ -99,12 +99,12 @@ export function Login() {
                 {...register('password')}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-10 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                className="w-full pl-9 pr-10 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 text-sm select-none transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-sm select-none transition-colors"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
@@ -117,7 +117,7 @@ export function Login() {
           </div>
 
           {errors.root && (
-            <div className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs font-bold text-rose-600">
+            <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-100 dark:border-slate-700 px-3.5 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400">
               ⚠️ {errors.root.message}
             </div>
           )}
@@ -131,7 +131,7 @@ export function Login() {
         {/* Signup Navigation Link */}
         <p className="mt-6 text-center text-xs font-bold text-gray-400">
           New to the community?{' '}
-          <Link to="/signup" className="text-emerald-600 hover:underline hover:text-emerald-700">
+          <Link to="/signup" className="text-emerald-600 hover:underline hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
             Create an Account
           </Link>
         </p>

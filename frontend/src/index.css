@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
 @import 'leaflet/dist/leaflet.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -17,7 +18,7 @@ body,
 }
 
 body {
-  @apply bg-emerald-50 text-gray-900 antialiased;
+  @apply bg-emerald-50 text-gray-900 antialiased dark:bg-slate-900 dark:text-slate-100;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -33,6 +34,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Dark mode Leaflet popup overrides */
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+.dark .leaflet-popup-content-wrapper .leaflet-popup-custom * {
+  color: inherit;
 }
 
 @media print {

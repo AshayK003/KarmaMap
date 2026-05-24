@@ -236,6 +236,7 @@ npm run dev
 - **`@/` path alias**: configured in `tsconfig.app.json` + `vite.config.ts`
 - **Map center**: Defaults to Delhi (28.6139, 77.209); Lucknow RDSO preset (26.8193, 80.8853); zoom 13
 - **PWA**: auto-update with registration; OSM tiles cached (CacheFirst, 200 max, 30 days)
+- **Dark mode**: `ThemeContext` with `ThemeProvider` wrapping app; reads `localStorage('karmamap-theme')` with system `prefers-color-scheme` fallback; toggles `dark` class on `<html>`; Tailwind v4 `@custom-variant dark` for class-based dark mode; sun/moon toggle button in Navbar; Leaflet popup dark overrides in `index.css`; `dark:` variants applied across all pages, components, and shadcn/ui
 - **OSRM profiles**: `walking`, `cycling`, `driving`
 - **Carbon offset**: Haversine distance × 0.12 kg CO₂/km estimate
 - **Duplicate join**: Backend returns 409 `"You have already joined this gig."`

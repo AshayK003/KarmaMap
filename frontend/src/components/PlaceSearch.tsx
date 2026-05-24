@@ -69,23 +69,23 @@ export function PlaceSearch({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="text-xs font-medium text-gray-600">Search location</label>
+      <label className="text-xs font-medium text-gray-600 dark:text-slate-300">Search location</label>
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        className="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         autoComplete="off"
       />
       {loading && (
-        <p className="mt-1 text-xs text-gray-400">Searching…</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Searching…</p>
       )}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       {open && results.length > 0 && (
         <ul
-          className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:shadow-slate-900/50"
           role="listbox"
         >
           {results.map((place) => (
@@ -94,7 +94,7 @@ export function PlaceSearch({
                 type="button"
                 role="option"
                 onClick={() => handleSelect(place)}
-                className="w-full px-3 py-3 text-left text-sm text-gray-800 hover:bg-emerald-50 border-b border-slate-50 last:border-0"
+                className="w-full px-3 py-3 text-left text-sm text-gray-800 hover:bg-emerald-50 border-b border-slate-50 last:border-0 dark:text-slate-100 dark:hover:bg-emerald-900/30 dark:border-slate-700"
               >
                 {place.label}
               </button>
@@ -102,7 +102,7 @@ export function PlaceSearch({
           ))}
         </ul>
       )}
-      <p className="mt-1 text-[10px] sm:text-xs text-gray-400">
+      <p className="mt-1 text-[10px] sm:text-xs text-gray-400 dark:text-slate-500">
         Powered by OpenStreetMap (Photon) · type 3+ letters
       </p>
     </div>

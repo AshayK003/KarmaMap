@@ -21,7 +21,7 @@ const RADIUS_OPTIONS = [
 
 function GigCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
+    <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
       <div className="flex items-start justify-between gap-2">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-14 shrink-0" />
@@ -103,19 +103,19 @@ export function VolunteerMap() {
   }, [loadGigs, geoLoading, source]);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/40 to-white">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
       {/* ── Page Header ── */}
-      <div className="border-b border-emerald-100/60 bg-white/80 backdrop-blur-sm px-4 py-4">
+      <div className="border-b border-emerald-100/60 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-4 py-4">
         <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-gray-900 flex items-center gap-1.5">
+            <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-slate-100 flex items-center gap-1.5">
               Discover Opportunities
-              <svg className="h-5 w-5 text-emerald-600 animate-float" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 text-emerald-600 dark:text-emerald-400 animate-float" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </h1>
-            <p className="text-xs font-semibold text-gray-400 mt-0.5">
+            <p className="text-xs font-semibold text-gray-400 dark:text-slate-400 mt-0.5">
               Find volunteer gigs near you and make an impact today
             </p>
           </div>
@@ -171,7 +171,7 @@ export function VolunteerMap() {
 
             {/* Radius pills */}
             <Card className="p-4">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-3">Search Radius</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-3">Search Radius</p>
               <div className="flex flex-wrap gap-2">
                 {RADIUS_OPTIONS.map((opt) => (
                   <Button
@@ -188,7 +188,7 @@ export function VolunteerMap() {
 
             {/* Sort mode */}
             <Card className="p-4">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-3">Sort By</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-3">Sort By</p>
               <div className="flex gap-2">
                 <Button
                   variant={sortMode === 'nearest' ? 'default' : 'outline'}
@@ -208,7 +208,7 @@ export function VolunteerMap() {
                 </Button>
               </div>
               {sortMode === 'best_match' && profile?.skills && profile.skills.length > 0 && (
-                <p className="text-[10px] font-bold text-emerald-600 mt-2">
+                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-2">
                   Sorted by skill relevance
                 </p>
               )}
@@ -217,9 +217,9 @@ export function VolunteerMap() {
             {/* Gig list in sidebar */}
             <div className="space-y-3">
               <div className="flex items-center justify-between px-0.5">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-gray-400">Nearby Opportunities</h2>
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400">Nearby Opportunities</h2>
                 {!loading && sortedGigs.length > 0 && (
-                  <span className="text-[10px] font-bold text-gray-400">{sortedGigs.length} results</span>
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400">{sortedGigs.length} results</span>
                 )}
               </div>
 
@@ -230,21 +230,21 @@ export function VolunteerMap() {
                   <GigCardSkeleton />
                 </>
               ) : loadError ? (
-                <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-xs font-bold text-rose-700 flex items-center gap-2">
+                <div className="rounded-2xl border border-rose-100 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-900/30 p-4 text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-2">
                   <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   {loadError}
                 </div>
               ) : sortedGigs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-5 text-center space-y-2 flex flex-col items-center">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                <div className="rounded-2xl border border-dashed border-amber-200 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-900/30 p-5 text-center space-y-2 flex flex-col items-center">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                   </span>
-                  <p className="text-sm font-extrabold text-amber-900 mt-1">No open gigs nearby</p>
-                  <ul className="text-xs font-semibold text-amber-700 text-left space-y-1.5 mt-2">
+                  <p className="text-sm font-extrabold text-amber-900 dark:text-amber-200 mt-1">No open gigs nearby</p>
+                  <ul className="text-xs font-semibold text-amber-700 dark:text-amber-300 text-left space-y-1.5 mt-2">
                     <li className="flex items-start gap-1.5"><span>→</span> Try a larger radius (50–100 km)</li>
                     <li className="flex items-start gap-1.5"><span>→</span> Use GPS or pick a different area</li>
                     <li className="flex items-start gap-1.5"><span>→</span> NGOs may not have posted gigs yet</li>

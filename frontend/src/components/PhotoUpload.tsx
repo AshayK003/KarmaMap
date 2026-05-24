@@ -51,7 +51,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label className="text-sm font-medium text-gray-700 dark:text-slate-200">{label}</label>
       <button
         type="button"
         onClick={() => {
@@ -73,25 +73,25 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
 
       <div className="flex items-center gap-2 min-h-[20px]">
         {status === 'compressing' && (
-          <span className="flex items-center gap-1.5 text-xs text-amber-600">
+          <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
             Compressing image…
           </span>
         )}
         {status === 'uploading' && (
-          <span className="flex items-center gap-1.5 text-xs text-blue-600">
+          <span className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
             <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
             Uploading…
           </span>
         )}
         {status === 'done' && (
-          <span className="text-xs font-medium text-emerald-600">Photo uploaded ✓</span>
+          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Photo uploaded ✓</span>
         )}
         {status === 'error' && (
-          <span className="text-xs font-medium text-red-600">{errorMessage ?? 'Upload failed — tap to retry'}</span>
+          <span className="text-xs font-medium text-red-600 dark:text-red-400">{errorMessage ?? 'Upload failed — tap to retry'}</span>
         )}
         {status === 'idle' && (
-          <span className="text-xs text-gray-500">{STATUS_LABELS.idle}</span>
+          <span className="text-xs text-gray-500 dark:text-slate-400">{STATUS_LABELS.idle}</span>
         )}
       </div>
 

@@ -65,58 +65,58 @@ export function Signup() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-tr from-emerald-50 via-white to-teal-50 px-4 py-12 relative overflow-hidden select-none">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-tr from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 px-4 py-12 relative overflow-hidden select-none">
       {/* Blurred decorative background meshes */}
-      <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-100/50 blur-3xl dark:bg-emerald-900/20 pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-teal-100/50 blur-3xl dark:bg-slate-800/30 pointer-events-none" />
 
       {/* Premium Glassmorphic card container */}
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center space-y-2 mb-6">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl text-emerald-700 shadow-sm shadow-emerald-500/10">
+          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-2xl text-emerald-700 dark:text-emerald-400 shadow-sm dark:shadow-none dark:shadow-slate-900/50 shadow-emerald-500/10">
             🌱
           </span>
-          <h1 className="text-2xl font-black tracking-tight text-gray-900">Create Account</h1>
-          <p className="text-xs font-semibold text-gray-400">Join KarmaMap to start making a real community impact</p>
+          <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-slate-100">Create Account</h1>
+          <p className="text-xs font-semibold text-gray-400 dark:text-slate-400">Join KarmaMap to start making a real community impact</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Beautiful Segmented Role Toggles */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">I am joining as a</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider block">I am joining as a</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleRoleSelect('volunteer')}
                 className={`flex flex-col items-center justify-center p-3.5 rounded-xl border-2 text-center transition-all duration-200 select-none ${
                   role === 'volunteer'
-                    ? 'border-emerald-600 bg-emerald-50/50 text-emerald-800 shadow-2xs'
-                    : 'border-slate-100 bg-slate-50/30 text-slate-500 hover:bg-slate-100/50 hover:border-slate-200'
+                    ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 shadow-2xs dark:shadow-none dark:shadow-slate-900/50'
+                    : 'border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600'
                 }`}
               >
                 <span className="text-xl mb-1">🤝</span>
                 <span className="text-xs font-extrabold">Volunteer</span>
-                <span className="text-[10px] font-bold text-gray-400 mt-0.5 leading-tight">Help out & earn points</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 mt-0.5 leading-tight">Help out & earn points</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleRoleSelect('ngo')}
                 className={`flex flex-col items-center justify-center p-3.5 rounded-xl border-2 text-center transition-all duration-200 select-none ${
                   role === 'ngo'
-                    ? 'border-emerald-600 bg-emerald-50/50 text-emerald-800 shadow-2xs'
-                    : 'border-slate-100 bg-slate-50/30 text-slate-500 hover:bg-slate-100/50 hover:border-slate-200'
+                    ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 shadow-2xs dark:shadow-none dark:shadow-slate-900/50'
+                    : 'border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600'
                 }`}
               >
                 <span className="text-xl mb-1">🏢</span>
                 <span className="text-xs font-extrabold">NGO / Cause</span>
-                <span className="text-[10px] font-bold text-gray-400 mt-0.5 leading-tight">Post gigs & find help</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 mt-0.5 leading-tight">Post gigs & find help</span>
               </button>
             </div>
           </div>
 
           {/* Full Name input field */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Full Name</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider block">Full Name</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                 👤
@@ -125,7 +125,7 @@ export function Signup() {
                 {...register('name')}
                 type="text"
                 placeholder="John Doe"
-                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
             {errors.name && (
@@ -137,7 +137,7 @@ export function Signup() {
 
           {/* Email input field */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Email Address</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider block">Email Address</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                 ✉️
@@ -146,7 +146,7 @@ export function Signup() {
                 {...register('email')}
                 type="email"
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
             {errors.email && (
@@ -158,7 +158,7 @@ export function Signup() {
 
           {/* Password input field */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Password</label>
+            <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider block">Password</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                 🔒
@@ -167,12 +167,12 @@ export function Signup() {
                 {...register('password')}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-10 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                className="w-full pl-9 pr-10 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 text-sm select-none transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-sm select-none transition-colors"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
@@ -187,7 +187,7 @@ export function Signup() {
           {/* Skills input field - dynamically displayed for Volunteers */}
           {role === 'volunteer' && (
             <div className="space-y-1 animate-fade-in">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Skills (comma-separated)</label>
+              <label className="text-xs font-bold text-gray-500 dark:text-slate-300 uppercase tracking-wider block">Skills (comma-separated)</label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 select-none text-sm">
                   💡
@@ -195,14 +195,14 @@ export function Signup() {
                 <input
                   {...register('skills')}
                   placeholder="teaching, gardening, first-aid"
-                  className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/30 text-gray-800 placeholder-gray-400 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                  className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           {errors.root && (
-            <div className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs font-bold text-rose-600">
+            <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-100 dark:border-slate-700 px-3.5 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400">
               ⚠️ {errors.root.message}
             </div>
           )}
@@ -216,7 +216,7 @@ export function Signup() {
         {/* Login Navigation Link */}
         <p className="mt-6 text-center text-xs font-bold text-gray-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-emerald-600 hover:underline hover:text-emerald-700">
+          <Link to="/login" className="text-emerald-600 hover:underline hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
             Login here
           </Link>
         </p>

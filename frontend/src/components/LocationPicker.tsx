@@ -35,17 +35,17 @@ export function LocationPicker({
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-white/30 backdrop-blur-lg border-white/20 shadow-lg backdrop-filter">
+    <div className="p-4 border rounded-lg bg-white/30 backdrop-blur-lg border-white/20 shadow-lg dark:bg-slate-800/30 dark:border-slate-700/50 dark:shadow-none dark:shadow-slate-900/50 backdrop-filter">
       <h2 className="text-lg font-bold mb-2">Location Picker</h2>
       {placeLabel && source === 'search' ? (
-        <p className="mt-1 text-xs text-gray-700">{placeLabel}</p>
+        <p className="mt-1 text-xs text-gray-700 dark:text-slate-200">{placeLabel}</p>
       ) : null}
-      <p className="mt-1 text-xs text-gray-500">
+      <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
         {lat.toFixed(5)}, {lng.toFixed(5)}{' '}
-        <span className="text-emerald-600">({source})</span>
+        <span className="text-emerald-600 dark:text-emerald-400">({source})</span>
       </p>
       {geoError && source === 'gps' && (
-        <p className="mt-1 text-xs text-amber-600">GPS: {geoError}</p>
+        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">GPS: {geoError}</p>
       )}
 
       <div className="mt-3">
@@ -58,21 +58,21 @@ export function LocationPicker({
         <button
           type="button"
           onClick={onUseGps}
-          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-slate-700 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
         >
           Use GPS
         </button>
         <button
           type="button"
           onClick={() => onPreset(PRESET_LUCKNOW_RDSO)}
-          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+          className="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-slate-700 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
         >
           {PRESET_LUCKNOW_RDSO.label}
         </button>
       </div>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-xs font-medium text-gray-600 py-1">
+        <summary className="cursor-pointer text-xs font-medium text-gray-600 dark:text-slate-300 py-1">
           Manual coordinates
         </summary>
         <form
@@ -83,7 +83,7 @@ export function LocationPicker({
           }}
         >
           <div>
-            <label className="text-xs text-gray-500">Latitude</label>
+            <label className="text-xs text-gray-500 dark:text-slate-400">Latitude</label>
             <input
               name="manual_lat"
               type="number"
@@ -94,7 +94,7 @@ export function LocationPicker({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500">Longitude</label>
+            <label className="text-xs text-gray-500 dark:text-slate-400">Longitude</label>
             <input
               name="manual_lng"
               type="number"
@@ -106,14 +106,14 @@ export function LocationPicker({
           </div>
           <button
             type="submit"
-            className="col-span-2 rounded-lg bg-emerald-100 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-200"
+            className="col-span-2 rounded-lg bg-emerald-100 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
           >
             Apply coordinates
           </button>
         </form>
       </details>
 
-      <p className="mt-2 text-xs text-gray-400">{mapHint}</p>
+      <p className="mt-2 text-xs text-gray-400 dark:text-slate-500">{mapHint}</p>
     </div>
   );
 }

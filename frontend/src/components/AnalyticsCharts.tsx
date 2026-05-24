@@ -39,23 +39,34 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
   if (!data.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm font-medium text-gray-400">No active gig analytics recorded yet.</p>
-        <p className="text-xs text-gray-300 mt-1">Publish new volunteer gigs to see real-time interaction metrics.</p>
+        <p className="text-sm font-medium text-gray-400 dark:text-slate-400">No active gig analytics recorded yet.</p>
+        <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">Publish new volunteer gigs to see real-time interaction metrics.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end gap-1.5 border-b border-gray-50 pb-3">
-        <span className="text-xs font-semibold text-gray-400 mr-auto uppercase tracking-wider">Visual mode</span>
+      <div className="flex items-center justify-end gap-1.5 border-b border-gray-50 dark:border-slate-700 pb-3">
+        <span className="text-xs font-semibold text-gray-400 dark:text-slate-400 mr-auto uppercase tracking-wider">Visual mode</span>
         <button
           type="button"
           onClick={() => setChartType('bar')}
           className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
             chartType === 'bar'
               ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+          }`}
+        >
+          Bar View
+        </button>
+        <button
+          type="button"
+          onClick={() => setChartType('area')}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
+            chartType === 'area'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
           }`}
         >
           Bar View

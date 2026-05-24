@@ -38,7 +38,7 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
   const isFeatured = gig.featured_until && new Date(gig.featured_until) > new Date();
 
   return (
-    <article className="group relative flex flex-col rounded-2xl border border-emerald-50/50 bg-white p-5 shadow-xs hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-950/3 hover:border-emerald-100/80 transition-all duration-300 ease-out overflow-hidden">
+    <article className="group relative flex flex-col rounded-2xl border border-emerald-50/50 bg-white p-5 shadow-xs hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-950/3 hover:border-emerald-100/80 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:shadow-slate-900/50 dark:hover:border-slate-600 dark:hover:shadow-none dark:hover:shadow-slate-900/50 transition-all duration-300 ease-out overflow-hidden">
       {/* Featured ribbon */}
       {isFeatured && (
         <div className="absolute top-3 right-0 z-10">
@@ -51,26 +51,26 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
         </div>
       )}
       {/* Subtle top accent line — color shifts with skill match */}
-      <div className={`absolute top-0 left-0 h-[3px] w-full ${isFeatured ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : overlap >= 75 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : overlap >= 40 ? 'bg-gradient-to-r from-amber-400 to-orange-300' : 'bg-gradient-to-r from-slate-200 to-slate-300'}`} />
+      <div className={`absolute top-0 left-0 h-[3px] w-full ${isFeatured ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : overlap >= 75 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : overlap >= 40 ? 'bg-gradient-to-r from-amber-400 to-orange-300' : 'bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-500'}`} />
 
       {/* Header: title + distance */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-extrabold text-slate-800 leading-snug group-hover:text-emerald-900 transition-colors line-clamp-2 flex-1">
+        <h3 className="font-extrabold text-slate-800 dark:text-slate-100 leading-snug group-hover:text-emerald-900 transition-colors line-clamp-2 flex-1">
           {gig.title}
         </h3>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <Badge variant="secondary" className="text-[10px] sm:text-xs px-2.5 py-0.5">{formatDistance(gig.distance_meters)}</Badge>
-          <span className="text-[10px] sm:text-xs font-black text-emerald-600 tracking-wide uppercase select-none">
+          <span className="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 tracking-wide uppercase select-none">
             {travelTime}
           </span>
         </div>
       </div>
 
       {/* NGO name */}
-      <p className="mt-1.5 text-xs sm:text-sm font-black text-emerald-700 opacity-90">{gig.ngo_name}</p>
+      <p className="mt-1.5 text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400 opacity-90">{gig.ngo_name}</p>
 
       {/* Description */}
-      <p className="mt-2 line-clamp-2 text-xs sm:text-sm font-semibold text-slate-400 leading-relaxed flex-1">
+      <p className="mt-2 line-clamp-2 text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500 leading-relaxed flex-1">
         {gig.description}
       </p>
 
@@ -98,11 +98,11 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
       {/* Volunteer spots progress bar */}
       <div className="mt-4.5 space-y-1.5">
         <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold">
-          <span className="text-slate-400">Spots filled</span>
-          <span className="text-slate-600 font-extrabold">
+          <span className="text-slate-400 dark:text-slate-500">Spots filled</span>
+          <span className="text-slate-600 font-extrabold dark:text-slate-300">
             {gig.volunteers_joined}/{gig.volunteers_needed}
             {spotsLeft > 0 && (
-              <span className="ml-1 text-emerald-600 font-black">· {spotsLeft} left</span>
+              <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-black">· {spotsLeft} left</span>
             )}
           </span>
         </div>
@@ -110,7 +110,7 @@ export function GigCard({ gig, volunteerSkills = [] }: GigCardProps) {
       </div>
 
       {/* Footer: skill match + CTA */}
-      <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-50 pt-3">
+      <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-50 dark:border-slate-700 pt-3">
         <SkillMatchBadge overlap={overlap} />
         <Link to={`/gigs/${gig.id}`}>
           <Button size="sm">View details</Button>

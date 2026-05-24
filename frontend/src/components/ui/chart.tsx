@@ -71,9 +71,9 @@ export function ChartTooltipContent({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-xl border border-emerald-50 bg-white/95 p-3 shadow-lg backdrop-blur-xs select-none">
+    <div className="rounded-xl border border-emerald-50 bg-white/95 p-3 shadow-lg backdrop-blur-xs select-none dark:border-slate-700 dark:bg-slate-800/95">
       {!hideLabel && label && (
-        <p className="text-xs font-bold text-gray-800 mb-1.5">{label}</p>
+        <p className="text-xs font-bold text-gray-800 dark:text-slate-200 mb-1.5">{label}</p>
       )}
       <div className="space-y-1">
         {payload.map((entry, i) => {
@@ -87,9 +87,9 @@ export function ChartTooltipContent({
                 ) : (
                   <span className="h-3 w-0.5 rounded-full" style={{ backgroundColor: color }} />
                 )}
-                <span className="text-gray-500">{cfg?.label ?? entry.name}</span>
+                <span className="text-gray-500 dark:text-slate-400">{cfg?.label ?? entry.name}</span>
               </div>
-              <span className="text-gray-950 font-bold">{entry.value}</span>
+              <span className="text-gray-950 dark:text-slate-100 font-bold">{entry.value}</span>
             </div>
           );
         })}
@@ -114,7 +114,7 @@ export function ChartLegendContent({ payload }: ChartLegendContentProps) {
         const cfg = config[entry.value];
         const color = entry.color ?? cfg?.color ?? '#059669';
         return (
-          <div key={i} className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+          <div key={i} className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400">
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
             {cfg?.label ?? entry.value}
           </div>

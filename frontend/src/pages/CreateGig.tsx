@@ -28,7 +28,7 @@ type FormData = z.infer<typeof schema>;
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="mt-1.5 text-xs font-bold text-rose-600">{message}</p>;
+  return <p className="mt-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">{message}</p>;
 }
 
 export function CreateGig() {
@@ -87,8 +87,8 @@ export function CreateGig() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* ── Page Header ── */}
-      <div className="mb-8 border-b border-emerald-100/60 pb-6">
-        <h1 className="text-3xl font-black tracking-tight text-slate-800">
+      <div className="mb-8 border-b border-emerald-100/60 dark:border-slate-700 pb-6">
+        <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100">
           Create Volunteer Opportunity
         </h1>
         <p className="text-sm font-semibold text-slate-400 mt-1">
@@ -101,7 +101,7 @@ export function CreateGig() {
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-[76px]">
           <Card className="p-5 space-y-4">
             <div>
-              <h2 className="text-base font-black text-slate-800">Geospatial Center</h2>
+              <h2 className="text-base font-black text-slate-800 dark:text-slate-100">Geospatial Center</h2>
               <p className="text-[11px] font-bold text-slate-400 mt-0.5">
                 Volunteers within search range of this coordinate will see this opportunity.
               </p>
@@ -148,7 +148,7 @@ export function CreateGig() {
           <Card className="p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             <div>
-              <h2 className="text-base font-black text-slate-800">Opportunity Details</h2>
+              <h2 className="text-base font-black text-slate-800 dark:text-slate-100">Opportunity Details</h2>
               <p className="text-[11px] font-bold text-slate-400 mt-0.5">
                 Describe the role and target skillsets required for the event.
               </p>
@@ -163,7 +163,7 @@ export function CreateGig() {
                 {...register('title')}
                 type="text"
                 placeholder="e.g. Community Garden Planting Day"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
               />
               <FieldError message={errors.title?.message} />
             </div>
@@ -177,7 +177,7 @@ export function CreateGig() {
                 {...register('description')}
                 rows={5}
                 placeholder="Detail what volunteers will do, requirements, meeting spots and other essential guidelines..."
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
               />
               <FieldError message={errors.description?.message} />
             </div>
@@ -191,7 +191,7 @@ export function CreateGig() {
                 {...register('required_skills')}
                 type="text"
                 placeholder="e.g. cleanup, botany, teaching (comma separated)"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
               />
               <FieldError message={errors.required_skills?.message} />
               <p className="mt-1.5 text-[10px] font-bold text-slate-400 leading-normal">
@@ -212,7 +212,7 @@ export function CreateGig() {
                   min={1}
                   max={500}
                   step={1}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                   onWheel={(e) => e.currentTarget.blur()}
                 />
                 <FieldError message={errors.volunteers_needed?.message} />
@@ -261,7 +261,7 @@ export function CreateGig() {
             </div>
 
             {errors.root && (
-              <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-xs font-bold text-rose-700">
+              <div className="rounded-2xl border border-rose-100 dark:border-slate-700 bg-rose-50 dark:bg-rose-900/30 p-4 text-xs font-bold text-rose-700 dark:text-rose-300">
                 ⚠️ {errors.root.message}
               </div>
             )}

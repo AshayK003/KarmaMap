@@ -65,14 +65,14 @@ export function NgoDashboard() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 print:p-8">
       {/* 1. Stunning Hero Welcome Banner */}
       <Card className="no-print relative overflow-hidden p-6">
-        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-emerald-100/40 blur-3xl pointer-events-none select-none" />
+        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-emerald-100/40 blur-3xl dark:bg-emerald-900/20 pointer-events-none select-none" />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
             <Avatar size="lg" alt={profile?.name ?? 'NGO'} />
 
             <div className="space-y-0.5">
-              <h1 className="text-2xl font-black tracking-tight text-slate-800">
+              <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
                 Welcome back, {profile?.name || 'NGO'}
               </h1>
               <p className="text-xs font-bold text-slate-400">
@@ -92,9 +92,9 @@ export function NgoDashboard() {
       </Card>
 
       {/* Print-only simple header to save ink and look professional */}
-      <div className="print-only hidden border-b border-gray-200 pb-4">
-        <h1 className="text-3xl font-bold text-emerald-800">{profile?.name || 'NGO'} Impact Summary</h1>
-        <p className="text-sm text-gray-500">Generated on {new Date().toLocaleDateString()}</p>
+      <div className="print-only hidden border-b border-gray-200 dark:border-slate-700 pb-4">
+        <h1 className="text-3xl font-bold text-emerald-800 dark:text-emerald-400">{profile?.name || 'NGO'} Impact Summary</h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Generated on {new Date().toLocaleDateString()}</p>
       </div>
 
       {/* 2. Premium Analytics Grid */}
@@ -135,8 +135,8 @@ export function NgoDashboard() {
       </div>
 
       {/* 3. Analytics Chart Section */}
-      <div className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-md">
-        <h2 className="text-base font-black tracking-tight text-slate-800 mb-4 select-none">
+      <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+        <h2 className="text-base font-black tracking-tight text-slate-800 dark:text-slate-100 mb-4 select-none">
           Volunteer and Completion Analytics
         </h2>
         <AnalyticsCharts data={analytics?.chart_data ?? []} />
@@ -145,9 +145,9 @@ export function NgoDashboard() {
       {/* 4. Gig Management Shell */}
       <div className="no-print space-y-4">
         {/* Search & Categories toolbar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
           <div className="space-y-0.5">
-            <h2 className="text-lg font-black tracking-tight text-slate-800">
+            <h2 className="text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
               Manage Opportunities
             </h2>
             <p className="text-xs font-semibold text-slate-400">
@@ -168,13 +168,13 @@ export function NgoDashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by title or skills..."
-                className="w-full pl-9 pr-8 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 transition-all focus:border-emerald-500 focus:bg-white focus:outline-hidden"
+                className="w-full pl-9 pr-8 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 font-black text-xs cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-300 font-black text-xs cursor-pointer"
                 >
                   ✕
                 </button>
@@ -196,13 +196,13 @@ export function NgoDashboard() {
 
         {/* 5. Gigs List Display */}
         {filteredGigs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/40 p-12 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 mb-3">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/40 dark:bg-slate-800/40 p-12 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-700 text-slate-400 mb-3">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </span>
-            <h3 className="text-sm font-black text-slate-700">No gigs matched</h3>
+            <h3 className="text-sm font-black text-slate-700 dark:text-slate-200">No gigs matched</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed font-semibold">
               {searchQuery || filter !== 'all'
                 ? "We couldn't find any opportunities matching your active query or category filter. Try clearing your filters!"

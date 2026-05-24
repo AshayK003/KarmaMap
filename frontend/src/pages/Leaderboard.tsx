@@ -38,7 +38,7 @@ export function Leaderboard() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-black tracking-tight text-slate-800 flex items-center gap-2">
+        <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
           Volunteer Leaderboard
         </h1>
         <p className="text-sm font-semibold text-slate-400 mt-1">
@@ -49,12 +49,12 @@ export function Leaderboard() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-2xl bg-slate-100 animate-pulse" />
+            <div key={i} className="h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
           ))}
         </div>
       ) : volunteers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center">
-          <p className="text-sm font-extrabold text-slate-600">No volunteers ranked yet</p>
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 p-8 text-center">
+          <p className="text-sm font-extrabold text-slate-600 dark:text-slate-300">No volunteers ranked yet</p>
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-5">
@@ -64,8 +64,8 @@ export function Leaderboard() {
               return (
                 <div
                   key={v.name + i}
-                  className={`flex items-center gap-4 rounded-2xl border p-4 shadow-xs transition-all hover:shadow-md ${
-                    isTop3 ? 'bg-white border-emerald-200' : 'bg-white border-slate-100'
+                  className={`flex items-center gap-4 rounded-2xl border p-4 shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-all hover:shadow-md ${
+                    isTop3 ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-slate-700' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
                   }`}
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-black">
@@ -77,12 +77,12 @@ export function Leaderboard() {
                   </span>
                   <Avatar alt={v.name} size="md" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-extrabold text-slate-800 truncate">{v.name}</p>
+                    <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">{v.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Badge variant="default" className="text-[10px] px-2 py-0.5">
                         ✨ {v.karma_points} Karma
                       </Badge>
-                      <span className="text-[10px] font-bold text-amber-600">🔥 {v.streak} day streak</span>
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">🔥 {v.streak} day streak</span>
                     </div>
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export function Leaderboard() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="sticky top-24 rounded-2xl border border-slate-100 bg-white p-5 shadow-xs">
+            <div className="sticky top-24 rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-4">Top 10 by Karma</h2>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>

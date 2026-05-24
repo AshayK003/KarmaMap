@@ -212,9 +212,9 @@ export function VolunteerPortfolio() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* ── Page Header ── */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-emerald-100/60 pb-6">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-emerald-100/60 dark:border-slate-700 pb-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-800 flex items-center gap-2">
+          <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
             Volunteer Portfolio <span className="text-2xl animate-float">✨</span>
           </h1>
           <p className="text-sm font-semibold text-slate-400 mt-1">
@@ -223,14 +223,14 @@ export function VolunteerPortfolio() {
         </div>
 
         {/* Public Share Panel */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 border border-slate-100 rounded-2xl p-2 shadow-xs backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl p-2 shadow-xs dark:shadow-none dark:shadow-slate-900/50 backdrop-blur-sm">
           {!shareUrl ? (
             <Button onClick={enableSharing}>
               🌐 Generate Public Page
             </Button>
           ) : (
             <>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 select-all overflow-hidden max-w-[240px] truncate">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 select-all overflow-hidden max-w-[240px] truncate">
                 <span>🔗</span> {shareUrl}
               </div>
               <div className="flex gap-1.5">
@@ -258,7 +258,7 @@ export function VolunteerPortfolio() {
         {/* ─── Left Sidebar: Profile Details ─── */}
         <div className="lg:col-span-4 space-y-6">
           {/* Main profile glass card */}
-          <div className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-6 shadow-md">
+          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
             <div className="flex flex-col items-center text-center">
               {/* Profile Avatar Glow ring */}
               <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
@@ -266,26 +266,26 @@ export function VolunteerPortfolio() {
                   size="xl"
                   alt={profile?.name ?? 'VM'}
                 />
-                <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-sm shadow-md border-2 border-white select-none">
+                <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
                   🛡️
                 </span>
               </div>
 
-              <h2 className="mt-4 text-xl font-black text-slate-800">{profile?.name}</h2>
+              <h2 className="mt-4 text-xl font-black text-slate-800 dark:text-slate-100">{profile?.name}</h2>
               <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-3.5 py-1 text-xs font-extrabold text-white shadow-xs`}>
                 {level.title}
               </span>
             </div>
 
             {/* Inline Bio Section */}
-            <div className="mt-6 border-t border-slate-100/80 pt-5">
+            <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Personal Bio</span>
                 {!isEditingBio ? (
                   <button
                     type="button"
                     onClick={() => setIsEditingBio(true)}
-                    className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                    className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
                   >
                     ✏️ Edit
                   </button>
@@ -293,7 +293,7 @@ export function VolunteerPortfolio() {
               </div>
 
               {!isEditingBio ? (
-                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 italic">
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300 italic">
                   {profile?.bio || 'Add a helpful bio to showcase your story, motivations and volunteer aspirations…'}
                 </p>
               ) : (
@@ -304,7 +304,7 @@ export function VolunteerPortfolio() {
                     onChange={(e) => setBioInput(e.target.value)}
                     maxLength={200}
                     placeholder="Tell us why you love volunteering..."
-                    className="w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                   />
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
                     <span>{bioInput.length}/200 chars</span>
@@ -312,7 +312,7 @@ export function VolunteerPortfolio() {
                       <button
                         type="button"
                         onClick={() => setIsEditingBio(false)}
-                        className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-slate-600 transition-colors cursor-pointer"
+                        className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 px-2.5 py-1.5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -320,7 +320,7 @@ export function VolunteerPortfolio() {
                         type="button"
                         onClick={handleSaveBio}
                         disabled={saveLoading}
-                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {saveLoading ? 'Saving...' : 'Save'}
                       </button>
@@ -331,7 +331,7 @@ export function VolunteerPortfolio() {
             </div>
 
             {/* Skills Badges */}
-            <div className="mt-6 border-t border-slate-100/80 pt-5">
+            <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
                   Expertise & Skills
@@ -340,7 +340,7 @@ export function VolunteerPortfolio() {
                   <button
                     type="button"
                     onClick={handleEditSkills}
-                    className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                    className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
                   >
                     ✏️ Edit
                   </button>
@@ -351,7 +351,7 @@ export function VolunteerPortfolio() {
                 profile?.skills && profile.skills.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {profile.skills.map((s) => (
-                      <Badge key={s} variant="secondary" className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                      <Badge key={s} variant="secondary" className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
                         🌱 {s}
                       </Badge>
                     ))}
@@ -365,13 +365,13 @@ export function VolunteerPortfolio() {
                     {workingSkills.map((s, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 group"
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 group"
                       >
                         🌱 {s}
                         <button
                           type="button"
                           onClick={() => handleRemoveSkill(i)}
-                          className="ml-0.5 rounded-full p-0.5 text-emerald-400 hover:bg-emerald-200 hover:text-emerald-700 transition-colors cursor-pointer"
+                          className="ml-0.5 rounded-full p-0.5 text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-700 hover:text-emerald-700 dark:hover:text-emerald-200 transition-colors cursor-pointer"
                         >
                           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
@@ -387,13 +387,13 @@ export function VolunteerPortfolio() {
                       onChange={(e) => setNewSkill(e.target.value)}
                       onKeyDown={handleSkillKeyDown}
                       placeholder="Type a skill and press Enter"
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                      className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                     />
                     <button
                       type="button"
                       onClick={handleAddSkill}
                       disabled={!newSkill.trim()}
-                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40"
+                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-bold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-colors cursor-pointer disabled:opacity-40"
                     >
                       Add
                     </button>
@@ -402,7 +402,7 @@ export function VolunteerPortfolio() {
                     <button
                       type="button"
                       onClick={() => setIsEditingSkills(false)}
-                      className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-600 transition-colors cursor-pointer"
+                      className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -410,7 +410,7 @@ export function VolunteerPortfolio() {
                       type="button"
                       onClick={handleSaveSkills}
                       disabled={saveLoading}
-                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {saveLoading ? 'Saving...' : 'Save'}
                     </button>
@@ -426,13 +426,13 @@ export function VolunteerPortfolio() {
           {/* Stats Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Karma Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Karma</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
                 <span className="text-xl">✨</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-emerald-700">{profile?.karma_points ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{profile?.karma_points ?? 0}</p>
               {/* Level Progress */}
               <div className="mt-4">
                 <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 mb-1">
@@ -447,13 +447,13 @@ export function VolunteerPortfolio() {
             </div>
 
             {/* Streak Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-amber-800">Day Streak</span>
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Day Streak</span>
                 <span className="text-xl animate-float">🔥</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-amber-600">{profile?.streak ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{profile?.streak ?? 0}</p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 {profile?.streak && profile.streak > 0
                   ? 'Awesome momentum! Keep making an impact to extend your streak.'
@@ -462,13 +462,13 @@ export function VolunteerPortfolio() {
             </div>
 
             {/* Hours Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-800">Dedicated Hours</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Dedicated Hours</span>
                 <span className="text-xl">⏳</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-slate-800">{totalHours}h</p>
+              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">{totalHours}h</p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 {totalHours > 0
                   ? `Incredible contribution! You spent ${totalHours} hours serving local NGOs.`
@@ -477,17 +477,17 @@ export function VolunteerPortfolio() {
             </div>
 
             {/* Eco-Hero Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-emerald-50/25 backdrop-blur-md p-5 shadow-xs">
+            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-emerald-50/25 dark:bg-emerald-900/20 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/25 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Eco-Savings</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Eco-Savings</span>
                 <span className="text-xl animate-bounce">🌳</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-emerald-700">
+              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
                 {co2SavedKg >= 1 ? `${co2SavedKg.toFixed(2)} kg` : `${Math.round(co2SavedKg * 1000)} g`}
               </p>
               <div className="mt-4">
-                <div className="flex justify-between text-[9px] font-black uppercase text-emerald-600 mb-1">
+                <div className="flex justify-between text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 mb-1">
                   <span>Carbon Offset</span>
                   <span>{treesPlanted.toFixed(2)} Trees Eq.</span>
                 </div>
@@ -500,8 +500,8 @@ export function VolunteerPortfolio() {
           </div>
 
           {/* Completed Gigs List / Timeline */}
-          <div className="rounded-3xl border border-white/20 bg-white/70 backdrop-blur-md p-6 shadow-md">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-1.5">
+          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <span>📋</span> Completed Gigs & Achievements
             </h2>
             <p className="text-xs font-bold text-slate-400 mt-0.5">
@@ -510,9 +510,9 @@ export function VolunteerPortfolio() {
 
             <div className="mt-6 space-y-4">
               {completed.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/50 p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
                   <span className="text-3xl select-none">🌱</span>
-                  <p className="mt-2 text-sm font-extrabold text-slate-600">No completed gigs logged yet</p>
+                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">No completed gigs logged yet</p>
                   <p className="text-xs font-medium text-slate-400 mt-1 max-w-xs mx-auto">
                     Once you participate in open opportunities and the NGO marks it complete, your certificates will compile here!
                   </p>
@@ -532,34 +532,34 @@ export function VolunteerPortfolio() {
                   return (
                     <div
                       key={p.id}
-                      className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 bg-white hover:bg-emerald-50/20 p-4 transition-all duration-200 hover:shadow-xs hover:border-emerald-100/50"
+                      className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-emerald-50/20 dark:hover:bg-emerald-900/10 p-4 transition-all duration-200 hover:shadow-xs dark:hover:shadow-none dark:hover:shadow-slate-900/50 hover:border-emerald-100/50 dark:hover:border-slate-600"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl font-bold text-emerald-600">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-xl font-bold text-emerald-600 dark:text-emerald-400">
                           🏅
                         </span>
                         <div>
-                          <h3 className="text-sm font-extrabold text-slate-800 group-hover:text-emerald-800 transition-colors">
+                          <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors">
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
                             <span>📅 {dateStr}</span>
                             <span className="text-slate-300">•</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-slate-50 pt-2 sm:pt-0">
-                        <span className="text-xs font-extrabold text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200/50">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-slate-50 dark:border-slate-700 pt-2 sm:pt-0">
+                        <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2.5 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-600/50">
                           ⏱️ {p.hours ?? 0} hours
                         </span>
                         <button
                           type="button"
                           onClick={() => handleViewCert(p, gigTitle, rawDate || '')}
-                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-xs transition-all cursor-pointer active:scale-95"
+                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-all cursor-pointer active:scale-95"
                         >
                           📜 View Certificate
                         </button>
@@ -575,12 +575,12 @@ export function VolunteerPortfolio() {
 
       {/* ─── Printable Certificate Modal ─── */}
       {selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl dark:shadow-none dark:shadow-slate-900/50 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={() => setSelectedCert(null)}
-              className="absolute top-4 right-4 rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all cursor-pointer"
+              className="absolute top-4 right-4 rounded-full p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
             >
               ✕
             </button>
@@ -612,13 +612,13 @@ export function VolunteerPortfolio() {
                     }))
                     .catch(() => {});
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 dark:bg-slate-900 hover:bg-slate-900 dark:hover:bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md dark:shadow-none dark:shadow-slate-900/50 shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
               >
                 🖨️ Print Certificate
               </button>
               <button
                 onClick={() => setSelectedCert(null)}
-                className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-black text-slate-700 transition-all cursor-pointer active:scale-95"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 px-5 py-2.5 text-xs font-black text-slate-700 dark:text-slate-200 transition-all cursor-pointer active:scale-95"
               >
                 Close
               </button>

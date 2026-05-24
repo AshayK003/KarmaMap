@@ -140,7 +140,7 @@ export function ParticipateGig() {
 
   if (loadingParticipation) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500 dark:text-slate-400">
         Loading…
       </div>
     );
@@ -150,7 +150,7 @@ export function ParticipateGig() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="text-xl font-bold">Complete: {gigTitle}</h1>
-        <p className="mt-4 text-gray-600">You need to join this gig before uploading photos.</p>
+        <p className="mt-4 text-gray-600 dark:text-slate-300">You need to join this gig before uploading photos.</p>
         {pageError && <p className="mt-2 text-sm text-red-600">{pageError}</p>}
         <div className="mt-4 flex gap-3">
           <Button onClick={handleJoin} disabled={submitting}>Join gig</Button>
@@ -175,7 +175,7 @@ export function ParticipateGig() {
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {participation.before_photo_url && (
               <div>
-                <p className="mb-1 text-xs font-medium text-gray-500">Before</p>
+                <p className="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">Before</p>
                 <img
                   src={participation.before_photo_url}
                   alt="Before"
@@ -185,7 +185,7 @@ export function ParticipateGig() {
             )}
             {participation.after_photo_url && (
               <div>
-                <p className="mb-1 text-xs font-medium text-gray-500">After</p>
+                <p className="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">After</p>
                 <img
                   src={participation.after_photo_url}
                   alt="After"
@@ -205,7 +205,7 @@ export function ParticipateGig() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-xl font-bold">Complete: {gigTitle}</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
         Upload photos while you fill in the details — they'll start uploading right away.
       </p>
 
@@ -223,7 +223,7 @@ export function ParticipateGig() {
             min={0.5}
             max={24}
             step={0.5}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2"
             onWheel={(e) => e.currentTarget.blur()}
           />
           {errors.hours && (
@@ -232,7 +232,7 @@ export function ParticipateGig() {
         </div>
 
         {(errors.root || pageError) && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-600 dark:text-red-400">
             {errors.root?.message ?? pageError}
           </p>
         )}
