@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
-import { apiFetch } from '../utils/api';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Building2Icon, UsersIcon, UserCircleIcon, XIcon } from '../components/NavIcons';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Building2Icon, UserCircleIcon, UsersIcon } from '../components/NavIcons';
 import type { OrganizationMember } from '../types/database';
+import { apiFetch } from '../utils/api';
 
 export function OrganizationManage() {
   const [orgName, setOrgName] = useState<string | null>(null);
@@ -22,7 +22,9 @@ export function OrganizationManage() {
     setLoading(true);
     setError(null);
     try {
-      const orgRes = await apiFetch<{ org: { role: string; organizations: { name: string } } | null }>('/api/organizations/my-org');
+      const orgRes = await apiFetch<{
+        org: { role: string; organizations: { name: string } } | null;
+      }>('/api/organizations/my-org');
       if (!orgRes.org) {
         setError('You are not a member of any organization');
         setLoading(false);
@@ -34,7 +36,9 @@ export function OrganizationManage() {
         setLoading(false);
         return;
       }
-      const membersRes = await apiFetch<{ members: OrganizationMember[] }>('/api/organizations/members');
+      const membersRes = await apiFetch<{ members: OrganizationMember[] }>(
+        '/api/organizations/members',
+      );
       setMembers(membersRes.members);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load organization';
@@ -49,29 +53,39 @@ export function OrganizationManage() {
     fetchData();
   }, [fetchData]);
 
-  const handleAddMember = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profileId.trim()) return;
-    setAdding(true);
-    try {
-      await apiFetch('/api/organizations/members', {
-        method: 'POST',
-        body: { profile_id: profileId.trim(), department: department.trim() || undefined },
-      });
-      toast.success('Member added');
-      setProfileId('');
-      setDepartment('');
-      fetchData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add member');
-    } finally {
-      setAdding(false);
-    }
-  }, [profileId, department, fetchData]);
+  const handleAddMember = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!profileId.trim()) return;
+      setAdding(true);
+      try {
+        await apiFetch('/api/organizations/members', {
+          method: 'POST',
+          body: JSON.stringify({
+            profile_id: profileId.trim(),
+            department: department.trim() || undefined,
+          }),
+        });
+        toast.success('Member added');
+        setProfileId('');
+        setDepartment('');
+        fetchData();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to add member');
+      } finally {
+        setAdding(false);
+      }
+    },
+    [profileId, department, fetchData],
+  );
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="Loading">
+      <div
+        className="flex min-h-[50vh] items-center justify-center"
+        role="status"
+        aria-label="Loading"
+      >
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
       </div>
     );
@@ -83,10 +97,14 @@ export function OrganizationManage() {
         <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 dark:border-red-800 dark:bg-red-900/20">
           <Building2Icon className="mx-auto h-10 w-10 text-red-400" />
           <h2 className="mt-3 text-lg font-bold text-red-700 dark:text-red-400">
-            {error === 'You are not a member of any organization' ? 'Not a Member' : 'Something went wrong'}
+            {error === 'You are not a member of any organization'
+              ? 'Not a Member'
+              : 'Something went wrong'}
           </h2>
           <p className="mt-1 text-sm text-red-600 dark:text-red-300">{error}</p>
-          <Button variant="outline" className="mt-4" onClick={fetchData}>Retry</Button>
+          <Button variant="outline" className="mt-4" onClick={fetchData}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -97,8 +115,12 @@ export function OrganizationManage() {
       <div className="mx-auto max-w-4xl px-4 py-12">
         <Card className="p-8 text-center">
           <UsersIcon className="mx-auto h-10 w-10 text-slate-300" />
-          <h2 className="mt-3 text-lg font-bold text-slate-700 dark:text-slate-300">Admin Access Required</h2>
-          <p className="mt-1 text-sm text-slate-500">Only organization admins can manage team members.</p>
+          <h2 className="mt-3 text-lg font-bold text-slate-700 dark:text-slate-300">
+            Admin Access Required
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Only organization admins can manage team members.
+          </p>
         </Card>
       </div>
     );
@@ -119,10 +141,17 @@ export function OrganizationManage() {
 
       {/* Add member form */}
       <Card className="p-6">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Add Team Member</h2>
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
+          Add Team Member
+        </h2>
         <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
-            <label htmlFor="profile-id" className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Profile ID (UUID)</label>
+            <label
+              htmlFor="profile-id"
+              className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block"
+            >
+              Profile ID (UUID)
+            </label>
             <Input
               id="profile-id"
               placeholder="Enter member's profile UUID"
@@ -134,7 +163,12 @@ export function OrganizationManage() {
             />
           </div>
           <div className="sm:w-48">
-            <label htmlFor="dept" className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Department</label>
+            <label
+              htmlFor="dept"
+              className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block"
+            >
+              Department
+            </label>
             <Input
               id="dept"
               placeholder="e.g. Engineering"
@@ -156,10 +190,14 @@ export function OrganizationManage() {
       <Card className="p-6">
         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
           Team Members
-          <Badge variant="default" className="ml-2 text-xs">{members.length}</Badge>
+          <Badge variant="default" className="ml-2 text-xs">
+            {members.length}
+          </Badge>
         </h2>
         {members.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">No members yet. Add your first team member above.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
+            No members yet. Add your first team member above.
+          </p>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {members.map((m) => (
@@ -171,12 +209,20 @@ export function OrganizationManage() {
                       {m.profiles?.name ?? m.profile_id.slice(0, 8) + '...'}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{m.department ?? 'No department'}</span>
-                      <Badge variant={m.role === 'admin' ? 'default' : 'outline'} className="text-[10px] px-1.5 py-0">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {m.department ?? 'No department'}
+                      </span>
+                      <Badge
+                        variant={m.role === 'admin' ? 'default' : 'outline'}
+                        className="text-[10px] px-1.5 py-0"
+                      >
                         {m.role}
                       </Badge>
                       {m.opted_in && (
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
+                        <Badge
+                          variant="default"
+                          className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0"
+                        >
                           opted in
                         </Badge>
                       )}

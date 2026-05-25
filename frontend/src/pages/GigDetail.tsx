@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { formatDate } from '../utils/format';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
-import { joinGigViaApi } from '../services/gigs';
-import { useRealtimeParticipations } from '../hooks/useRealtimeGigs';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { Gig } from '../types/database';
-import { skillOverlapScore, parseGigLocation } from '../utils/geo';
-import { WeatherIcon, getWeatherDescription, getWeatherAdvisory, type WeatherForecast } from '../utils/weather.tsx';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '../context/AuthContext';
+import { useRealtimeParticipations } from '../hooks/useRealtimeGigs';
+import { supabase } from '../lib/supabase';
+import { joinGigViaApi } from '../services/gigs';
+import type { Gig } from '../types/database';
+import { formatDate } from '../utils/format';
+import { parseGigLocation, skillOverlapScore } from '../utils/geo';
+import {
+  getWeatherAdvisory,
+  getWeatherDescription,
+  type WeatherForecast,
+  WeatherIcon,
+} from '../utils/weather.tsx';
 
 export function GigDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,12 +68,14 @@ export function GigDetail() {
           setWeather(parsed.data);
           return;
         }
-      } catch { /* ignore stale cache */ }
+      } catch {
+        /* ignore stale cache */
+      }
     }
 
     setLoadingWeather(true);
     fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`,
     )
       .then((res) => {
         if (!res.ok) throw new Error('Weather API error');
@@ -144,7 +151,9 @@ export function GigDetail() {
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center space-y-2">
           <span className="text-4xl select-none">⚠️</span>
-          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">Failed to load gig</h2>
+          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">
+            Failed to load gig
+          </h2>
           <p className="text-xs font-semibold text-slate-400">{gigError}</p>
         </div>
       </div>
@@ -163,9 +172,7 @@ export function GigDetail() {
   }
 
   const overlap =
-    profile?.role === 'volunteer'
-      ? skillOverlapScore(gig.required_skills, profile.skills)
-      : 0;
+    profile?.role === 'volunteer' ? skillOverlapScore(gig.required_skills, profile.skills) : 0;
 
   const advisory = getWeatherAdvisory(weather);
 
@@ -177,31 +184,54 @@ export function GigDetail() {
         className="mb-5 inline-flex items-center gap-1 text-xs font-black text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.5"
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
         Back
       </button>
 
-      <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 leading-tight">{gig.title}</h1>
+      <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 leading-tight">
+        {gig.title}
+      </h1>
       <p className="mt-1 text-sm font-bold text-emerald-700 dark:text-emerald-400">
         by {(gig as Gig & { profiles?: { name: string } }).profiles?.name ?? 'NGO'}
       </p>
-      
+
       <p className="mt-5 text-sm font-semibold leading-relaxed text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-5 shadow-2xs dark:shadow-none dark:shadow-slate-900/50 whitespace-pre-wrap">
         {gig.description}
       </p>
 
       {/* Skills requirements */}
       <div className="mt-5">
-        <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-2">Required Skills</span>
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400 block mb-2">
+          Required Skills
+        </span>
         <div className="flex flex-wrap gap-2">
           {gig.required_skills.map((s) => {
             const hasSkill = profile?.skills?.some((ps) => ps.toLowerCase() === s.toLowerCase());
             return (
-              <Badge key={s} variant={hasSkill ? 'default' : 'secondary'} className="gap-0.5 px-3 py-1.5 text-xs">
+              <Badge
+                key={s}
+                variant={hasSkill ? 'default' : 'secondary'}
+                className="gap-0.5 px-3 py-1.5 text-xs"
+              >
                 {hasSkill && (
-                  <svg className="h-3 w-3 mr-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="h-3 w-3 mr-0.5 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
                 {s}
@@ -216,78 +246,105 @@ export function GigDetail() {
         {/* Left Column: Spots & Matching */}
         <Card className="p-5 flex flex-col justify-between">
           <div className="space-y-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Registration Stats</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
+              Registration Stats
+            </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-slate-800 dark:text-slate-100">{volunteerCount || gig.volunteers_joined}</span>
-              <span className="text-sm font-bold text-slate-400">/ {gig.volunteers_needed} spots joined</span>
+              <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                {volunteerCount || gig.volunteers_joined}
+              </span>
+              <span className="text-sm font-bold text-slate-400">
+                / {gig.volunteers_needed} spots joined
+              </span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                style={{ width: `${Math.min(((volunteerCount || gig.volunteers_joined) / gig.volunteers_needed) * 100, 100)}%` }}
+                style={{
+                  width: `${Math.min(((volunteerCount || gig.volunteers_joined) / gig.volunteers_needed) * 100, 100)}%`,
+                }}
               />
             </div>
           </div>
           {profile?.role === 'volunteer' && (
             <div className="mt-4 pt-3 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Profile Match</span>
-              <Badge variant={overlap >= 70 ? 'default' : overlap >= 40 ? 'amber' : 'secondary'} className="text-[10px] px-2.5 py-0.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                Profile Match
+              </span>
+              <Badge
+                variant={overlap >= 70 ? 'default' : overlap >= 40 ? 'amber' : 'secondary'}
+                className="text-[10px] px-2.5 py-0.5"
+              >
                 {overlap}% overlap
               </Badge>
             </div>
           )}
         </Card>
 
-          {/* Right Column: Date & Live Weather */}
-          <Card className="p-5 bg-gradient-to-b from-white to-emerald-50/20 dark:from-slate-800 dark:to-emerald-900/20 flex flex-col justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Date & Planning</span>
-              <p className="text-sm font-black text-slate-800 dark:text-slate-100 leading-snug">
-                {formatDate(gig.gig_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                🕒 {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  const parsed = parseGigLocation(gig.location);
-                  const start = new Date(gig.gig_date);
-                  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
-                  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                  const ics = [
-                    'BEGIN:VCALENDAR',
-                    'VERSION:2.0',
-                    'PRODID:-//KarmaMap//EN',
-                    'BEGIN:VEVENT',
-                    `DTSTART:${fmt(start)}`,
-                    `DTEND:${fmt(end)}`,
-                    `SUMMARY:${gig.title}`,
-                    `DESCRIPTION:${gig.description.replace(/\n/g, '\\n')}`,
-                    parsed ? `LOCATION:${parsed.lat},${parsed.lng}` : '',
-                    `URL:${window.location.href}`,
-                    'END:VEVENT',
-                    'END:VCALENDAR',
-                  ].filter(Boolean).join('\r\n');
-                  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `${gig.title.replace(/\s+/g, '_')}.ics`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Add to Calendar
-              </button>
-            </div>
+        {/* Right Column: Date & Live Weather */}
+        <Card className="p-5 bg-gradient-to-b from-white to-emerald-50/20 dark:from-slate-800 dark:to-emerald-900/20 flex flex-col justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">
+              Date & Planning
+            </span>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-100 leading-snug">
+              {formatDate(gig.gig_date, {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              🕒 {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const parsed = parseGigLocation(gig.location);
+                const start = new Date(gig.gig_date);
+                const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+                const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                const ics = [
+                  'BEGIN:VCALENDAR',
+                  'VERSION:2.0',
+                  'PRODID:-//KarmaMap//EN',
+                  'BEGIN:VEVENT',
+                  `DTSTART:${fmt(start)}`,
+                  `DTEND:${fmt(end)}`,
+                  `SUMMARY:${gig.title}`,
+                  `DESCRIPTION:${gig.description.replace(/\n/g, '\\n')}`,
+                  parsed ? `LOCATION:${parsed.lat},${parsed.lng}` : '',
+                  `URL:${window.location.href}`,
+                  'END:VEVENT',
+                  'END:VCALENDAR',
+                ]
+                  .filter(Boolean)
+                  .join('\r\n');
+                const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${gig.title.replace(/\s+/g, '_')}.ics`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Add to Calendar
+            </button>
+          </div>
 
-            {/* Live Weather Widget */}
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          {/* Live Weather Widget */}
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
             {loadingWeather ? (
               <Skeleton className="h-4 w-44" />
             ) : weather ? (
@@ -315,7 +372,9 @@ export function GigDetail() {
                 </div>
               </div>
             ) : (
-              <span className="text-xs font-semibold text-slate-400 italic">Weather forecast details unavailable</span>
+              <span className="text-xs font-semibold text-slate-400 italic">
+                Weather forecast details unavailable
+              </span>
             )}
           </div>
         </Card>
@@ -323,11 +382,15 @@ export function GigDetail() {
 
       {/* Smart Weather Advisory Banner */}
       {advisory && (
-        <div className={`mt-4 flex gap-3.5 rounded-2xl border p-4 shadow-2xs backdrop-blur-xs transition-all duration-300 ${advisory.bg}`}>
+        <div
+          className={`mt-4 flex gap-3.5 rounded-2xl border p-4 shadow-2xs backdrop-blur-xs transition-all duration-300 ${advisory.bg}`}
+        >
           <span className="text-2xl shrink-0 select-none animate-float">{advisory.emoji}</span>
           <div className="space-y-1">
             <h4 className="text-xs font-black uppercase tracking-wider">{advisory.title}</h4>
-            <p className="text-xs font-semibold leading-relaxed opacity-95">{advisory.description}</p>
+            <p className="text-xs font-semibold leading-relaxed opacity-95">
+              {advisory.description}
+            </p>
           </div>
         </div>
       )}
@@ -336,8 +399,18 @@ export function GigDetail() {
         <div className="mt-6 space-y-2">
           {joinError && (
             <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700/50 px-4 py-2.5 text-xs font-bold text-rose-700 dark:text-rose-300">
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               {joinError}
             </div>

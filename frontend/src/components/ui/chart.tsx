@@ -1,8 +1,5 @@
 import * as React from 'react';
-import {
-  ResponsiveContainer,
-  type ResponsiveContainerProps,
-} from 'recharts';
+import { ResponsiveContainer, type ResponsiveContainerProps } from 'recharts';
 import { cn } from '@/lib/utils';
 
 interface ChartConfig {
@@ -28,12 +25,7 @@ interface ChartContainerProps extends ResponsiveContainerProps {
   className?: string;
 }
 
-export function ChartContainer({
-  config,
-  children,
-  className,
-  ...props
-}: ChartContainerProps) {
+export function ChartContainer({ config, children, className, ...props }: ChartContainerProps) {
   return (
     <ChartContext.Provider value={{ config }}>
       <div className={cn('w-full', className)}>
@@ -86,7 +78,9 @@ export function ChartTooltipContent({
                 ) : (
                   <span className="h-3 w-0.5 rounded-full" style={{ backgroundColor: color }} />
                 )}
-                <span className="text-gray-500 dark:text-slate-400">{cfg?.label ?? entry.name}</span>
+                <span className="text-gray-500 dark:text-slate-400">
+                  {cfg?.label ?? entry.name}
+                </span>
               </div>
               <span className="text-gray-950 dark:text-slate-100 font-bold">{entry.value}</span>
             </div>
@@ -113,7 +107,10 @@ export function ChartLegendContent({ payload }: ChartLegendContentProps) {
         const cfg = config[entry.value];
         const color = entry.color ?? cfg?.color ?? '#059669';
         return (
-          <div key={i} className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400">
+          <div
+            key={i}
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400"
+          >
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
             {cfg?.label ?? entry.value}
           </div>

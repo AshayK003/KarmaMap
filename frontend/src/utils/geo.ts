@@ -6,10 +6,7 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
-export function skillOverlapScore(
-  required: string[],
-  volunteer: string[]
-): number {
+export function skillOverlapScore(required: string[], volunteer: string[]): number {
   if (required.length === 0) return 100;
   const req = required.map((s) => s.toLowerCase());
   const matches = volunteer.filter((s) => req.includes(s.toLowerCase())).length;
@@ -60,7 +57,7 @@ export function calculateHaversineDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371e3; // Earth radius in meters
   const phi1 = (lat1 * Math.PI) / 180;
@@ -70,12 +67,8 @@ export function calculateHaversineDistance(
 
   const a =
     Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-    Math.cos(phi1) *
-      Math.cos(phi2) *
-      Math.sin(deltaLambda / 2) *
-      Math.sin(deltaLambda / 2);
+    Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c; // returns distance in meters
 }
-

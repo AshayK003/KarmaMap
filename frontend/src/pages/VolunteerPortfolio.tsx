@@ -1,19 +1,19 @@
+import confetti from 'canvas-confetti';
 import { useEffect, useMemo, useState } from 'react';
-import { formatDate } from '../utils/format';
-import { getKarmaLevel } from '../utils/karma';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../utils/api';
-import { generatePortfolioSlug, calculateHaversineDistance, parseGigLocation } from '../utils/geo';
-import type { Participation } from '../types/database';
-import { Certificate } from '../components/Certificate';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Certificate } from '../components/Certificate';
 import { Building2Icon } from '../components/NavIcons';
-import confetti from 'canvas-confetti';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import type { Participation } from '../types/database';
+import { apiFetch } from '../utils/api';
+import { formatDate } from '../utils/format';
+import { calculateHaversineDistance, generatePortfolioSlug, parseGigLocation } from '../utils/geo';
+import { getKarmaLevel } from '../utils/karma';
 
 export function VolunteerPortfolio() {
   const { profile, user, refreshProfile } = useAuth();
@@ -47,7 +47,7 @@ export function VolunteerPortfolio() {
         .select('*, gigs(title, gig_date, location)')
         .eq('volunteer_id', user.id)
         .eq('status', 'completed')
-        .then(({ data }) => setCompleted((data as Participation[]) ?? []))
+        .then(({ data }) => setCompleted((data as Participation[]) ?? [])),
     ).catch((err: unknown) => console.error('Failed to fetch completed gigs:', err));
 
     if (profile?.portfolio_slug) {
@@ -57,7 +57,9 @@ export function VolunteerPortfolio() {
       setBioInput(profile.bio);
     }
 
-    apiFetch<{ org: { role: string; opted_in: boolean; organizations: { name: string } } | null }>('/api/organizations/my-org')
+    apiFetch<{ org: { role: string; opted_in: boolean; organizations: { name: string } } | null }>(
+      '/api/organizations/my-org',
+    )
       .then((res) => {
         if (res.org) {
           setOrgInfo({
@@ -208,7 +210,7 @@ export function VolunteerPortfolio() {
 
   const totalHours = useMemo(
     () => completed.reduce((s, p) => s + Number(p.hours ?? 0), 0),
-    [completed]
+    [completed],
   );
 
   const { co2SavedKg, treesPlanted } = useMemo(() => {
@@ -216,22 +218,31 @@ export function VolunteerPortfolio() {
 
     let totalCo2SavedMeters = 0;
     for (const p of completed) {
-      const gigLoc = (p as unknown as Record<string, unknown> & { gigs?: { location?: unknown } })?.gigs?.location;
+      const gigLoc = (p as unknown as Record<string, unknown> & { gigs?: { location?: unknown } })
+        ?.gigs?.location;
       if (volParsed && gigLoc) {
         const gigParsed = parseGigLocation(gigLoc);
         if (gigParsed) {
-          const distance = calculateHaversineDistance(volParsed.lat, volParsed.lng, gigParsed.lat, gigParsed.lng);
+          const distance = calculateHaversineDistance(
+            volParsed.lat,
+            volParsed.lng,
+            gigParsed.lat,
+            gigParsed.lng,
+          );
           totalCo2SavedMeters += distance * 2;
         }
       }
     }
-    const c = (totalCo2SavedMeters / 1000) * 0.120;
+    const c = (totalCo2SavedMeters / 1000) * 0.12;
     return { co2SavedKg: c, treesPlanted: c / 22 };
   }, [completed, profile?.location]);
 
   const karma = profile?.karma_points ?? 0;
   const level = useMemo(() => getKarmaLevel(karma), [karma]);
-  const nextMilestonePercent = useMemo(() => Math.min(100, (karma / level.max) * 100), [karma, level.max]);
+  const nextMilestonePercent = useMemo(
+    () => Math.min(100, (karma / level.max) * 100),
+    [karma, level.max],
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -249,9 +260,7 @@ export function VolunteerPortfolio() {
         {/* Public Share Panel */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl p-2 shadow-xs dark:shadow-none dark:shadow-slate-900/50 backdrop-blur-sm">
           {!shareUrl ? (
-            <Button onClick={enableSharing}>
-              🌐 Generate Public Page
-            </Button>
+            <Button onClick={enableSharing}>🌐 Generate Public Page</Button>
           ) : (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 select-all overflow-hidden max-w-[240px] truncate">
@@ -263,8 +272,18 @@ export function VolunteerPortfolio() {
                 </Button>
                 {typeof navigator.share === 'function' && (
                   <Button onClick={handleNativeShare}>
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 10.742l4.632-2.316m0 4.632l-4.632-2.316m0 0a3 3 0 11-6 0 3 3 0 016 0zm11.368-4.632a3 3 0 11-6 0 3 3 0 016 0zm0 9.264a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M8.684 10.742l4.632-2.316m0 4.632l-4.632-2.316m0 0a3 3 0 11-6 0 3 3 0 016 0zm11.368-4.632a3 3 0 11-6 0 3 3 0 016 0zm0 9.264a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     </svg>
                     Share
                   </Button>
@@ -285,7 +304,9 @@ export function VolunteerPortfolio() {
           <Card>
             <div className="flex flex-col items-center text-center">
               {/* Profile Avatar Glow ring */}
-              <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
+              <div
+                className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}
+              >
                 <Avatar
                   size="xl"
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
@@ -296,8 +317,12 @@ export function VolunteerPortfolio() {
                 </span>
               </div>
 
-              <h2 className="mt-4 text-xl font-black text-slate-800 dark:text-slate-100">{profile?.name}</h2>
-              <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-3.5 py-1 text-xs font-extrabold text-white shadow-xs`}>
+              <h2 className="mt-4 text-xl font-black text-slate-800 dark:text-slate-100">
+                {profile?.name}
+              </h2>
+              <span
+                className={`mt-1.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-3.5 py-1 text-xs font-extrabold text-white shadow-xs`}
+              >
                 {level.title}
               </span>
             </div>
@@ -305,7 +330,12 @@ export function VolunteerPortfolio() {
             {/* Inline Bio Section */}
             <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
               <div className="flex items-center justify-between">
-                <label htmlFor="bio-textarea" className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Personal Bio</label>
+                <label
+                  htmlFor="bio-textarea"
+                  className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400"
+                >
+                  Personal Bio
+                </label>
                 {!isEditingBio ? (
                   <button
                     type="button"
@@ -319,7 +349,8 @@ export function VolunteerPortfolio() {
 
               {!isEditingBio ? (
                 <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300 italic">
-                  {profile?.bio || 'Add a helpful bio to showcase your story, motivations and volunteer aspirations…'}
+                  {profile?.bio ||
+                    'Add a helpful bio to showcase your story, motivations and volunteer aspirations…'}
                 </p>
               ) : (
                 <div className="mt-2 space-y-3">
@@ -377,13 +408,19 @@ export function VolunteerPortfolio() {
                 profile?.skills && profile.skills.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {profile.skills.map((s) => (
-                      <Badge key={s} variant="secondary" className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                      <Badge
+                        key={s}
+                        variant="secondary"
+                        className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                      >
                         🌱 {s}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs font-semibold text-slate-400 italic">No skills registered yet.</p>
+                  <p className="text-xs font-semibold text-slate-400 italic">
+                    No skills registered yet.
+                  </p>
                 )
               ) : (
                 <div className="space-y-3">
@@ -399,8 +436,18 @@ export function VolunteerPortfolio() {
                           onClick={() => handleRemoveSkill(i)}
                           className="ml-0.5 rounded-full p-0.5 text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-700 hover:text-emerald-700 dark:hover:text-emerald-200 transition-colors cursor-pointer"
                         >
-                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="3"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </span>
@@ -456,15 +503,21 @@ export function VolunteerPortfolio() {
             <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
+                  Karma
+                </span>
                 <span className="text-xl">✨</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{profile?.karma_points ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
+                {profile?.karma_points ?? 0}
+              </p>
               {/* Level Progress */}
               <div className="mt-4">
                 <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 mb-1">
                   <span>Progress to next Rank</span>
-                  <span>{karma}/{level.max} XP</span>
+                  <span>
+                    {karma}/{level.max} XP
+                  </span>
                 </div>
                 <Progress
                   value={nextMilestonePercent}
@@ -477,10 +530,14 @@ export function VolunteerPortfolio() {
             <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Day Streak</span>
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
+                  Day Streak
+                </span>
                 <span className="text-xl animate-float">🔥</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{profile?.streak ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">
+                {profile?.streak ?? 0}
+              </p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 {profile?.streak && profile.streak > 0
                   ? 'Awesome momentum! Keep making an impact to extend your streak.'
@@ -492,10 +549,14 @@ export function VolunteerPortfolio() {
             <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Dedicated Hours</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+                  Dedicated Hours
+                </span>
                 <span className="text-xl">⏳</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">{totalHours}h</p>
+              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">
+                {totalHours}h
+              </p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 {totalHours > 0
                   ? `Incredible contribution! You spent ${totalHours} hours serving local NGOs.`
@@ -507,11 +568,15 @@ export function VolunteerPortfolio() {
             <Card className="relative overflow-hidden bg-emerald-50/25 dark:bg-emerald-900/20 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/25 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Eco-Savings</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
+                  Eco-Savings
+                </span>
                 <span className="text-xl animate-bounce">🌳</span>
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
-                {co2SavedKg >= 1 ? `${co2SavedKg.toFixed(2)} kg` : `${Math.round(co2SavedKg * 1000)} g`}
+                {co2SavedKg >= 1
+                  ? `${co2SavedKg.toFixed(2)} kg`
+                  : `${Math.round(co2SavedKg * 1000)} g`}
               </p>
               <div className="mt-4">
                 <div className="flex justify-between text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 mb-1">
@@ -522,48 +587,57 @@ export function VolunteerPortfolio() {
                   value={Math.min(100, treesPlanted * 100)}
                   indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500"
                 />
-            </div>
-
-            {orgInfo && (
-              <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Building2Icon className="h-4 w-4 text-emerald-600" />
-                  <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Your Organization</span>
-                </div>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{orgInfo.name}</p>
-                <p className="text-xs font-semibold text-slate-400 mt-0.5 capitalize">Role: {orgInfo.role}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <label htmlFor="opt-in-toggle" className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Share volunteer data with {orgInfo.name}
-                  </label>
-                  <button
-                    id="opt-in-toggle"
-                    type="button"
-                    role="switch"
-                    aria-checked={orgInfo.opted_in}
-                    aria-label="Toggle data sharing"
-                    disabled={orgLoading}
-                    onClick={handleOptInToggle}
-                    className={`relative h-6 w-11 rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer disabled:opacity-50 ${
-                      orgInfo.opted_in ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200 ${
-                        orgInfo.opted_in ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <p className="mt-2 text-[10px] font-medium text-slate-400 leading-relaxed">
-                  {orgInfo.opted_in
-                    ? 'Your completed gigs and hours are visible to your organization\'s dashboard.'
-                    : 'Toggle on to allow your organization to see aggregate volunteer data.'}
-                </p>
               </div>
-            )}
-          </Card>
-        </div>
+
+              {orgInfo && (
+                <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Building2Icon className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                      Your Organization
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                    {orgInfo.name}
+                  </p>
+                  <p className="text-xs font-semibold text-slate-400 mt-0.5 capitalize">
+                    Role: {orgInfo.role}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <label
+                      htmlFor="opt-in-toggle"
+                      className="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                    >
+                      Share volunteer data with {orgInfo.name}
+                    </label>
+                    <button
+                      id="opt-in-toggle"
+                      type="button"
+                      role="switch"
+                      aria-checked={orgInfo.opted_in}
+                      aria-label="Toggle data sharing"
+                      disabled={orgLoading}
+                      onClick={handleOptInToggle}
+                      className={`relative h-6 w-11 rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer disabled:opacity-50 ${
+                        orgInfo.opted_in ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                          orgInfo.opted_in ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[10px] font-medium text-slate-400 leading-relaxed">
+                    {orgInfo.opted_in
+                      ? "Your completed gigs and hours are visible to your organization's dashboard."
+                      : 'Toggle on to allow your organization to see aggregate volunteer data.'}
+                  </p>
+                </div>
+              )}
+            </Card>
+          </div>
 
           {/* Completed Gigs List / Timeline */}
           <Card>
@@ -578,15 +652,21 @@ export function VolunteerPortfolio() {
               {completed.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
                   <span className="text-3xl select-none">🌱</span>
-                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">No completed gigs logged yet</p>
+                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">
+                    No completed gigs logged yet
+                  </p>
                   <p className="text-xs font-medium text-slate-400 mt-1 max-w-xs mx-auto">
-                    Once you participate in open opportunities and the NGO marks it complete, your certificates will compile here!
+                    Once you participate in open opportunities and the NGO marks it complete, your
+                    certificates will compile here!
                   </p>
                 </div>
               ) : (
                 completed.map((p) => {
-                  const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
-                  const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
+                  const gigTitle =
+                    (p as Participation & { gigs?: { title: string } }).gigs?.title ??
+                    'Volunteer Gig';
+                  const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs
+                    ?.gig_date;
                   const dateStr = rawDate
                     ? formatDate(rawDate, { month: 'short', day: 'numeric', year: 'numeric' })
                     : 'Verified Date';
@@ -637,7 +717,12 @@ export function VolunteerPortfolio() {
 
       {/* ─── Printable Certificate Modal ─── */}
       {selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Certificate of Impact">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Certificate of Impact"
+        >
           <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl dark:shadow-none dark:shadow-slate-900/50 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
@@ -653,7 +738,11 @@ export function VolunteerPortfolio() {
                 volunteerName={profile?.name || ''}
                 participation={selectedCert.participation}
                 gigTitle={selectedCert.title}
-                completedDate={formatDate(selectedCert.date, { month: 'long', day: 'numeric', year: 'numeric' })}
+                completedDate={formatDate(selectedCert.date, {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
               />
             </div>
 
@@ -685,4 +774,3 @@ export function VolunteerPortfolio() {
     </div>
   );
 }
-

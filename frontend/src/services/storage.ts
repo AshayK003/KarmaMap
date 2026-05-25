@@ -22,11 +22,14 @@ function imageToJpegBlob(img: HTMLImageElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
+        if (!blob) {
+          reject(new Error('Canvas toBlob failed'));
+          return;
+        }
         resolve(blob);
       },
       'image/jpeg',
-      0.8
+      0.8,
     );
   });
 }
@@ -68,7 +71,7 @@ export async function compressImage(file: File): Promise<File> {
 export async function uploadParticipationPhoto(
   userId: string,
   file: File,
-  type: 'before' | 'after'
+  type: 'before' | 'after',
 ): Promise<string> {
   const path = `${userId}/${type}-${Date.now()}.jpg`;
 
@@ -86,7 +89,7 @@ export async function compressAndUpload(
   userId: string,
   file: File,
   type: 'before' | 'after',
-  onStatus?: (status: PhotoUploadStatus) => void
+  onStatus?: (status: PhotoUploadStatus) => void,
 ): Promise<string> {
   onStatus?.('compressing');
   let compressed: File;

@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
-import { createLocalPreview, revokePreview, compressAndUpload } from '../services/storage';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { PhotoUploadStatus } from '../services/storage';
+import { compressAndUpload, createLocalPreview, revokePreview } from '../services/storage';
 
 interface PhotoUploadProps {
   label: string;
@@ -41,7 +41,12 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
     setStatus('compressing');
 
     try {
-      const url = await compressAndUpload(user.id, file, label.toLowerCase().includes('before') ? 'before' : 'after', setStatus);
+      const url = await compressAndUpload(
+        user.id,
+        file,
+        label.toLowerCase().includes('before') ? 'before' : 'after',
+        setStatus,
+      );
       setUploadedUrl(url);
       onUploadComplete(url);
     } catch (err) {
@@ -66,11 +71,17 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
         className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 disabled:cursor-wait disabled:opacity-70"
         style={{
           borderColor: status === 'error' ? '#fca5a5' : status === 'done' ? '#6ee7b7' : '#6ee7b7',
-          backgroundColor: status === 'error' ? '#fef2f2' : status === 'done' ? '#ecfdf5' : '#ecfdf5',
+          backgroundColor:
+            status === 'error' ? '#fef2f2' : status === 'done' ? '#ecfdf5' : '#ecfdf5',
         }}
       >
         {displaySrc ? (
-          <img src={displaySrc} alt={label} className="w-full h-auto rounded-lg object-contain" onError={() => console.error('Photo display failed:', displaySrc)} />
+          <img
+            src={displaySrc}
+            alt={label}
+            className="w-full h-auto rounded-lg object-contain"
+            onError={() => console.error('Photo display failed:', displaySrc)}
+          />
         ) : (
           <span className="text-2xl">📷</span>
         )}
@@ -90,10 +101,14 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
           </span>
         )}
         {status === 'done' && (
-          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Photo uploaded ✓</span>
+          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            Photo uploaded ✓
+          </span>
         )}
         {status === 'error' && (
-          <span className="text-xs font-medium text-red-600 dark:text-red-400">{errorMessage ?? 'Upload failed — tap to retry'}</span>
+          <span className="text-xs font-medium text-red-600 dark:text-red-400">
+            {errorMessage ?? 'Upload failed — tap to retry'}
+          </span>
         )}
         {status === 'idle' && (
           <span className="text-xs text-gray-500 dark:text-slate-400">{STATUS_LABELS.idle}</span>

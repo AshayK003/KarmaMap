@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtectedRoute } from '../ProtectedRoute';
 
 const mockUseAuth = vi.fn();
@@ -19,7 +19,7 @@ function renderRoute(roles?: string[]) {
       <ProtectedRoute roles={roles as any}>
         <div data-testid="protected-content">Authenticated content</div>
       </ProtectedRoute>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 

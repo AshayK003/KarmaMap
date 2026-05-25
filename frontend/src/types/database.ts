@@ -1,11 +1,6 @@
 export type UserRole = 'volunteer' | 'ngo';
 export type GigStatus = 'open' | 'in_progress' | 'completed' | 'cancelled';
-export type ParticipationStatus =
-  | 'pending'
-  | 'joined'
-  | 'checked_in'
-  | 'completed'
-  | 'cancelled';
+export type ParticipationStatus = 'pending' | 'joined' | 'checked_in' | 'completed' | 'cancelled';
 
 export interface Profile {
   id: string;

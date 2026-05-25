@@ -1,15 +1,15 @@
 declare const global: typeof globalThis;
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const injectedSession = vi.hoisted(() => ({ current: null as { access_token?: string } | null }));
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn().mockImplementation(() =>
-        Promise.resolve({ data: { session: injectedSession.current } })
-      ),
+      getSession: vi
+        .fn()
+        .mockImplementation(() => Promise.resolve({ data: { session: injectedSession.current } })),
     },
     channel: vi.fn(),
   },

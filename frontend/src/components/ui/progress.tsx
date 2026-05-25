@@ -13,13 +13,13 @@ export function Progress({ value, className, indicatorClassName }: ProgressProps
     <div
       className={cn(
         'h-2 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/50 dark:bg-slate-700 dark:border-slate-600/50',
-        className
+        className,
       )}
     >
       <div
         className={cn(
           'h-full rounded-full transition-all duration-500',
-          indicatorClassName ?? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+          indicatorClassName ?? 'bg-gradient-to-r from-emerald-500 to-teal-500',
         )}
         style={{ width: `${clamped}%` }}
       />

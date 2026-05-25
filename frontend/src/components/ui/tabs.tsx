@@ -16,9 +16,7 @@ interface TabsProps {
 export function Tabs({ value, onValueChange, children, className }: TabsProps) {
   return (
     <TabsContext.Provider value={{ value, onValueChange }}>
-      <div className={cn('', className)}>
-        {children}
-      </div>
+      <div className={cn('', className)}>{children}</div>
     </TabsContext.Provider>
   );
 }
@@ -34,7 +32,7 @@ export function TabsList({
     <div
       className={cn(
         'inline-flex items-center gap-1 bg-slate-100/50 border border-slate-200/30 p-1 rounded-xl overflow-x-auto scrollbar-none snap-x snap-mandatory dark:bg-slate-800/50 dark:border-slate-700/30',
-        className
+        className,
       )}
     >
       {children}
@@ -63,12 +61,10 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
         isActive
           ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-700 dark:text-emerald-400'
           : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-        className
+        className,
       )}
     >
       {children}
     </button>
   );
 }
-
-

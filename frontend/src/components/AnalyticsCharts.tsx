@@ -1,20 +1,16 @@
 import { useState } from 'react';
 import {
-  BarChart,
-  Bar,
-  AreaChart,
   Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
 } from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltipContent,
-  ChartLegendContent,
-} from '@/components/ui/chart';
+import { ChartContainer, ChartLegendContent, ChartTooltipContent } from '@/components/ui/chart';
 
 interface ChartDataPoint {
   name: string;
@@ -39,8 +35,12 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
   if (!data.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm font-medium text-gray-400 dark:text-slate-400">No active gig analytics recorded yet.</p>
-        <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">Publish new volunteer gigs to see real-time interaction metrics.</p>
+        <p className="text-sm font-medium text-gray-400 dark:text-slate-400">
+          No active gig analytics recorded yet.
+        </p>
+        <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">
+          Publish new volunteer gigs to see real-time interaction metrics.
+        </p>
       </div>
     );
   }
@@ -48,7 +48,9 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-1.5 border-b border-gray-50 dark:border-slate-700 pb-3">
-        <span className="text-xs font-semibold text-gray-400 dark:text-slate-400 mr-auto uppercase tracking-wider">Visual mode</span>
+        <span className="text-xs font-semibold text-gray-400 dark:text-slate-400 mr-auto uppercase tracking-wider">
+          Visual mode
+        </span>
         <button
           type="button"
           aria-pressed={chartType === 'bar'}
@@ -79,7 +81,12 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         <ChartContainer config={chartConfig} height={256}>
           {chartType === 'bar' ? (
             <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} className="dark:[&>path]:stroke-slate-700" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                vertical={false}
+                className="dark:[&>path]:stroke-slate-700"
+              />
               <XAxis
                 dataKey="name"
                 tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
@@ -95,8 +102,17 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                 dx={-4}
                 width={24}
               />
-              <Tooltip content={<ChartTooltipContent />} cursor={{ fill: '#f8fafc', opacity: 0.8 }} />
-              <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} content={<ChartLegendContent />} />
+              <Tooltip
+                content={<ChartTooltipContent />}
+                cursor={{ fill: '#f8fafc', opacity: 0.8 }}
+              />
+              <Legend
+                verticalAlign="top"
+                height={36}
+                iconType="circle"
+                iconSize={8}
+                content={<ChartLegendContent />}
+              />
               <Bar dataKey="volunteers" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={32} />
               <Bar dataKey="completed" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
@@ -112,7 +128,12 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} className="dark:[&>path]:stroke-slate-700" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                vertical={false}
+                className="dark:[&>path]:stroke-slate-700"
+              />
               <XAxis
                 dataKey="name"
                 tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
@@ -129,9 +150,29 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                 width={24}
               />
               <Tooltip content={<ChartTooltipContent />} />
-              <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} content={<ChartLegendContent />} />
-              <Area type="monotone" dataKey="volunteers" stroke="#059669" strokeWidth={2.5} fillOpacity={1} fill="url(#colorVolunteers)" />
-              <Area type="monotone" dataKey="completed" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCompleted)" />
+              <Legend
+                verticalAlign="top"
+                height={36}
+                iconType="circle"
+                iconSize={8}
+                content={<ChartLegendContent />}
+              />
+              <Area
+                type="monotone"
+                dataKey="volunteers"
+                stroke="#059669"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#colorVolunteers)"
+              />
+              <Area
+                type="monotone"
+                dataKey="completed"
+                stroke="#f59e0b"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#colorCompleted)"
+              />
             </AreaChart>
           )}
         </ChartContainer>

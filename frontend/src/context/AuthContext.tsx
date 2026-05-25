@@ -1,13 +1,13 @@
+import type { Session, User } from '@supabase/supabase-js';
 import {
   createContext,
+  type ReactNode,
+  useCallback,
   useContext,
   useEffect,
-  useCallback,
   useMemo,
   useState,
-  type ReactNode,
 } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile, UserRole } from '../types/database';
 
@@ -21,7 +21,7 @@ interface AuthContextValue {
     password: string,
     name: string,
     role: UserRole,
-    skills?: string[]
+    skills?: string[],
   ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -42,14 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cacheKey = `${CACHE_PREFIX}${userId}`;
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
-      try { setProfile(JSON.parse(cached)); } catch { /* ignore stale cache */ }
+      try {
+        setProfile(JSON.parse(cached));
+      } catch {
+        /* ignore stale cache */
+      }
     }
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (data) {
         setProfile(data);
         sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -88,34 +88,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const signUp = useCallback(async (
-    email: string,
-    password: string,
-    name: string,
-    role: UserRole,
-    skills: string[] = []
-  ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, skills, role },
-      },
-    });
+  const signUp = useCallback(
+    async (
+      email: string,
+      password: string,
+      name: string,
+      role: UserRole,
+      skills: string[] = [],
+    ) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, skills, role },
+        },
+      });
 
-    if (!error && data.user) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ role, name, skills })
-          .eq('id', data.user.id);
-      } catch (profileErr) {
-        console.error('Failed to update profile after signup:', profileErr);
+      if (!error && data.user) {
+        try {
+          await supabase.from('profiles').update({ role, name, skills }).eq('id', data.user.id);
+        } catch (profileErr) {
+          console.error('Failed to update profile after signup:', profileErr);
+        }
       }
-    }
 
-    return { error: error as Error | null };
-  }, []);
+      return { error: error as Error | null };
+    },
+    [],
+  );
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -143,14 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ user, session, profile, loading, signUp, signIn, signOut, refreshProfile }),
-    [user, session, profile, loading, signUp, signIn, signOut, refreshProfile]
+    [user, session, profile, loading, signUp, signIn, signOut, refreshProfile],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

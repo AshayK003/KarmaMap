@@ -5,7 +5,7 @@ import { apiFetch } from '../utils/api';
 export async function fetchNearbyGigs(
   lat: number,
   lng: number,
-  radiusMeters = 10000
+  radiusMeters = 10000,
 ): Promise<NearbyGig[]> {
   const { data, error } = await supabase.rpc('nearby_gigs', {
     lat,
@@ -51,14 +51,14 @@ export async function completeParticipationViaApi(
     hours: number;
     before_photo_url?: string;
     after_photo_url?: string;
-  }
+  },
 ) {
   return apiFetch<{ participation: unknown; karma_earned: number }>(
     `/api/participations/${participationId}/complete`,
     {
       method: 'PATCH',
       body: JSON.stringify(payload),
-    }
+    },
   );
 }
 
@@ -75,24 +75,6 @@ export async function updateGigStatus(gigId: string, status: GigStatus) {
     throw error;
   }
   return data as Gig;
-}
-
-export async function updateGigDetails(
-  gigId: string,
-  updates: {
-    title: string;
-    description: string;
-    volunteers_needed: number;
-    gig_date: string;
-    required_skills: string[];
-    lat: number;
-    lng: number;
-  }
-) {
-  return apiFetch(`/api/gigs/${gigId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updates),
-  });
 }
 
 export async function fetchNgoAnalytics() {

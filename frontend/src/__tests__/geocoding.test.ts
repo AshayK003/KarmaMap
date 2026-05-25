@@ -1,6 +1,6 @@
 declare const global: typeof globalThis;
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('formatPhotonLabel', () => {
   it('deduplicates identical parts', async () => {

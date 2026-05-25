@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
@@ -7,11 +7,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm hover:shadow-md hover:from-emerald-700 hover:to-teal-700',
+        default:
+          'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm hover:shadow-md hover:from-emerald-700 hover:to-teal-700',
         destructive: 'bg-red-500 text-white shadow-sm hover:bg-red-600',
-        outline: 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300',
-        secondary: 'bg-slate-800 text-white shadow-sm hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600',
-        ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
+        outline:
+          'border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300',
+        secondary:
+          'bg-slate-800 text-white shadow-sm hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600',
+        ghost:
+          'text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
         link: 'text-emerald-600 underline-offset-4 hover:underline',
       },
       size: {
@@ -25,21 +29,19 @@ const buttonVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  }
+  },
 );
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
+      <button className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
     );
-  }
+  },
 );
 Button.displayName = 'Button';
 

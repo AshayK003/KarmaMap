@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_CENTER } from '../utils/geo';
 
 interface GeoState {
@@ -72,10 +72,10 @@ export function useGeolocation() {
               error: err.message,
             });
           },
-          { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 },
         );
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 },
     );
   }, []);
 

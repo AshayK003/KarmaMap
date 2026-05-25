@@ -15,19 +15,16 @@ async function tryFetch(url: string, opts: RequestInit): Promise<Response> {
     const msg =
       typeof body.error === 'string'
         ? body.error
-        : body.error?.formErrors?.[0] ??
-          body.error?.fieldErrors ??
-          res.statusText;
+        : (body.error?.formErrors?.[0] ?? body.error?.fieldErrors ?? res.statusText);
     throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
   return res;
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const token = session?.access_token ?? null;
 
   const opts: RequestInit = {

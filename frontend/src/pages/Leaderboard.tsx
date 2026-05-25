@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '../lib/supabase';
 
 interface LeaderboardEntry {
   name: string;
@@ -30,7 +30,9 @@ export function Leaderboard() {
           setLoading(false);
           return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     Promise.resolve(
@@ -45,7 +47,7 @@ export function Leaderboard() {
           const entries = (data as LeaderboardEntry[]) ?? [];
           setVolunteers(entries);
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
-        })
+        }),
     )
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -72,7 +74,9 @@ export function Leaderboard() {
         </div>
       ) : volunteers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 p-8 text-center">
-          <p className="text-sm font-extrabold text-slate-600 dark:text-slate-300">No volunteers ranked yet</p>
+          <p className="text-sm font-extrabold text-slate-600 dark:text-slate-300">
+            No volunteers ranked yet
+          </p>
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-5">
@@ -83,7 +87,9 @@ export function Leaderboard() {
                 <div
                   key={v.name + i}
                   className={`flex items-center gap-4 rounded-2xl border p-4 shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-all hover:shadow-md ${
-                    isTop3 ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-slate-700' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
+                    isTop3
+                      ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-slate-700'
+                      : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
                   }`}
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-black">
@@ -93,14 +99,22 @@ export function Leaderboard() {
                       <span className="text-sm font-bold text-slate-400">#{i + 1}</span>
                     )}
                   </span>
-                  <Avatar src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(v.name)}&backgroundType=gradientLinear&fontSize=42`} alt={v.name} size="md" />
+                  <Avatar
+                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(v.name)}&backgroundType=gradientLinear&fontSize=42`}
+                    alt={v.name}
+                    size="md"
+                  />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">{v.name}</p>
+                    <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">
+                      {v.name}
+                    </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Badge variant="default" className="text-[10px] px-2 py-0.5">
                         ✨ {v.karma_points} Karma
                       </Badge>
-                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">🔥 {v.streak} day streak</span>
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                        🔥 {v.streak} day streak
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -110,14 +124,30 @@ export function Leaderboard() {
 
           <div className="lg:col-span-2">
             <div className="sticky top-24 rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-4">Top 10 by Karma</h2>
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-4">
+                Top 10 by Karma
+              </h2>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                <BarChart
+                  data={chartData}
+                  layout="vertical"
+                  margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                >
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={80}
+                    tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                  />
                   <Tooltip
                     cursor={{ fill: '#f1f5f9' }}
-                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: '1px solid #e2e8f0',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
                     formatter={(value) => [`${value} Karma`, 'Points']}
                   />
                   <Bar dataKey="karma_points" radius={[0, 8, 8, 0]} barSize={20}>

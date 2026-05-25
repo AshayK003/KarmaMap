@@ -1,25 +1,24 @@
+import L from 'leaflet';
 import { memo, useEffect, useRef, useState } from 'react';
 import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
   Circle,
+  MapContainer,
+  Marker,
   Polyline,
+  Popup,
+  TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
-import L from 'leaflet';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { Link } from 'react-router-dom';
 import type { NearbyGig } from '../types/database';
 import { formatDistance } from '../utils/geo';
-import { Link } from 'react-router-dom';
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -109,7 +108,9 @@ export const MapView = memo(function MapView({
     duration: number;
   } | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
-  const routeCache = useRef<Map<string, { coords: [number, number][]; distance: number; duration: number }>>(new Map());
+  const routeCache = useRef<
+    Map<string, { coords: [number, number][]; distance: number; duration: number }>
+  >(new Map());
 
   useEffect(() => {
     setSelectedGig(null);
@@ -141,11 +142,11 @@ export const MapView = memo(function MapView({
       try {
         const profile = osrmProfile[travelMode] ?? 'walking';
         const res = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${lng},${lat};${selectedGig.lng},${selectedGig.lat}?overview=full&geometries=geojson`
+          `https://router.project-osrm.org/route/v1/${profile}/${lng},${lat};${selectedGig.lng},${selectedGig.lat}?overview=full&geometries=geojson`,
         );
         if (!res.ok) throw new Error('OSRM routing request failed');
         const data = await res.json();
-        
+
         if (!isMounted) return;
 
         if (data.routes && data.routes.length > 0) {
@@ -201,8 +202,8 @@ export const MapView = memo(function MapView({
                   ? mode === 'foot'
                     ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
                     : mode === 'bicycle'
-                    ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-500/20'
-                    : 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
+                      ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-500/20'
+                      : 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
                   : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
               }`}
             >
@@ -212,12 +213,7 @@ export const MapView = memo(function MapView({
         })}
       </div>
 
-      <MapContainer
-        center={[lat, lng]}
-        zoom={13}
-        className="h-full w-full"
-        scrollWheelZoom
-      >
+      <MapContainer center={[lat, lng]} zoom={13} className="h-full w-full" scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -244,7 +240,12 @@ export const MapView = memo(function MapView({
             <Polyline
               positions={activeRoute.coords}
               pathOptions={{
-                color: travelMode === 'foot' ? '#10b981' : travelMode === 'bicycle' ? '#06b6d4' : '#6366f1',
+                color:
+                  travelMode === 'foot'
+                    ? '#10b981'
+                    : travelMode === 'bicycle'
+                      ? '#06b6d4'
+                      : '#6366f1',
                 weight: 6,
                 opacity: 0.35,
                 lineCap: 'round',
@@ -254,7 +255,12 @@ export const MapView = memo(function MapView({
             <Polyline
               positions={activeRoute.coords}
               pathOptions={{
-                color: travelMode === 'foot' ? '#059669' : travelMode === 'bicycle' ? '#0891b2' : '#4f46e5',
+                color:
+                  travelMode === 'foot'
+                    ? '#059669'
+                    : travelMode === 'bicycle'
+                      ? '#0891b2'
+                      : '#4f46e5',
                 weight: 3,
                 opacity: 0.95,
                 lineCap: 'round',
@@ -267,7 +273,9 @@ export const MapView = memo(function MapView({
         <Marker position={[lat, lng]} icon={youIcon}>
           <Popup className="leaflet-popup-custom">
             <div className="min-w-[120px] text-center py-1">
-              <p className="font-extrabold text-sm text-gray-900 dark:text-slate-100">📍 You are here</p>
+              <p className="font-extrabold text-sm text-gray-900 dark:text-slate-100">
+                📍 You are here
+              </p>
             </div>
           </Popup>
         </Marker>
@@ -292,31 +300,49 @@ export const MapView = memo(function MapView({
                 <div className="space-y-1.5 py-1">
                   <p className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-snug flex items-center gap-1.5">
                     {gig.featured_until && new Date(gig.featured_until) > new Date() && (
-                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">★ FEATURED</span>
+                      <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">
+                        ★ FEATURED
+                      </span>
                     )}
                     {gig.title}
                   </p>
-                  <p className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">{gig.ngo_name}</p>
+                  <p className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">
+                    {gig.ngo_name}
+                  </p>
 
                   <div className="flex flex-col text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 gap-1 border-t border-slate-100 dark:border-slate-700 pt-1.5 mt-1.5">
                     <div className="flex items-center justify-between">
                       <span>📍 Straight line:</span>
-                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{formatDistance(gig.distance_meters)}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">
+                        {formatDistance(gig.distance_meters)}
+                      </span>
                     </div>
 
                     {activeRoute && activeRoute.gigId === gig.id ? (
                       <>
-                        <div className={`flex items-center justify-between font-black ${
-                          travelMode === 'foot' ? 'text-emerald-700 dark:text-emerald-400' : travelMode === 'bicycle' ? 'text-cyan-700 dark:text-cyan-400' : 'text-indigo-700 dark:text-indigo-400'
-                        }`}>
-                          <span>{travelMode === 'foot' ? '🚶 Walking road:' : travelMode === 'bicycle' ? '🚲 Cycling road:' : '🚗 Driving road:'}</span>
+                        <div
+                          className={`flex items-center justify-between font-black ${
+                            travelMode === 'foot'
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : travelMode === 'bicycle'
+                                ? 'text-cyan-700 dark:text-cyan-400'
+                                : 'text-indigo-700 dark:text-indigo-400'
+                          }`}
+                        >
+                          <span>
+                            {travelMode === 'foot'
+                              ? '🚶 Walking road:'
+                              : travelMode === 'bicycle'
+                                ? '🚲 Cycling road:'
+                                : '🚗 Driving road:'}
+                          </span>
                           <span>{formatDistance(activeRoute.distance)}</span>
                         </div>
                         <div className="flex items-center justify-between text-teal-600 dark:text-teal-400 font-black">
                           <span>⏱️ Travel time:</span>
                           <span>{Math.round(activeRoute.duration / 60)} mins</span>
                         </div>
-                        
+
                         {travelMode !== 'car' ? (
                           <div className="flex items-center justify-between text-emerald-600 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 mt-1 shadow-2xs dark:text-emerald-400 dark:bg-emerald-900/30 dark:border-slate-700 dark:shadow-none dark:shadow-slate-900/50">
                             <span>🌱 CO2 Saved:</span>
@@ -341,7 +367,9 @@ export const MapView = memo(function MapView({
 
                     <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-700 pt-1.5 mt-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                       <span>👥 Joined spots:</span>
-                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">
+                        {gig.volunteers_joined}/{gig.volunteers_needed}
+                      </span>
                     </div>
                   </div>
 

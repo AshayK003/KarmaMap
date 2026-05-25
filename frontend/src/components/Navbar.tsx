@@ -1,26 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { NotificationBell } from './NotificationBell';
 import {
-  MapPinIcon,
   AwardIcon,
-  ClipboardListIcon,
-  PlusCircleIcon,
-  LogOutIcon,
-  LogInIcon,
-  SunIcon,
-  MoonIcon,
-  MenuIcon,
-  XIcon,
-  LayoutDashboardIcon,
-  UserCircleIcon,
   Building2Icon,
+  ClipboardListIcon,
+  LayoutDashboardIcon,
+  LogInIcon,
+  LogOutIcon,
+  MapPinIcon,
+  MenuIcon,
+  MoonIcon,
+  PlusCircleIcon,
+  SunIcon,
+  UserCircleIcon,
   UsersIcon,
+  XIcon,
 } from './NavIcons';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
@@ -52,8 +52,12 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
-        <Link to="/" className="flex items-center gap-2 group transition-all" onClick={closeMobile}>
+      <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 py-3">
+        <Link
+          to="/"
+          className="flex items-center gap-2 group transition-all shrink-0"
+          onClick={closeMobile}
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/10 group-hover:scale-105 transition-transform duration-200">
             <MapPinIcon className="h-5 w-5" />
           </div>
@@ -63,52 +67,116 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden sm:flex items-center gap-4 text-xs sm:text-sm font-bold">
+        <div className="hidden sm:flex items-center flex-1 text-xs sm:text-sm font-bold">
           {user && profile ? (
             <>
               {profile.role === 'volunteer' && (
                 <>
-                  <Link to="/map" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><MapPinIcon className="h-4 w-4" /> Discovery Map</Link>
-                  <Link to="/portfolio" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UserCircleIcon className="h-4 w-4" /> My Portfolio</Link>
-                  <Link to="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><AwardIcon className="h-4 w-4" /> Leaderboard</Link>
-                  <Link to="/corporate/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><Building2Icon className="h-4 w-4" /> CSR Dashboard</Link>
-                  <Link to="/corporate/manage" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UsersIcon className="h-4 w-4" /> Manage Team</Link>
-                  <Badge variant="default" className="px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
+                  <Link
+                    to="/map"
+                    className="flex items-center gap-1.5 ml-8 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <MapPinIcon className="h-4 w-4" /> Discovery Map
+                  </Link>
+                  <Link
+                    to="/portfolio"
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <UserCircleIcon className="h-4 w-4" /> My Portfolio
+                  </Link>
+                  <Link
+                    to="/leaderboard"
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <AwardIcon className="h-4 w-4" /> Leaderboard
+                  </Link>
+                  <Link
+                    to="/corporate/dashboard"
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <Building2Icon className="h-4 w-4" /> CSR Dashboard
+                  </Link>
+                  <Link
+                    to="/corporate/manage"
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <UsersIcon className="h-4 w-4" /> Manage Team
+                  </Link>
+                  <Badge variant="default" className="ml-3 px-2.5 py-1 text-xs">
+                    {profile.karma_points} Karma Points
+                  </Badge>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      aria-label="Toggle theme"
+                    >
+                      {theme === 'dark' ? (
+                        <SunIcon className="h-4 w-4 text-slate-400 hover:text-amber-400 transition-colors" />
+                      ) : (
+                        <MoonIcon className="h-4 w-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
+                      )}
+                    </button>
+                    <NotificationBell />
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      <LogOutIcon className="h-4 w-4 mr-1" /> Sign Out
+                    </Button>
+                  </div>
                 </>
               )}
               {profile.role === 'ngo' && (
                 <>
-                  <Link to="/ngo/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><LayoutDashboardIcon className="h-4 w-4" /> NGO Dashboard</Link>
-                  <Link to="/ngo/create-gig"><Button size="sm"><PlusCircleIcon className="h-4 w-4 mr-1" /> Create Opportunity</Button></Link>
+                  <Link
+                    to="/ngo/dashboard"
+                    className="flex items-center gap-1.5 ml-8 px-2.5 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"
+                  >
+                    <LayoutDashboardIcon className="h-4 w-4" /> NGO Dashboard
+                  </Link>
+                  <Link to="/ngo/create-gig" className="ml-2">
+                    <Button size="sm">
+                      <PlusCircleIcon className="h-4 w-4 mr-1" /> Create Opportunity
+                    </Button>
+                  </Link>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      aria-label="Toggle theme"
+                    >
+                      {theme === 'dark' ? (
+                        <SunIcon className="h-4 w-4 text-slate-400 hover:text-amber-400 transition-colors" />
+                      ) : (
+                        <MoonIcon className="h-4 w-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
+                      )}
+                    </button>
+                    <NotificationBell />
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      <LogOutIcon className="h-4 w-4 mr-1" /> Sign Out
+                    </Button>
+                  </div>
                 </>
               )}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? (
-                  <SunIcon className="h-5 w-5 text-slate-400 hover:text-amber-400 transition-colors" />
-                ) : (
-                  <MoonIcon className="h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
-                )}
-              </button>
-              <NotificationBell />
-              <Button variant="ghost" onClick={handleSignOut}><LogOutIcon className="h-4 w-4 mr-1" /> Sign Out</Button>
             </>
           ) : (
-            <>
-              <Link to="/login"><Button variant="ghost" size="sm"><LogInIcon className="h-4 w-4 mr-1" /> Sign In</Button></Link>
-              <Link to="/signup"><Button size="sm">Get Started</Button></Link>
-            </>
+            <div className="flex items-center gap-2 ml-auto">
+              <Link to="/login">
+                <Button variant="ghost" size="sm">
+                  <LogInIcon className="h-4 w-4 mr-1" /> Sign In
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button size="sm">Get Started</Button>
+              </Link>
+            </div>
           )}
         </div>
 
         {/* Mobile hamburger */}
         <button
           type="button"
-          className="sm:hidden flex items-center justify-center h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          className="sm:hidden flex items-center justify-center h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ml-auto"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
         >
@@ -122,7 +190,11 @@ export function Navbar() {
 
       {/* Mobile drawer backdrop */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 sm:hidden bg-black/20 backdrop-blur-xs" onClick={closeMobile} aria-hidden="true" />
+        <div
+          className="fixed inset-0 z-40 sm:hidden bg-black/20 backdrop-blur-xs"
+          onClick={closeMobile}
+          aria-hidden="true"
+        />
       )}
 
       {/* Mobile drawer */}
@@ -133,36 +205,68 @@ export function Navbar() {
               <>
                 {profile.role === 'volunteer' && (
                   <>
-                    <Link to="/map" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/map"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <MapPinIcon className="h-4 w-4 shrink-0" />
                       Discovery Map
                     </Link>
-                    <Link to="/portfolio" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/portfolio"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <ClipboardListIcon className="h-4 w-4 shrink-0" />
                       My Portfolio
                     </Link>
-                    <Link to="/leaderboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/leaderboard"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <AwardIcon className="h-4 w-4 shrink-0" />
                       Leaderboard
                     </Link>
-                    <Link to="/corporate/dashboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/corporate/dashboard"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <Building2Icon className="h-4 w-4 shrink-0" />
                       CSR Dashboard
                     </Link>
-                    <Link to="/corporate/manage" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/corporate/manage"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <UsersIcon className="h-4 w-4 shrink-0" />
                       Manage Team
                     </Link>
-                    <div className="px-3 py-2"><Badge variant="default" className="text-xs">{profile.karma_points} Karma Points</Badge></div>
+                    <div className="px-3 py-2">
+                      <Badge variant="default" className="text-xs">
+                        {profile.karma_points} Karma Points
+                      </Badge>
+                    </div>
                   </>
                 )}
                 {profile.role === 'ngo' && (
                   <>
-                    <Link to="/ngo/dashboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/ngo/dashboard"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <LayoutDashboardIcon className="h-4 w-4 shrink-0" />
                       NGO Dashboard
                     </Link>
-                    <Link to="/ngo/create-gig" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                    <Link
+                      to="/ngo/create-gig"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                    >
                       <PlusCircleIcon className="h-4 w-4 shrink-0" />
                       Create Opportunity
                     </Link>
@@ -184,13 +288,30 @@ export function Navbar() {
                   <NotificationBell />
                 </div>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-                  <button onClick={handleSignOut} className="w-full px-3 py-3 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-left">Sign Out</button>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-3 py-3 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-left"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"><LogInIcon className="h-4 w-4 mr-2" /> Sign In</Link>
-                <Link to="/signup" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-emerald-700 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/40 transition-colors">Get Started</Link>
+                <Link
+                  to="/login"
+                  onClick={closeMobile}
+                  className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                >
+                  <LogInIcon className="h-4 w-4 mr-2" /> Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={closeMobile}
+                  className="flex items-center px-3 py-3 text-sm font-bold text-emerald-700 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/40 transition-colors"
+                >
+                  Get Started
+                </Link>
               </>
             )}
           </div>

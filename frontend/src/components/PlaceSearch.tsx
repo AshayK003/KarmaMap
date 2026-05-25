@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { searchPlaces, type PlaceResult } from '../services/geocoding';
+import { type PlaceResult, searchPlaces } from '../services/geocoding';
 
 interface PlaceSearchProps {
   onSelect: (place: PlaceResult) => void;
@@ -69,7 +69,12 @@ export function PlaceSearch({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label htmlFor="place-search" className="text-xs font-medium text-gray-600 dark:text-slate-300">Search location</label>
+      <label
+        htmlFor="place-search"
+        className="text-xs font-medium text-gray-600 dark:text-slate-300"
+      >
+        Search location
+      </label>
       <input
         id="place-search"
         type="text"
@@ -80,9 +85,7 @@ export function PlaceSearch({
         className="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         autoComplete="off"
       />
-      {loading && (
-        <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Searching…</p>
-      )}
+      {loading && <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Searching…</p>}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       {open && results.length > 0 && (
         <ul

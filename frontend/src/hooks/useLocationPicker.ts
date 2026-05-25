@@ -7,9 +7,7 @@ export const PRESET_LUCKNOW_RDSO = { lat: 26.8193, lng: 80.8853, label: 'Lucknow
 export function useLocationPicker() {
   const geo = useGeolocation();
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
-  const [source, setSource] = useState<'gps' | 'manual' | 'map' | 'preset' | 'search'>(
-    'gps'
-  );
+  const [source, setSource] = useState<'gps' | 'manual' | 'map' | 'preset' | 'search'>('gps');
   const [placeLabel, setPlaceLabel] = useState<string | null>(null);
 
   const lat = picked?.lat ?? geo.lat;
@@ -21,7 +19,7 @@ export function useLocationPicker() {
       setSource(src);
       setPlaceLabel(label ?? null);
     },
-    []
+    [],
   );
 
   const useGps = useCallback(() => {
@@ -30,9 +28,12 @@ export function useLocationPicker() {
     geo.refresh();
   }, [geo]);
 
-  const usePreset = useCallback((preset: { lat: number; lng: number }) => {
-    setLocation(preset.lat, preset.lng, 'preset');
-  }, [setLocation]);
+  const usePreset = useCallback(
+    (preset: { lat: number; lng: number }) => {
+      setLocation(preset.lat, preset.lng, 'preset');
+    },
+    [setLocation],
+  );
 
   return {
     lat,

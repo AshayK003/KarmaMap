@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { formatDate } from '../utils/format';
-import { getKarmaLevel } from '../utils/karma';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import type { Profile, Participation } from '../types/database';
+import { supabase } from '../lib/supabase';
+import type { Participation, Profile } from '../types/database';
+import { formatDate } from '../utils/format';
+import { getKarmaLevel } from '../utils/karma';
 
 export function PublicPortfolio() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,7 +35,7 @@ export function PublicPortfolio() {
                 .then(({ data: parts }) => {
                   setCompleted((parts as Participation[]) ?? []);
                   setLoading(false);
-                })
+                }),
             ).catch((err: unknown) => {
               console.error('Failed to fetch participations:', err);
               setLoading(false);
@@ -43,7 +43,7 @@ export function PublicPortfolio() {
           } else {
             setLoading(false);
           }
-        })
+        }),
     ).catch((err: unknown) => {
       console.error('Failed to fetch profile:', err);
       setLoading(false);
@@ -66,7 +66,9 @@ export function PublicPortfolio() {
       <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="text-center space-y-2">
           <span className="text-4xl select-none">🗺️</span>
-          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">Portfolio Not Found</h2>
+          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">
+            Portfolio Not Found
+          </h2>
           <p className="text-xs font-semibold text-slate-400">
             The profile link may be incorrect, or the volunteer has disabled sharing.
           </p>
@@ -106,7 +108,9 @@ export function PublicPortfolio() {
           <Card className="bg-white dark:bg-slate-800 text-center">
             {/* Avatar block */}
             <div className="flex flex-col items-center">
-              <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
+              <div
+                className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}
+              >
                 <Avatar
                   size="xl"
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
@@ -117,8 +121,12 @@ export function PublicPortfolio() {
                 </span>
               </div>
 
-              <h1 className="mt-4 text-2xl font-black text-slate-800 dark:text-slate-100">{profile.name}</h1>
-              <span className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-xs font-extrabold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50`}>
+              <h1 className="mt-4 text-2xl font-black text-slate-800 dark:text-slate-100">
+                {profile.name}
+              </h1>
+              <span
+                className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-xs font-extrabold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50`}
+              >
                 {level.title}
               </span>
             </div>
@@ -154,7 +162,6 @@ export function PublicPortfolio() {
               </div>
             )}
           </Card>
-
         </div>
 
         {/* ─── Right Column: Stats & Timeline ─── */}
@@ -165,15 +172,21 @@ export function PublicPortfolio() {
             <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
+                  Karma
+                </span>
                 <span className="text-xl">✨</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{profile.karma_points ?? 0}</p>
+              <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
+                {profile.karma_points ?? 0}
+              </p>
               {/* Level Progress */}
               <div className="mt-4">
                 <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 mb-1">
                   <span>Next Milestone</span>
-                  <span>{karma}/{level.max} XP</span>
+                  <span>
+                    {karma}/{level.max} XP
+                  </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200/50 dark:border-slate-600/50">
                   <div
@@ -188,10 +201,14 @@ export function PublicPortfolio() {
             <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Active Streak</span>
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
+                  Active Streak
+                </span>
                 <span className="text-xl animate-float">🔥</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{profile.streak ?? 0} days</p>
+              <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">
+                {profile.streak ?? 0} days
+              </p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Shows active engagement and reliable daily community service.
               </p>
@@ -201,10 +218,14 @@ export function PublicPortfolio() {
             <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Verified Time</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+                  Verified Time
+                </span>
                 <span className="text-xl">⏳</span>
               </div>
-              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">{totalHours}h</p>
+              <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">
+                {totalHours}h
+              </p>
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Total accumulated volunteer time verified across open NGO projects.
               </p>
@@ -224,15 +245,20 @@ export function PublicPortfolio() {
               {completed.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
                   <span className="text-3xl select-none">🌱</span>
-                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">No verified history found</p>
+                  <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">
+                    No verified history found
+                  </p>
                   <p className="text-xs font-medium text-slate-400 mt-1 max-w-xs mx-auto">
                     This volunteer has not logged any completed events on their public page yet.
                   </p>
                 </div>
               ) : (
                 completed.map((p) => {
-                  const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
-                  const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
+                  const gigTitle =
+                    (p as Participation & { gigs?: { title: string } }).gigs?.title ??
+                    'Volunteer Gig';
+                  const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs
+                    ?.gig_date;
                   const dateStr = rawDate
                     ? formatDate(rawDate, { month: 'short', day: 'numeric', year: 'numeric' })
                     : 'Verified Date';
@@ -276,4 +302,3 @@ export function PublicPortfolio() {
     </div>
   );
 }
-

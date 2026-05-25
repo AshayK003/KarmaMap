@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  formatDistance,
-  skillOverlapScore,
-  generatePortfolioSlug,
-  estimateTravelTime,
-  parseGigLocation,
   calculateHaversineDistance,
+  estimateTravelTime,
+  formatDistance,
+  generatePortfolioSlug,
+  parseGigLocation,
+  skillOverlapScore,
 } from '../utils/geo';
 
 describe('formatDistance', () => {

@@ -6,16 +6,26 @@ interface DashboardCardProps {
   gradient?: string; // Optional custom top border gradient classes
 }
 
-export function DashboardCard({ title, value, subtitle, icon, gradient = 'from-emerald-500 to-teal-400' }: DashboardCardProps) {
+export function DashboardCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  gradient = 'from-emerald-500 to-teal-400',
+}: DashboardCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-xl border border-emerald-100 bg-white p-6 shadow-xs hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-950/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:shadow-slate-900/50 transition-all duration-300 ease-out">
       {/* Decorative top border gradient line */}
       <div className={`absolute top-0 left-0 h-[3px] w-full bg-gradient-to-r ${gradient}`} />
-      
+
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold tracking-wider uppercase text-gray-400 dark:text-slate-400">{title}</p>
-          <p className="text-3xl font-bold tracking-tight text-emerald-800 dark:text-emerald-400 transition-colors group-hover:text-emerald-950">{value}</p>
+          <p className="text-xs font-semibold tracking-wider uppercase text-gray-400 dark:text-slate-400">
+            {title}
+          </p>
+          <p className="text-3xl font-bold tracking-tight text-emerald-800 dark:text-emerald-400 transition-colors group-hover:text-emerald-950">
+            {value}
+          </p>
         </div>
         {icon && (
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 shadow-xs dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-none dark:shadow-slate-900/50 transition-transform duration-300 group-hover:scale-110 shrink-0">
@@ -23,7 +33,7 @@ export function DashboardCard({ title, value, subtitle, icon, gradient = 'from-e
           </div>
         )}
       </div>
-      
+
       {subtitle && (
         <p className="mt-3 flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 font-medium">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -33,5 +43,3 @@ export function DashboardCard({ title, value, subtitle, icon, gradient = 'from-e
     </div>
   );
 }
-
-

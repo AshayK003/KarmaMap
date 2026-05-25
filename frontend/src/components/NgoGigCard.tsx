@@ -1,42 +1,45 @@
-import { useState, useEffect } from 'react';
-import type { Gig, GigStatus } from '../types/database';
-import { updateGigDetails, updateGigStatus } from '../services/gigs';
-import { parseGigLocation } from '../utils/geo';
+import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { updateGigStatus } from '../services/gigs';
+import type { Gig, GigStatus } from '../types/database';
+import { parseGigLocation } from '../utils/geo';
 
 interface NgoGigCardProps {
   gig: Gig;
   onUpdated: () => void;
 }
 
-const STATUS_THEME: Record<GigStatus, { bg: string; text: string; border: string; dot: string; label: string }> = {
-  open: { 
-    bg: 'bg-emerald-50/70 dark:bg-emerald-900/30', 
-    text: 'text-emerald-700 dark:text-emerald-400', 
-    border: 'border-emerald-200/50 dark:border-slate-700', 
+const STATUS_THEME: Record<
+  GigStatus,
+  { bg: string; text: string; border: string; dot: string; label: string }
+> = {
+  open: {
+    bg: 'bg-emerald-50/70 dark:bg-emerald-900/30',
+    text: 'text-emerald-700 dark:text-emerald-400',
+    border: 'border-emerald-200/50 dark:border-slate-700',
     dot: 'bg-emerald-500',
-    label: 'Open for volunteers' 
+    label: 'Open for volunteers',
   },
-  in_progress: { 
-    bg: 'bg-blue-50/70 dark:bg-blue-900/30', 
-    text: 'text-blue-700 dark:text-blue-400', 
-    border: 'border-blue-200/50 dark:border-slate-700', 
+  in_progress: {
+    bg: 'bg-blue-50/70 dark:bg-blue-900/30',
+    text: 'text-blue-700 dark:text-blue-400',
+    border: 'border-blue-200/50 dark:border-slate-700',
     dot: 'bg-blue-500 animate-pulse',
-    label: 'In Progress' 
+    label: 'In Progress',
   },
-  completed: { 
-    bg: 'bg-slate-50/70 dark:bg-slate-800/70', 
-    text: 'text-slate-700 dark:text-slate-200', 
-    border: 'border-slate-200/50 dark:border-slate-700/50', 
+  completed: {
+    bg: 'bg-slate-50/70 dark:bg-slate-800/70',
+    text: 'text-slate-700 dark:text-slate-200',
+    border: 'border-slate-200/50 dark:border-slate-700/50',
     dot: 'bg-slate-400',
-    label: 'Completed' 
+    label: 'Completed',
   },
-  cancelled: { 
-    bg: 'bg-rose-50/70 dark:bg-rose-900/30', 
-    text: 'text-rose-700 dark:text-rose-400', 
-    border: 'border-rose-200/50 dark:border-slate-700', 
+  cancelled: {
+    bg: 'bg-rose-50/70 dark:bg-rose-900/30',
+    text: 'text-rose-700 dark:text-rose-400',
+    border: 'border-rose-200/50 dark:border-slate-700',
     dot: 'bg-rose-500',
-    label: 'Closed' 
+    label: 'Closed',
   },
 };
 
@@ -44,12 +47,32 @@ function LocationDisplay({ gig }: { gig: Gig }) {
   const parsed = parseGigLocation(gig.location);
   if (!parsed) return null;
   return (
-    <span className="flex items-center gap-1 select-none" title={`${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`}>
-      <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    <span
+      className="flex items-center gap-1 select-none"
+      title={`${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`}
+    >
+      <svg
+        className="h-4 w-4 shrink-0 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+        />
       </svg>
-      <span className="truncate max-w-[200px]">{gig.location_label || `${parsed.lat.toFixed(4)}, ${parsed.lng.toFixed(4)}`}</span>
+      <span className="truncate max-w-[200px]">
+        {gig.location_label || `${parsed.lat.toFixed(4)}, ${parsed.lng.toFixed(4)}`}
+      </span>
     </span>
   );
 }
@@ -57,35 +80,9 @@ function LocationDisplay({ gig }: { gig: Gig }) {
 export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(gig.title);
-  const [description, setDescription] = useState(gig.description);
-  const [volunteersNeeded, setVolunteersNeeded] = useState(gig.volunteers_needed);
-  const [skills, setSkills] = useState(gig.required_skills.join(', '));
-
-  const initialLocation = parseGigLocation(gig.location);
-  const [lat, setLat] = useState(initialLocation?.lat ?? 28.6139);
-  const [lng, setLng] = useState(initialLocation?.lng ?? 77.209);
 
   const gigDate = new Date(gig.gig_date);
-  const [datePart, setDatePart] = useState(gigDate.toISOString().slice(0, 10));
-  const [timePart, setTimePart] = useState(
-    gigDate.toTimeString().slice(0, 5)
-  );
-
-  useEffect(() => {
-    if (editing) return;
-    setTitle(gig.title);
-    setDescription(gig.description);
-    setVolunteersNeeded(gig.volunteers_needed);
-    setSkills(gig.required_skills.join(', '));
-    const loc = parseGigLocation(gig.location);
-    setLat(loc?.lat ?? 28.6139);
-    setLng(loc?.lng ?? 77.209);
-    const d = new Date(gig.gig_date);
-    setDatePart(d.toISOString().slice(0, 10));
-    setTimePart(d.toTimeString().slice(0, 5));
-  }, [gig.id, gig.title, gig.description, gig.volunteers_needed, gig.required_skills, gig.location, gig.gig_date, editing]);
+  const timePart = gigDate.toTimeString().slice(0, 5);
 
   const runAction = async (action: () => Promise<void>, confirmMsg?: string) => {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -110,52 +107,18 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
       },
       status === 'cancelled'
         ? 'Close this gig? Volunteers will no longer see it on the map.'
-        : undefined
+        : undefined,
     );
-
-  const saveEdits = () =>
-    runAction(async () => {
-      const combined = new Date(`${datePart}T${timePart}`);
-      if (Number.isNaN(combined.getTime())) {
-        throw new Error('Invalid date or time');
-      }
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        throw new Error('Invalid coordinates');
-      }
-      await updateGigDetails(gig.id, {
-        title: title.trim(),
-        description: description.trim(),
-        volunteers_needed: volunteersNeeded,
-        required_skills: skills
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        gig_date: combined.toISOString(),
-        lat,
-        lng,
-      });
-      setEditing(false);
-    });
 
   const isTerminal = gig.status === 'completed' || gig.status === 'cancelled';
 
-  const fillRate = gig.volunteers_needed > 0 ? (gig.volunteers_joined / gig.volunteers_needed) * 100 : 0;
+  const fillRate =
+    gig.volunteers_needed > 0 ? (gig.volunteers_joined / gig.volunteers_needed) * 100 : 0;
   const cappedFillRate = Math.min(fillRate, 100);
-  const progressTheme = fillRate >= 100 ? 'bg-emerald-500' : fillRate >= 50 ? 'bg-teal-500' : 'bg-amber-500';
+  const progressTheme =
+    fillRate >= 100 ? 'bg-emerald-500' : fillRate >= 50 ? 'bg-teal-500' : 'bg-amber-500';
 
   const currentTheme = STATUS_THEME[gig.status];
-
-  const cancelEdit = () => {
-    setEditing(false);
-    setTitle(gig.title);
-    setDescription(gig.description);
-    setVolunteersNeeded(gig.volunteers_needed);
-    setSkills(gig.required_skills.join(', '));
-    if (initialLocation) {
-      setLat(initialLocation.lat);
-      setLng(initialLocation.lng);
-    }
-  };
 
   return (
     <article className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-xs hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-950/2 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:shadow-slate-900/50 dark:hover:border-slate-600 transition-all duration-300 ease-out">
@@ -165,7 +128,9 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
             <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 leading-snug group-hover:text-emerald-900 transition-colors">
               {gig.title}
             </h3>
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-2xs ${currentTheme.bg} ${currentTheme.text} ${currentTheme.border}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-2xs ${currentTheme.bg} ${currentTheme.text} ${currentTheme.border}`}
+            >
               <span className={`h-1.5 w-1.5 rounded-full ${currentTheme.dot}`} />
               {currentTheme.label}
             </span>
@@ -177,18 +142,38 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-slate-400 font-semibold pt-1">
             <span className="flex items-center gap-1 select-none">
-              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                className="h-4 w-4 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
               {gigDate.toLocaleDateString()}
             </span>
             <span className="flex items-center gap-1 select-none">
-              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-4 w-4 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {timePart}
             </span>
-            {!editing && <LocationDisplay gig={gig} />}
+            <LocationDisplay gig={gig} />
           </div>
 
           <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100/50 p-3 max-w-xl dark:bg-slate-800 dark:border-slate-700/50">
@@ -204,7 +189,10 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
           {gig.required_skills.length > 0 && (
             <div className="mt-3.5 flex flex-wrap gap-1.5">
               {gig.required_skills.map((s) => (
-                <span key={s} className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                <span
+                  key={s}
+                  className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                >
                   {s}
                 </span>
               ))}
@@ -214,16 +202,28 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
       </div>
 
       {error && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400" role="alert">
-          <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div
+          className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs font-semibold text-rose-600 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400"
+          role="alert"
+        >
+          <svg
+            className="h-4 w-4 shrink-0 text-rose-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           {error}
         </div>
       )}
 
-      {!editing && (
-        <div className="no-print mt-5 flex flex-wrap items-center gap-2 border-t border-gray-50 dark:border-slate-700 pt-4">
+      <div className="no-print mt-5 flex flex-wrap items-center gap-2 border-t border-gray-50 dark:border-slate-700 pt-4">
           {!isTerminal && (
             <>
               {gig.status === 'open' && (
@@ -234,9 +234,25 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3.5 py-2.5 text-xs font-bold text-white hover:bg-blue-700 shadow-sm shadow-blue-500/10 hover:shadow-md dark:shadow-none dark:shadow-slate-900/50 transition-all duration-200 disabled:opacity-50"
                 >
                   {busy && (
-                    <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                   )}
                   Start Gig
@@ -250,9 +266,25 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
                   className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 hover:shadow-md dark:shadow-none dark:shadow-slate-900/50 transition-all duration-200 disabled:opacity-50"
                 >
                   {busy && (
-                    <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                   )}
                   Mark Completed
@@ -280,148 +312,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               Reopen Gig
             </button>
           )}
-          {!isTerminal && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setEditing(true)}
-              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 transition-all duration-200 disabled:opacity-50 mr-auto"
-            >
-              Edit Details
-            </button>
-          )}
         </div>
-      )}
-
-      {editing && (
-        <div className="mt-5 space-y-4 border-t border-gray-100 dark:border-slate-700 pt-4 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider uppercase text-gray-400 dark:text-slate-500">Edit Gig Details</span>
-            <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded dark:text-emerald-400 dark:bg-emerald-900/30">All changes save instantly</span>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="ngo-edit-title" className="text-xs font-bold text-gray-500 dark:text-slate-400">Gig Title</label>
-              <input
-                id="ngo-edit-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                placeholder="Enter an catchy title..."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="ngo-edit-desc" className="text-xs font-bold text-gray-500 dark:text-slate-400">Description</label>
-              <textarea
-                id="ngo-edit-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                placeholder="Describe what the volunteers will do..."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="ngo-edit-skills" className="text-xs font-bold text-gray-500 dark:text-slate-400">Required Skills (comma separated)</label>
-              <input
-                id="ngo-edit-skills"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                placeholder="e.g. Teaching, Gardening, Cooking"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label htmlFor="ngo-edit-spots" className="text-xs font-bold text-gray-500 dark:text-slate-400">Volunteers Needed</label>
-                <input
-                  id="ngo-edit-spots"
-                  type="number"
-                  min={1}
-                  value={volunteersNeeded}
-                  onChange={(e) => setVolunteersNeeded(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-              />
-            </div>
-            <div>
-              <label htmlFor="ngo-edit-date" className="text-xs font-bold text-gray-500 dark:text-slate-400">Date</label>
-                <input
-                  id="ngo-edit-date"
-                  type="date"
-                  value={datePart}
-                  onChange={(e) => setDatePart(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-              />
-            </div>
-            <div>
-              <label htmlFor="ngo-edit-time" className="text-xs font-bold text-gray-500 dark:text-slate-400">Time</label>
-              <input
-                id="ngo-edit-time"
-                type="time"
-                value={timePart}
-                onChange={(e) => setTimePart(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="ngo-edit-lat" className="text-xs font-bold text-gray-500 dark:text-slate-400">Latitude</label>
-              <input
-                id="ngo-edit-lat"
-                type="number"
-                step="any"
-                value={lat}
-                onChange={(e) => setLat(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                placeholder="e.g. 28.6139"
-              />
-            </div>
-            <div>
-              <label htmlFor="ngo-edit-lng" className="text-xs font-bold text-gray-500 dark:text-slate-400">Longitude</label>
-              <input
-                id="ngo-edit-lng"
-                type="number"
-                step="any"
-                value={lng}
-                onChange={(e) => setLng(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-gray-800 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
-                placeholder="e.g. 77.209"
-              />
-            </div>
-          </div>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={saveEdits}
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm shadow-emerald-500/10 dark:shadow-none dark:shadow-slate-900/50 transition-all duration-200 disabled:opacity-50"
-            >
-              {busy && (
-                <svg className="animate-spin -ml-1 mr-1.5 h-3 w-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              )}
-              Save Changes
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={cancelEdit}
-              className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 transition-all duration-200"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </article>
   );
 }

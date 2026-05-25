@@ -1,8 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "linter": {
     "enabled": true,
     "rules": {
@@ -14,8 +11,7 @@
         "noBannedTypes": "error"
       },
       "style": {
-        "noNonNullAssertion": "warn",
-        "useSingleCaseStatement": "off"
+        "noNonNullAssertion": "warn"
       }
     }
   },
@@ -32,8 +28,6 @@
     }
   },
   "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
+    "enabled": false
   }
 }

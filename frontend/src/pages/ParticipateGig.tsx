@@ -1,26 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { formatDate } from '../utils/format';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
-import { PhotoUpload } from '../components/PhotoUpload';
-import { Certificate } from '../components/Certificate';
-import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
-import { toast } from 'sonner';
-import type { Participation } from '../types/database';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { FieldError } from '@/components/ui/field-error';
 import confetti from 'canvas-confetti';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
+import { Input } from '@/components/ui/input';
+import { Certificate } from '../components/Certificate';
+import { PhotoUpload } from '../components/PhotoUpload';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
+import type { Participation } from '../types/database';
+import { formatDate } from '../utils/format';
 
 const schema = z.object({
-  hours: z.coerce
-    .number()
-    .min(0.5, 'Minimum 0.5 hours')
-    .max(24, 'Maximum 24 hours'),
+  hours: z.coerce.number().min(0.5, 'Minimum 0.5 hours').max(24, 'Maximum 24 hours'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -103,7 +100,10 @@ export function ParticipateGig() {
       const payload: Record<string, unknown> = { hours: data.hours };
       if (beforeUrl) payload.before_photo_url = beforeUrl;
       if (afterUrl) payload.after_photo_url = afterUrl;
-      const result = await completeParticipationViaApi(participation.id, payload as Parameters<typeof completeParticipationViaApi>[1]);
+      const result = await completeParticipationViaApi(
+        participation.id,
+        payload as Parameters<typeof completeParticipationViaApi>[1],
+      );
 
       const updated = (result as { participation?: Participation }).participation;
       if (updated) {
@@ -142,8 +142,7 @@ export function ParticipateGig() {
   };
 
   const gigTitle =
-    (participation as Participation & { gigs?: { title: string } })?.gigs?.title ??
-    'Volunteer Gig';
+    (participation as Participation & { gigs?: { title: string } })?.gigs?.title ?? 'Volunteer Gig';
 
   if (loadingParticipation) {
     return (
@@ -160,10 +159,14 @@ export function ParticipateGig() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="text-xl font-bold">Complete: {gigTitle}</h1>
-        <p className="mt-4 text-gray-600 dark:text-slate-300">You need to join this gig before uploading photos.</p>
+        <p className="mt-4 text-gray-600 dark:text-slate-300">
+          You need to join this gig before uploading photos.
+        </p>
         {pageError && <p className="mt-2 text-sm text-red-600">{pageError}</p>}
         <div className="mt-4 flex gap-3">
-          <Button onClick={handleJoin} disabled={submitting}>Join gig</Button>
+          <Button onClick={handleJoin} disabled={submitting}>
+            Join gig
+          </Button>
           <Link to={`/gigs/${gigId}`}>
             <Button variant="outline">Back to gig</Button>
           </Link>
@@ -179,9 +182,16 @@ export function ParticipateGig() {
           volunteerName={profile.name}
           participation={participation}
           gigTitle={gigTitle}
-          completedDate={formatDate(new Date(), { month: 'short', day: 'numeric', year: 'numeric' })}
+          completedDate={formatDate(new Date(), {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
         />
-        {(participation.before_photo_url || participation.after_photo_url || beforeUrl || afterUrl) && (
+        {(participation.before_photo_url ||
+          participation.after_photo_url ||
+          beforeUrl ||
+          afterUrl) && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(participation.before_photo_url || beforeUrl) && (
               <div>
@@ -190,7 +200,12 @@ export function ParticipateGig() {
                   src={participation.before_photo_url || beforeUrl!}
                   alt="Before"
                   className="w-full h-auto rounded-lg object-contain"
-                  onError={() => console.error('Before photo failed to load:', participation.before_photo_url || beforeUrl)}
+                  onError={() =>
+                    console.error(
+                      'Before photo failed to load:',
+                      participation.before_photo_url || beforeUrl,
+                    )
+                  }
                 />
               </div>
             )}
@@ -201,7 +216,12 @@ export function ParticipateGig() {
                   src={participation.after_photo_url || afterUrl!}
                   alt="After"
                   className="w-full h-auto rounded-lg object-contain"
-                  onError={() => console.error('After photo failed to load:', participation.after_photo_url || afterUrl)}
+                  onError={() =>
+                    console.error(
+                      'After photo failed to load:',
+                      participation.after_photo_url || afterUrl,
+                    )
+                  }
                 />
               </div>
             )}
@@ -226,7 +246,11 @@ export function ParticipateGig() {
           <div className="flex flex-col gap-2">
             <PhotoUpload label="Before photo" onUploadComplete={setBeforeUrl} />
             {beforeUrl && (
-              <img src={beforeUrl} alt="Before" className="w-full h-auto rounded-lg object-contain" />
+              <img
+                src={beforeUrl}
+                alt="Before"
+                className="w-full h-auto rounded-lg object-contain"
+              />
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -238,7 +262,9 @@ export function ParticipateGig() {
         </div>
 
         <div>
-          <label htmlFor="participate-hours" className="text-sm font-medium">Hours volunteered</label>
+          <label htmlFor="participate-hours" className="text-sm font-medium">
+            Hours volunteered
+          </label>
           <Input
             {...register('hours')}
             id="participate-hours"
@@ -250,25 +276,27 @@ export function ParticipateGig() {
             className="mt-1"
             onWheel={(e) => e.currentTarget.blur()}
           />
-          {errors.hours && (
-            <FieldError message={errors.hours.message} />
-          )}
+          {errors.hours && <FieldError message={errors.hours.message} />}
         </div>
 
         {(errors.root || pageError) && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-2" role="alert">
+          <div
+            className="rounded-lg bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-2"
+            role="alert"
+          >
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
             {errors.root?.message ?? pageError}
           </div>
         )}
 
-        <Button
-          type="submit"
-          disabled={!canSubmit}
-          className="w-full"
-        >
+        <Button type="submit" disabled={!canSubmit} className="w-full">
           {submitting ? 'Submitting…' : 'Complete gig'}
         </Button>
       </form>

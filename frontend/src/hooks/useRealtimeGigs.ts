@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Gig, Notification } from '../types/database';
 
@@ -9,7 +9,9 @@ async function enrichGigProfile(gig: Gig): Promise<Gig> {
     if (data) {
       return { ...gig, profiles: { name: data.name } };
     }
-  } catch { /* best-effort */ }
+  } catch {
+    /* best-effort */
+  }
   return gig;
 }
 
@@ -65,28 +67,26 @@ export function useRealtimeGigs(ngoId?: string) {
               setGigs((prev) => prev.map((g) => (g.id === enriched.id ? enriched : g)));
             }
           }
-        }
+        },
       )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'gigs' },
-        (payload) => {
-          const updated = payload.new as Gig;
-          setGigs((prev) =>
-            prev.map((g) => {
-              if (g.id === updated.id) {
-                return { ...updated, profiles: g.profiles ?? updated.profiles };
-              }
-              return g;
-            })
-          );
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'gigs' },
-        (payload) =>
-          setGigs((prev) => prev.filter((g) => g.id !== payload.old.id))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'gigs' }, (payload) => {
+        const updated = payload.new as Gig;
+        setGigs((prev) =>
+          prev.map((g) => {
+            if (g.id === updated.id) {
+              return {
+                ...g,
+                ...updated,
+                location: typeof updated.location === 'object' ? updated.location : g.location,
+                profiles: g.profiles ?? updated.profiles,
+              };
+            }
+            return g;
+          }),
+        );
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'gigs' }, (payload) =>
+        setGigs((prev) => prev.filter((g) => g.id !== payload.old.id)),
       )
       .subscribe();
 
@@ -125,22 +125,36 @@ export function useRealtimeNotifications(userId?: string) {
       .channel('notifications-realtime')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => setNotifications((prev) => [payload.new as Notification, ...prev])
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => setNotifications((prev) => [payload.new as Notification, ...prev]),
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
         (payload) =>
           setNotifications((prev) =>
-            prev.map((n) => (n.id === payload.new.id ? (payload.new as Notification) : n))
-          )
+            prev.map((n) => (n.id === payload.new.id ? (payload.new as Notification) : n)),
+          ),
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) =>
-          setNotifications((prev) => prev.filter((n) => n.id !== payload.old.id))
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => setNotifications((prev) => prev.filter((n) => n.id !== payload.old.id)),
       )
       .subscribe();
 
@@ -163,7 +177,11 @@ export function useRealtimeNotifications(userId?: string) {
   const markAllRead = async () => {
     if (!userId) return;
     try {
-      await supabase.from('notifications').update({ read_status: true }).eq('user_id', userId).eq('read_status', false);
+      await supabase
+        .from('notifications')
+        .update({ read_status: true })
+        .eq('user_id', userId)
+        .eq('read_status', false);
       setNotifications((prev) => prev.map((n) => ({ ...n, read_status: true })));
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
@@ -198,13 +216,23 @@ export function useRealtimeParticipations(gigId?: string) {
       .channel(`participations-${gigId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'participations', filter: `gig_id=eq.${gigId}` },
-        () => setCount((c) => c + 1)
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'participations',
+          filter: `gig_id=eq.${gigId}`,
+        },
+        () => setCount((c) => c + 1),
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'participations', filter: `gig_id=eq.${gigId}` },
-        () => setCount((c) => Math.max(0, c - 1))
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'participations',
+          filter: `gig_id=eq.${gigId}`,
+        },
+        () => setCount((c) => Math.max(0, c - 1)),
       )
       .subscribe();
 

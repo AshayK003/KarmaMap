@@ -49,9 +49,7 @@ export function LocationPicker({
       )}
 
       <div className="mt-3">
-        <PlaceSearch
-          onSelect={(place) => onSearchSelect(place.lat, place.lng, place.label)}
-        />
+        <PlaceSearch onSelect={(place) => onSearchSelect(place.lat, place.lng, place.label)} />
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -83,7 +81,9 @@ export function LocationPicker({
           }}
         >
           <div>
-            <label htmlFor="manual-lat" className="text-xs text-gray-500 dark:text-slate-400">Latitude</label>
+            <label htmlFor="manual-lat" className="text-xs text-gray-500 dark:text-slate-400">
+              Latitude
+            </label>
             <input
               id="manual-lat"
               name="manual_lat"
@@ -95,7 +95,9 @@ export function LocationPicker({
             />
           </div>
           <div>
-            <label htmlFor="manual-lng" className="text-xs text-gray-500 dark:text-slate-400">Longitude</label>
+            <label htmlFor="manual-lng" className="text-xs text-gray-500 dark:text-slate-400">
+              Longitude
+            </label>
             <input
               id="manual-lng"
               name="manual_lng"

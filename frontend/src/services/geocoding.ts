@@ -23,13 +23,9 @@ interface PhotonFeature {
 }
 
 function formatPhotonLabel(props: PhotonFeature['properties']): string {
-  const parts = [
-    props.name,
-    props.street,
-    props.city,
-    props.state,
-    props.country,
-  ].filter((p, i, arr) => p && arr.indexOf(p) === i);
+  const parts = [props.name, props.street, props.city, props.state, props.country].filter(
+    (p, i, arr) => p && arr.indexOf(p) === i,
+  );
   return parts.join(', ') || 'Selected place';
 }
 
