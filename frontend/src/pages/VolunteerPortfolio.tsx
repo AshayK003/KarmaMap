@@ -3,6 +3,7 @@ import { formatDate } from '../utils/format';
 import { getKarmaLevel } from '../utils/karma';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../utils/api';
 import { generatePortfolioSlug, calculateHaversineDistance, parseGigLocation } from '../utils/geo';
 import type { Participation } from '../types/database';
 import { Certificate } from '../components/Certificate';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Building2Icon } from '../components/NavIcons';
 import confetti from 'canvas-confetti';
 
 export function VolunteerPortfolio() {
@@ -29,6 +31,12 @@ export function VolunteerPortfolio() {
     title: string;
     date: string;
   } | null>(null);
+  const [orgInfo, setOrgInfo] = useState<{
+    name: string;
+    role: string;
+    opted_in: boolean;
+  } | null>(null);
+  const [orgLoading, setOrgLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +56,18 @@ export function VolunteerPortfolio() {
     if (profile?.bio) {
       setBioInput(profile.bio);
     }
+
+    apiFetch<{ org: { role: string; opted_in: boolean; organizations: { name: string } } | null }>('/api/organizations/my-org')
+      .then((res) => {
+        if (res.org) {
+          setOrgInfo({
+            name: res.org.organizations.name,
+            role: res.org.role,
+            opted_in: res.org.opted_in,
+          });
+        }
+      })
+      .catch(() => {});
   }, [user, profile]);
 
   const enableSharing = async () => {
@@ -137,6 +157,23 @@ export function VolunteerPortfolio() {
       console.error(err);
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleOptInToggle = async () => {
+    if (!orgInfo) return;
+    setOrgLoading(true);
+    try {
+      const newVal = !orgInfo.opted_in;
+      await apiFetch('/api/organizations/my-org/opt-in', {
+        method: 'PATCH',
+        body: JSON.stringify({ opted_in: newVal }),
+      });
+      setOrgInfo({ ...orgInfo, opted_in: newVal });
+    } catch (err) {
+      console.error('Failed to update sharing preference:', err);
+    } finally {
+      setOrgLoading(false);
     }
   };
 
@@ -485,9 +522,48 @@ export function VolunteerPortfolio() {
                   value={Math.min(100, treesPlanted * 100)}
                   indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500"
                 />
+            </div>
+
+            {orgInfo && (
+              <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2Icon className="h-4 w-4 text-emerald-600" />
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Your Organization</span>
+                </div>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{orgInfo.name}</p>
+                <p className="text-xs font-semibold text-slate-400 mt-0.5 capitalize">Role: {orgInfo.role}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <label htmlFor="opt-in-toggle" className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    Share volunteer data with {orgInfo.name}
+                  </label>
+                  <button
+                    id="opt-in-toggle"
+                    type="button"
+                    role="switch"
+                    aria-checked={orgInfo.opted_in}
+                    aria-label="Toggle data sharing"
+                    disabled={orgLoading}
+                    onClick={handleOptInToggle}
+                    className={`relative h-6 w-11 rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer disabled:opacity-50 ${
+                      orgInfo.opted_in ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        orgInfo.opted_in ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="mt-2 text-[10px] font-medium text-slate-400 leading-relaxed">
+                  {orgInfo.opted_in
+                    ? 'Your completed gigs and hours are visible to your organization\'s dashboard.'
+                    : 'Toggle on to allow your organization to see aggregate volunteer data.'}
+                </p>
               </div>
-            </Card>
-          </div>
+            )}
+          </Card>
+        </div>
 
           {/* Completed Gigs List / Timeline */}
           <Card>

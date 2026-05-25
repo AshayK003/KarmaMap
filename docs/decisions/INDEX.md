@@ -6,7 +6,9 @@ Capture every significant technical decision: what was decided, why, what altern
 
 ## Contents
 
-*(Add entries here as files are created)*
+| ADR | Status | Summary |
+|---|---|---|
+| [ADR-001: Manual Invoicing](ADR-001-manual-invoicing.md) | Accepted | Delaying Stripe/PayU; using manual payment tracking for MVP validation |
 
 ## Template
 

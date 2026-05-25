@@ -238,3 +238,224 @@ describe('PATCH /api/participations/:participationId/complete', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('POST /api/payments', () => {
+  it('returns 400 for invalid body (non-uuid gig_id)', async () => {
+    const res = await supertest(app)
+      .post('/api/payments')
+      .set('Authorization', 'Bearer test')
+      .send({ gig_id: 'not-a-uuid', hours: 24 });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for hours = 0', async () => {
+    const res = await supertest(app)
+      .post('/api/payments')
+      .set('Authorization', 'Bearer test')
+      .send({ gig_id: '00000000-0000-0000-0000-000000000001', hours: 0 });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 201 for valid NGO request', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'pay-1', gig_id: '00000000-0000-0000-0000-000000000001', ngo_id: 'test-user-id', amount: 240000, status: 'pending', feature_hours: 24 },
+        error: null,
+      }),
+      insert: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+    });
+
+    const res = await supertest(app)
+      .post('/api/payments')
+      .set('Authorization', 'Bearer test')
+      .send({ gig_id: '00000000-0000-0000-0000-000000000001', hours: 24 });
+    expect(res.status).toBe(201);
+    expect(res.body.payment.status).toBe('pending');
+  });
+});
+
+describe('POST /api/payments/:paymentId/confirm', () => {
+  it('returns 200 and features gig on valid confirmation', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+
+    let fromCallCount = 0;
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      fromCallCount++;
+      if (fromCallCount === 1) {
+        // fetch payment
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'pay-1', gig_id: 'gig-1', ngo_id: 'test-user-id', status: 'pending', feature_hours: 24 },
+            error: null,
+          }),
+          order: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+        } as any;
+      }
+      if (fromCallCount === 2) {
+        // update gigs.featured_until
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        } as any;
+      }
+      // update payment status
+      return {
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'pay-1', status: 'paid', gig_id: 'gig-1', ngo_id: 'test-user-id', feature_hours: 24 },
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      } as any;
+    });
+
+    const res = await supertest(app)
+      .post('/api/payments/pay-1/confirm')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(200);
+    expect(res.body.payment.status).toBe('paid');
+    expect(res.body).toHaveProperty('featured_until');
+  });
+
+  it('returns 404 for nonexistent payment', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
+      order: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+    });
+
+    mockUserRole = 'ngo';
+    const res = await supertest(app)
+      .post('/api/payments/pay-404/confirm')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Payment not found');
+  });
+});
+
+describe('GET /api/payments', () => {
+  it('returns list of payments for the NGO', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [
+          { id: 'pay-1', amount: 240000, status: 'paid', gigs: { title: 'Plantation Drive' } },
+          { id: 'pay-2', amount: 120000, status: 'pending', gigs: { title: 'Beach Cleanup' } },
+        ],
+        error: null,
+      }),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+    });
+
+    const res = await supertest(app)
+      .get('/api/payments')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(200);
+    expect(res.body.payments).toHaveLength(2);
+  });
+});
+
+describe('GET /api/organizations/analytics', () => {
+  it('returns 403 when user not in any org', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      single: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+    });
+
+    const res = await supertest(app)
+      .get('/api/organizations/analytics')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('Not a member of any organization');
+  });
+
+  it('returns analytics for org member', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+
+    let callCount = 0;
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      callCount++;
+      const c: any = {
+        select: vi.fn(), eq: vi.fn(), single: vi.fn(), maybeSingle: vi.fn(),
+        in: vi.fn(), insert: vi.fn(), update: vi.fn(), order: vi.fn(),
+      };
+      c.then = (resolve: (v: unknown) => void) => resolve(c._val ?? { data: null, error: null });
+      c.catch = () => c;
+      c.setVal = (v: unknown) => { c._val = v; };
+      c.select = vi.fn().mockReturnValue(c);
+      c.eq = vi.fn().mockReturnValue(c);
+      c.in = vi.fn().mockReturnValue(c);
+      c.update = vi.fn().mockReturnValue(c);
+      c.order = vi.fn().mockReturnValue(c);
+      c.single = vi.fn().mockReturnValue(c);
+      c.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      c.maybeSingle = vi.fn().mockReturnValue(c);
+      c.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+
+      if (callCount === 1) {
+        c.maybeSingle = vi.fn().mockResolvedValue({
+          data: { organization_id: 'org-1' },
+          error: null,
+        });
+      } else if (callCount === 2) {
+        c.setVal({
+          data: [
+            { profile_id: 'v1', department: 'Engineering', role: 'member', profiles: { name: 'Alice' } },
+          ],
+          error: null,
+        });
+      } else if (callCount === 3) {
+        c.setVal({
+          data: [
+            { profile_id: 'v1', role: 'member' },
+          ],
+          error: null,
+        });
+      } else if (callCount === 4) {
+        c.setVal({
+          data: [
+            { volunteer_id: 'v1', hours: 4, created_at: '2026-05-01T00:00:00Z', gigs: { title: 'Beach Cleanup', gig_date: '2026-05-01' } },
+          ],
+          error: null,
+        });
+      }
+      return c;
+    });
+
+    const res = await supertest(app)
+      .get('/api/organizations/analytics')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(200);
+    expect(res.body.total_hours).toBe(4);
+    expect(res.body.active_members).toBe(1);
+  });
+});

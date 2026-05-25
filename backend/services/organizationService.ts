@@ -1,0 +1,268 @@
+import { supabaseAdmin } from './supabase.js';
+import { logger } from '../src/lib/logger.js';
+
+export interface OrgAnalyticsResult {
+  total_hours: number;
+  active_members: number;
+  total_members: number;
+  completed_count: number;
+  hours_by_department: Array<{ department: string; hours: number }>;
+  hours_by_month: Array<{ month: string; hours: number }>;
+  recent_activities: Array<{
+    volunteer_name: string;
+    gig_title: string;
+    hours: number;
+    date: string;
+  }>;
+}
+
+interface MemberInfo {
+  name: string;
+  department: string | null;
+}
+
+async function getAdminOrgId(profileId: string): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('organization_id')
+    .eq('profile_id', profileId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (error || !data) {
+    throw Object.assign(new Error('Not authorized'), { statusCode: 403 });
+  }
+
+  return data.organization_id;
+}
+
+async function getMemberOrgId(profileId: string): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('organization_id')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
+  }
+
+  return data.organization_id;
+}
+
+export async function getOrgAnalytics(
+  profileId: string
+): Promise<OrgAnalyticsResult> {
+  const orgId = await getMemberOrgId(profileId);
+
+  const { data: members, error: mErr } = await supabaseAdmin
+    .from('organization_members')
+    .select('profile_id, department, role, profiles!inner(name)')
+    .eq('organization_id', orgId)
+    .eq('opted_in', true);
+
+  if (mErr) {
+    logger.error({ orgId, error: mErr.message }, 'Failed to fetch org members');
+    throw new Error('Failed to fetch analytics');
+  }
+
+  const allMembers: Array<{ profile_id: string; role: string }> = [];
+  const { data: allM, error: allErr } = await supabaseAdmin
+    .from('organization_members')
+    .select('profile_id, role')
+    .eq('organization_id', orgId);
+
+  if (!allErr && allM) {
+    allMembers.push(...allM);
+  }
+
+  const totalMembers = allMembers.length;
+  const optedInMemberIds = new Set((members ?? []).map((m) => m.profile_id));
+  const memberInfo = new Map<string, MemberInfo>();
+
+  for (const m of members ?? []) {
+    memberInfo.set(m.profile_id, {
+      name: (m as unknown as { profiles: { name: string } }).profiles?.name ?? 'Unknown',
+      department: m.department,
+    });
+  }
+
+  const optedInIds = [...optedInMemberIds];
+
+  if (optedInIds.length === 0) {
+    return {
+      total_hours: 0,
+      active_members: 0,
+      total_members: totalMembers,
+      completed_count: 0,
+      hours_by_department: [],
+      hours_by_month: [],
+      recent_activities: [],
+    };
+  }
+
+  const { data: participations, error: pErr } = await supabaseAdmin
+    .from('participations')
+    .select('volunteer_id, hours, created_at, gigs!inner(title, gig_date)')
+    .in('volunteer_id', optedInIds)
+    .eq('status', 'completed');
+
+  if (pErr) {
+    logger.error({ orgId, error: pErr.message }, 'Failed to fetch participations');
+    throw new Error('Failed to fetch analytics');
+  }
+
+  const completed = participations ?? [];
+  let totalHours = 0;
+  const deptHours = new Map<string, number>();
+  const monthHours = new Map<string, number>();
+  const recent: OrgAnalyticsResult['recent_activities'] = [];
+  const volunteersWithHours = new Set<string>();
+
+  for (const p of completed) {
+    const hours = Number(p.hours ?? 0);
+    totalHours += hours;
+
+    const info = memberInfo.get(p.volunteer_id);
+    const dept = info?.department ?? 'Unspecified';
+    deptHours.set(dept, (deptHours.get(dept) ?? 0) + hours);
+
+    const month = (p.gigs as unknown as { gig_date: string }).gig_date?.slice(0, 7) ?? 'Unknown';
+    monthHours.set(month, (monthHours.get(month) ?? 0) + hours);
+
+    volunteersWithHours.add(p.volunteer_id);
+
+    recent.push({
+      volunteer_name: info?.name ?? 'Unknown',
+      gig_title: (p.gigs as unknown as { title: string }).title ?? 'Gig',
+      hours,
+      date: (p.gigs as unknown as { gig_date: string }).gig_date ?? '',
+    });
+  }
+
+  recent.sort((a, b) => b.date.localeCompare(a.date));
+  const topRecent = recent.slice(0, 20);
+
+  const hoursByDepartment = [...deptHours.entries()]
+    .map(([department, hours]) => ({ department, hours }))
+    .sort((a, b) => b.hours - a.hours);
+
+  const hoursByMonth = [...monthHours.entries()]
+    .map(([month, hours]) => ({ month, hours }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
+  return {
+    total_hours: totalHours,
+    active_members: volunteersWithHours.size,
+    total_members: totalMembers,
+    completed_count: completed.length,
+    hours_by_department: hoursByDepartment,
+    hours_by_month: hoursByMonth,
+    recent_activities: topRecent,
+  };
+}
+
+export async function getMyOrg(profileId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('role, department, opted_in, organizations!inner(name, slug)')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error({ profileId, error: error.message }, 'Failed to fetch org membership');
+    throw new Error('Failed to fetch organization');
+  }
+
+  return data;
+}
+
+export async function updateOptIn(
+  profileId: string,
+  optedIn: boolean
+): Promise<Record<string, unknown>> {
+  const { data: existing } = await supabaseAdmin
+    .from('organization_members')
+    .select('id')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+
+  if (!existing) {
+    throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .update({ opted_in: optedIn })
+    .eq('profile_id', profileId)
+    .select()
+    .single();
+
+  if (error) {
+    logger.error({ profileId, optedIn, error: error.message }, 'Failed to update opt-in');
+    throw new Error('Failed to update sharing preference');
+  }
+
+  return data;
+}
+
+export async function addOrgMember(
+  adminProfileId: string,
+  targetProfileId: string,
+  department?: string
+): Promise<Record<string, unknown>> {
+  const orgId = await getAdminOrgId(adminProfileId);
+
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .insert({
+      organization_id: orgId,
+      profile_id: targetProfileId,
+      role: 'member',
+      department: department ?? null,
+      opted_in: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      throw Object.assign(new Error('User is already a member'), { statusCode: 409 });
+    }
+    logger.error({ orgId, targetProfileId, error: error.message }, 'Failed to add member');
+    throw new Error('Failed to add member');
+  }
+
+  return data;
+}
+
+export async function getOrgMembers(
+  adminProfileId: string
+): Promise<Array<Record<string, unknown>>> {
+  const orgId = await getAdminOrgId(adminProfileId);
+
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('*, profiles!inner(id, name)')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.error({ orgId, error: error.message }, 'Failed to list members');
+    throw new Error('Failed to fetch members');
+  }
+
+  return (data ?? []) as Array<Record<string, unknown>>;
+}
+
+export async function getOrgName(profileId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('organizations!inner(name)')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return (data as unknown as { organizations: { name: string } }).organizations?.name ?? null;
+}

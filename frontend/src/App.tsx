@@ -18,6 +18,7 @@ const CreateGig = lazy(() => import('./pages/CreateGig').then((m) => ({ default:
 const VolunteerPortfolio = lazy(() => import('./pages/VolunteerPortfolio').then((m) => ({ default: m.VolunteerPortfolio })));
 const PublicPortfolio = lazy(() => import('./pages/PublicPortfolio').then((m) => ({ default: m.PublicPortfolio })));
 const Leaderboard = lazy(() => import('./pages/Leaderboard').then((m) => ({ default: m.Leaderboard })));
+const CorporateDashboard = lazy(() => import('./pages/CorporateDashboard').then((m) => ({ default: m.CorporateDashboard })));
 
 function PageLoader() {
   return (
@@ -88,6 +89,14 @@ function App() {
                   element={
                     <ProtectedRoute roles={['ngo']}>
                       <CreateGig />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/corporate/dashboard"
+                  element={
+                    <ProtectedRoute roles={['volunteer', 'ngo']}>
+                      <CorporateDashboard />
                     </ProtectedRoute>
                   }
                 />

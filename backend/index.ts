@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import gigRoutes from './routes/gigs.js';
 import participationRoutes from './routes/participations.js';
+import paymentRoutes from './routes/payments.js';
+import organizationRoutes from './routes/organizations.js';
 import { logger } from './src/lib/logger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,6 +54,8 @@ export function createApp() {
 
   app.use('/api/gigs', gigRoutes);
   app.use('/api/participations', participationRoutes);
+  app.use('/api/payments', paymentRoutes);
+  app.use('/api/organizations', organizationRoutes);
 
   app.use(
     (

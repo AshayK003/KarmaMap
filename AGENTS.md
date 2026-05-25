@@ -27,12 +27,16 @@ KarmaMap/
 │   │   ├── auth.ts           # verifyJwt + requireRole (Supabase Auth)
 │   │   ├── validate.ts       # Zod body validation
 │   │   └── asyncHandler.ts   # Async error wrapper for Express
+│   ├── src/lib/logger.ts
+├── routes/               # gigs.ts, participations.ts, payments.ts
+├── controllers/          # gigController.ts, participationController.ts, paymentController.ts
 │   ├── services/
 │   │   ├── supabase.ts       # service_role admin client
 │   │   ├── matchingService.ts # 0.5*proximity + 0.5*skill, 2-tier fallback
 │   │   ├── emailService.ts   # EmailJS REST via native fetch
 │   │   ├── gigService.ts     # createGig, getNgoAnalytics, verifyGigOwnership
-│   │   └── participationService.ts # joinGig, completeParticipation, awardKarma
+│   │   ├── participationService.ts # joinGig, completeParticipation, awardKarma
+│   │   └── paymentService.ts  # createPayment, confirmPayment, getNgoPayments
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
 │       ├── App.tsx            # 11 routes + AuthProvider + Navbar + ErrorBoundary
@@ -66,7 +70,7 @@ KarmaMap/
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
 │       └── utils/             # api.ts, geo.ts, weather.tsx, format.ts
-├── supabase/migrations/      # 9 SQL files
+├── supabase/migrations/      # 10 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
@@ -75,6 +79,7 @@ KarmaMap/
 │   ├── 06_location_label.sql
 │   ├── 07_fix_location_drift.sql
 │   ├── 08_drop_match_volunteers_for_gig.sql
+│   ├── 09_payments.sql
 │   └── storage_policies.sql
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
@@ -107,6 +112,9 @@ KarmaMap/
 | PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | Feature a gig for N hours (sets `featured_until`) |
 | POST | `/api/participations/join/:gigId` | JWT | volunteer | Join a gig (returns 409 if already joined) |
 | PATCH | `/api/participations/:participationId/complete` | JWT | volunteer | Complete with photos/hours + award karma |
+| POST | `/api/payments` | JWT | ngo | Create payment request for feature gig |
+| POST | `/api/payments/:paymentId/confirm` | JWT | ngo | Confirm payment + feature gig (manual invoicing) |
+| GET | `/api/payments` | JWT | ngo | List NGO's payment history |
 
 **Data flow**: Frontend uses Supabase anon client for reads (RPCs, direct queries). Backend uses service_role client for writes. REST API calls inject JWT via `utils/api.ts`.
 
@@ -115,6 +123,7 @@ KarmaMap/
 ### Controllers
 - **gigController.ts**: `createGigSchema` (Zod), `featureGigSchema` (Zod), `createGig`, `getNgoAnalytics`, `featureGig`, `triggerMatching`
 - **participationController.ts**: `completeGigSchema` (Zod), `joinGig`, `completeParticipation`
+- **paymentController.ts**: `createPaymentSchema` (Zod), `createPayment`, `confirmPayment`, `getPayments`
 
 ### Middleware
 - **auth.ts**: `AuthRequest` (interface), `verifyJwt`, `requireRole(...roles)`
@@ -127,6 +136,7 @@ KarmaMap/
 - **emailService.ts**: `sendEmail(params)`, `sendGigMatchEmails(volunteers, gigTitle)`, `sendCompletionEmail(email, name, gigTitle)`
 - **gigService.ts**: `createGig`, `getNgoAnalytics`, `verifyGigOwnership`, `getGigOwnership`
 - **participationService.ts**: `completeParticipation`, `joinGig`, `awardKarma`
+- **paymentService.ts**: `createPayment`, `confirmPayment`, `getNgoPayments`
 
 ## Database (PostgreSQL + PostGIS)
 **Custom enums**: `user_role` (volunteer, ngo), `gig_status` (open, in_progress, completed, cancelled), `participation_status` (pending, joined, checked_in, completed, cancelled)

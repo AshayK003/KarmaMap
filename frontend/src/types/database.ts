@@ -77,6 +77,38 @@ export interface NearbyGig {
   featured_until?: string;
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  profile_id: string;
+  role: 'admin' | 'member';
+  department: string | null;
+  opted_in: boolean;
+  organizations?: Organization;
+  profiles?: { id: string; name: string };
+}
+
+export interface OrgAnalytics {
+  total_hours: number;
+  active_members: number;
+  total_members: number;
+  completed_count: number;
+  hours_by_department: Array<{ department: string; hours: number }>;
+  hours_by_month: Array<{ month: string; hours: number }>;
+  recent_activities: Array<{
+    volunteer_name: string;
+    gig_title: string;
+    hours: number;
+    date: string;
+  }>;
+}
+
 export type Database = {
   public: {
     Tables: {
