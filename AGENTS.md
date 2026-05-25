@@ -75,10 +75,9 @@ KarmaMap/
 │   ├── 07_fix_location_drift.sql
 │   ├── 08_drop_match_volunteers_for_gig.sql
 │   └── storage_policies.sql
-├── render.yaml               # Backend deploy (Render) — DELETED, use docker-compose
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
-│   ├── deployment.md          # Docker Compose + Caddy + VPS deploy guide
+│   ├── deployment.md          # Vercel + Render deploy guide
 │   ├── INDEX.md               # Master table of contents for docs/
 │   ├── architecture/          # System architecture docs
 │   ├── decisions/             # ADRs
@@ -89,13 +88,8 @@ KarmaMap/
 │   └── deployment/            # Runbooks and operational guides
 ├── .env.example
 ├── AGENTS.md
-├── Dockerfile.frontend
-├── Dockerfile.backend
-├── docker-compose.yml
-├── nginx.conf
-├── Caddyfile
-└── .github/workflows/deploy.yml
 ```
+
 
 ## Roles & Routing (11 pages)
 - **Volunteer**: `/map` (discovery), `/portfolio`, `/gigs/:id`, `/gigs/:id/participate`, `/leaderboard`

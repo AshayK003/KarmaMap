@@ -27,6 +27,14 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
 
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      logger.info({ method: req.method, path: req.originalUrl, status: res.statusCode, duration: Date.now() - start }, 'request');
+    });
+    next();
+  });
+
   if (!isDev) {
     const generalLimiter = rateLimit({
       windowMs: 60 * 1000,
@@ -48,11 +56,11 @@ export function createApp() {
   app.use(
     (
       err: Error & { statusCode?: number },
-      _req: express.Request,
+      req: express.Request,
       res: express.Response,
       _next: express.NextFunction
     ) => {
-      logger.error(err);
+      logger.error({ err, method: req.method, path: req.originalUrl, statusCode: err.statusCode ?? 500 });
 
       if (err.name === 'ZodError') {
         res.status(400).json({ error: 'Validation error', details: (err as Error & { issues?: unknown }).issues });
