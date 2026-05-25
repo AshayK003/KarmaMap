@@ -19,6 +19,7 @@ const VolunteerPortfolio = lazy(() => import('./pages/VolunteerPortfolio').then(
 const PublicPortfolio = lazy(() => import('./pages/PublicPortfolio').then((m) => ({ default: m.PublicPortfolio })));
 const Leaderboard = lazy(() => import('./pages/Leaderboard').then((m) => ({ default: m.Leaderboard })));
 const CorporateDashboard = lazy(() => import('./pages/CorporateDashboard').then((m) => ({ default: m.CorporateDashboard })));
+const OrganizationManage = lazy(() => import('./pages/OrganizationManage').then((m) => ({ default: m.OrganizationManage })));
 
 function PageLoader() {
   return (
@@ -97,6 +98,14 @@ function App() {
                   element={
                     <ProtectedRoute roles={['volunteer', 'ngo']}>
                       <CorporateDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/corporate/manage"
+                  element={
+                    <ProtectedRoute roles={['volunteer']}>
+                      <OrganizationManage />
                     </ProtectedRoute>
                   }
                 />

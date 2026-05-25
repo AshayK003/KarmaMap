@@ -19,6 +19,7 @@ import {
   LayoutDashboardIcon,
   UserCircleIcon,
   Building2Icon,
+  UsersIcon,
 } from './NavIcons';
 
 export function Navbar() {
@@ -71,6 +72,7 @@ export function Navbar() {
                   <Link to="/portfolio" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UserCircleIcon className="h-4 w-4" /> My Portfolio</Link>
                   <Link to="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><AwardIcon className="h-4 w-4" /> Leaderboard</Link>
                   <Link to="/corporate/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><Building2Icon className="h-4 w-4" /> CSR Dashboard</Link>
+                  <Link to="/corporate/manage" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UsersIcon className="h-4 w-4" /> Manage Team</Link>
                   <Badge variant="default" className="px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
                 </>
               )}
@@ -146,6 +148,10 @@ export function Navbar() {
                     <Link to="/corporate/dashboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
                       <Building2Icon className="h-4 w-4 shrink-0" />
                       CSR Dashboard
+                    </Link>
+                    <Link to="/corporate/manage" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
+                      <UsersIcon className="h-4 w-4 shrink-0" />
+                      Manage Team
                     </Link>
                     <div className="px-3 py-2"><Badge variant="default" className="text-xs">{profile.karma_points} Karma Points</Badge></div>
                   </>

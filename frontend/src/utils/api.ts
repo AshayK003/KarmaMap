@@ -1,12 +1,27 @@
 import { supabase } from '../lib/supabase';
 
-// In dev, use Vite proxy (/api → localhost:3001) when VITE_API_URL is unset or "proxy"
 const configured = import.meta.env.VITE_API_URL?.trim();
-const API_BASE =
-  import.meta.env.DEV &&
-  (!configured || configured === 'proxy')
-    ? ''
-    : (configured ?? '');
+const DIRECT_API = 'http://localhost:3001';
+
+function getBase(): string {
+  if (configured && configured !== 'proxy') return configured;
+  return '';
+}
+
+async function tryFetch(url: string, opts: RequestInit): Promise<Response> {
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    const msg =
+      typeof body.error === 'string'
+        ? body.error
+        : body.error?.formErrors?.[0] ??
+          body.error?.fieldErrors ??
+          res.statusText;
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  return res;
+}
 
 export async function apiFetch<T>(
   path: string,
@@ -15,43 +30,27 @@ export async function apiFetch<T>(
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? null;
 
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
-    });
-  } catch {
-    throw new Error(
-      'Cannot reach the API server. Start the backend: cd backend && npm run dev'
-    );
-  }
+  const opts: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  };
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    const message =
-      typeof err.error === 'string'
-        ? err.error
-        : err.error?.formErrors?.[0] ??
-          err.error?.fieldErrors ??
-          res.statusText;
-    const text =
-      typeof message === 'string' ? message : JSON.stringify(message);
-    if (
-      res.type === 'error' ||
-      text === 'Failed to fetch' ||
-      text.toLowerCase().includes('failed to fetch')
-    ) {
-      throw new Error(
-        'Cannot reach the API server. Start the backend: cd backend && npm run dev'
-      );
+  const base = getBase();
+  const urls = base ? [base + path] : [`${DIRECT_API}${path}`, path];
+
+  let lastErr: unknown;
+  for (const url of urls) {
+    try {
+      const res = await tryFetch(url, opts);
+      return res.json() as Promise<T>;
+    } catch (e) {
+      lastErr = e;
     }
-    throw new Error(text);
   }
 
-  return res.json() as Promise<T>;
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }

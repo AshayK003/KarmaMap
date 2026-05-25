@@ -21,13 +21,11 @@ beforeEach(() => {
 });
 
 describe('apiFetch', () => {
-  it('throws friendly error on network failure', async () => {
+  it('throws on network failure after retry', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
 
     const { apiFetch } = await import('../utils/api');
-    await expect(apiFetch('/test')).rejects.toThrow(
-      'Cannot reach the API server. Start the backend: cd backend && npm run dev'
-    );
+    await expect(apiFetch('/test')).rejects.toThrow('Failed to fetch');
   });
 
   it('parses error response body', async () => {
