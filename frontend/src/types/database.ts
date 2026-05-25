@@ -29,6 +29,7 @@ export interface Gig {
   gig_date: string;
   status: GigStatus;
   featured_until?: string;
+  duration?: number;
   created_at: string;
   updated_at: string;
   profiles?: { name: string };
@@ -70,6 +71,7 @@ export interface NearbyGig {
   status: GigStatus;
   distance_meters: number;
   featured_until?: string;
+  duration?: number;
 }
 
 export interface Organization {

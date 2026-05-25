@@ -19,6 +19,7 @@ export const createGigSchema = z.object({
   volunteers_needed: z.number().int().min(1).default(1),
   gig_date: z.string().refine((val) => !Number.isNaN(Date.parse(val)), 'Invalid date format'),
   location_label: z.string().optional(),
+  duration: z.number().int().positive().optional(),
 });
 
 async function _createGig(req: AuthRequest, res: Response): Promise<void> {

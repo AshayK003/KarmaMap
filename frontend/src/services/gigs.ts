@@ -26,6 +26,7 @@ export async function createGigViaApi(payload: {
   volunteers_needed: number;
   gig_date: string;
   location_label?: string;
+  duration?: number;
 }) {
   return apiFetch<{ gig: unknown }>('/api/gigs', {
     method: 'POST',

@@ -175,6 +175,7 @@ export function VolunteerMap() {
                 {sortedGigs.length} {sortedGigs.length === 1 ? 'gig' : 'gigs'} found
               </Badge>
             )}
+
             <Button size="sm" onClick={loadGigs} disabled={loading}>
               {loading ? 'Searching…' : 'Refresh'}
             </Button>

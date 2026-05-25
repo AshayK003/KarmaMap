@@ -82,6 +82,12 @@ export const GigCard = memo(function GigCard({ gig, volunteerSkills = [] }: GigC
           <span className="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 tracking-wide uppercase select-none">
             {travelTime}
           </span>
+          {gig.duration && (
+            <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap">
+              {gig.duration}h
+            </span>
+          )}
+
         </div>
       </div>
 

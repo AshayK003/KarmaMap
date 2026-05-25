@@ -16,6 +16,7 @@ export interface CreateGigInput {
   volunteers_needed: number;
   gig_date: string;
   location_label?: string;
+  duration?: number;
 }
 
 interface CreateGigResult {
@@ -106,6 +107,7 @@ export async function createGig(ngoId: string, input: CreateGigInput): Promise<C
     p_volunteers_needed: input.volunteers_needed,
     p_gig_date: input.gig_date,
     p_location_label: input.location_label ?? '',
+    p_duration: input.duration ?? null,
   });
 
   if (error) {

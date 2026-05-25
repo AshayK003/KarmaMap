@@ -213,6 +213,8 @@ export function VolunteerPortfolio() {
     [completed],
   );
 
+
+
   const { co2SavedKg, treesPlanted } = useMemo(() => {
     const volParsed = profile?.location ? parseGigLocation(profile.location) : null;
 
@@ -562,6 +564,12 @@ export function VolunteerPortfolio() {
                   ? `Incredible contribution! You spent ${totalHours} hours serving local NGOs.`
                   : 'Your volunteer logs and time contributions will display here.'}
               </p>
+              {completed.length > 0 && (
+                <p className="mt-1.5 text-[10px] font-bold text-slate-400 leading-normal">
+                  Avg {(totalHours / completed.length).toFixed(1)}h per gig
+                </p>
+              )}
+
             </Card>
 
             {/* Eco-Hero Card */}

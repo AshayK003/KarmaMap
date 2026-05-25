@@ -17,6 +17,10 @@ const schema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   required_skills: z.string().min(1, 'Add at least one skill'),
   volunteers_needed: z.coerce.number().int().min(1, 'Need at least 1 volunteer').max(500),
+  duration: z.preprocess(
+    (val) => (val === '' || val === undefined ? undefined : Number(val)),
+    z.number().int().positive().max(24).optional(),
+  ),
   gig_date: z.string().min(1, 'Pick a date'),
   gig_time: z.string().min(1, 'Pick a time'),
 });
@@ -68,6 +72,7 @@ export function CreateGig() {
           .map((s) => s.trim())
           .filter(Boolean),
         volunteers_needed: data.volunteers_needed,
+        duration: data.duration,
         gig_date: gigDate.toISOString(),
         location_label: placeLabel || undefined,
       });
@@ -272,6 +277,29 @@ export function CreateGig() {
                     />
                   </div>
                   <FieldError message={errors.gig_date?.message} />
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label
+                    htmlFor="create-gig-duration"
+                    className="block text-xs font-extrabold uppercase tracking-widest text-slate-400"
+                  >
+                    Duration (hours)
+                  </label>
+                  <Input
+                    {...register('duration')}
+                    id="create-gig-duration"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={24}
+                    step={1}
+                    placeholder="e.g. 3"
+                    className="mt-2"
+                    onWheel={(e) => e.currentTarget.blur()}
+                  />
+                  <FieldError message={errors.duration?.message} />
                 </div>
 
                 {/* Time */}

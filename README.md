@@ -183,9 +183,12 @@ storage_policies.sql            → storage bucket RLS policies
 06_location_label.sql           → location_label support
 07_fix_location_drift.sql       → conditional update_gic location fix
 08_drop_match_volunteers_for_gig.sql → remove dead wrapper RPC
+09_payments.sql                 → payment requests table + RPCs
+10_corporate_dashboard.sql      → organizations + organization_members
+11_gig_duration.sql             → duration column on gigs, RPC updates
 ```
 
-Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
+12 migrations total. Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
 
 ## Deployment
 

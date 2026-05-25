@@ -73,7 +73,7 @@ KarmaMap/
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
 │       └── utils/             # api.ts, geo.ts, weather.tsx, format.ts
-├── supabase/migrations/      # 11 SQL files
+├── supabase/migrations/      # 12 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
@@ -84,6 +84,7 @@ KarmaMap/
 │   ├── 08_drop_match_volunteers_for_gig.sql
 │   ├── 09_payments.sql
 │   ├── 10_corporate_dashboard.sql
+│   ├── 11_gig_duration.sql
 │   └── storage_policies.sql
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
@@ -155,9 +156,9 @@ KarmaMap/
 ## Database (PostgreSQL + PostGIS)
 **Custom enums**: `user_role` (volunteer, ngo), `gig_status` (open, in_progress, completed, cancelled), `participation_status` (pending, joined, checked_in, completed, cancelled)
 
-**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
+**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until, duration), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
 
-**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
+**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns duration + featured-first sort; `insert_gig(...)` — accepts p_duration; `update_profile_location(lat, lng)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
 
 **Triggers**: auto-create profile on signup (`handle_new_user`), auto-update `updated_at` (`set_updated_at`), increment `volunteers_joined` on participation insert (`increment_gig_volunteers`).
 
@@ -188,7 +189,8 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **NotificationBell**: Inline SVG bell icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig. Notification items are keyboard accessible (`role="button"`, `tabIndex={0}`, Enter/Space handlers).
 - **Leaderboard**: `/leaderboard` route — `SELECT name, karma_points, streak FROM profiles WHERE role='volunteer' ORDER BY karma_points DESC LIMIT 50`; Recharts `BarChart` (horizontal, top 10); medals for top 3
 - **Best Match sort**: `sortMode` state in `VolunteerMap.tsx` toggles between `'nearest'` (RPC default) and `'best_match'` (client-side reorder via `skillOverlapScore`) — disabled when profile has no skills
-- **Add to Calendar**: ICS generator button on GigDetail — 3h default duration, GeoJSON/EWKT location parsed via `parseGigLocation`, Blob download
+- **Add to Calendar**: ICS generator button on GigDetail — 3h default duration (independent of gig's `duration` column), GeoJSON/EWKT location parsed via `parseGigLocation`, Blob download
+- **Gig duration**: `gigs` table has `duration INTEGER` column (estimated hours). Set by NGO on `CreateGig.tsx` form (1–24 input). Displayed as `{duration}h` on `GigCard.tsx` and `⏱️ {duration}h expected` on `GigDetail.tsx`. Backend schema validates `z.number().int().positive().optional()`.
 - **NgoGigCard**: Shows gig details with status management buttons (start, complete, close, reopen). No inline edit feature.
 - **Dark mode**: `ThemeContext` with `ThemeProvider` wrapping app; reads `localStorage('karmamap-theme')` with system `prefers-color-scheme` fallback; toggles `dark` class on `<html>`; Tailwind v4 `@custom-variant dark (&:where(.dark, .dark *))` for class-based dark mode; sun/moon toggle button in Navbar; Leaflet popup dark overrides in `index.css`; `dark:` variants applied across all pages, components, and shadcn/ui
 - **Carbon offset**: `calculateHaversineDistance` × 0.12 kg CO₂/km, rendered in VolunteerPortfolio as eco-savings
@@ -270,7 +272,10 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **`@types/pg` installed** (backend devDep) — fixes TS7016 for `applyMigration.ts`
 
 ### Migrations
-- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql` → `09_payments.sql` → `10_corporate_dashboard.sql`
+- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql` → `09_payments.sql` → `10_corporate_dashboard.sql` → `11_gig_duration.sql`
+
+### `11_gig_duration.sql`
+Adds `duration INTEGER` column to `gigs` table. Recreates `insert_gig` RPC to accept `p_duration INTEGER DEFAULT NULL`. Recreates `nearby_gigs` RPC to return `duration` in output. Applied manually via Supabase SQL Editor (3 separately executable parts).
 - Stale/obsolete migrations deleted: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`
 
 ## 🔴 Security: .env.example MUST use placeholder values only

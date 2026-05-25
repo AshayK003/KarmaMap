@@ -298,6 +298,11 @@ export function GigDetail() {
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
               🕒 {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
             </p>
+            {gig.duration && (
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                ⏱️ {gig.duration}h expected
+              </p>
+            )}
             <button
               type="button"
               onClick={() => {
