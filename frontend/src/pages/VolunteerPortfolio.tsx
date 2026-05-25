@@ -33,13 +33,14 @@ export function VolunteerPortfolio() {
   useEffect(() => {
     if (!user) return;
 
-    supabase
-      .from('participations')
-      .select('*, gigs(title, gig_date, location)')
-      .eq('volunteer_id', user.id)
-      .eq('status', 'completed')
-      .then(({ data }) => setCompleted((data as Participation[]) ?? []))
-      .catch((err) => console.error('Failed to fetch completed gigs:', err));
+    Promise.resolve(
+      supabase
+        .from('participations')
+        .select('*, gigs(title, gig_date, location)')
+        .eq('volunteer_id', user.id)
+        .eq('status', 'completed')
+        .then(({ data }) => setCompleted((data as Participation[]) ?? []))
+    ).catch((err: unknown) => console.error('Failed to fetch completed gigs:', err));
 
     if (profile?.portfolio_slug) {
       setShareUrl(`${window.location.origin}/p/${profile.portfolio_slug}`);
@@ -178,7 +179,7 @@ export function VolunteerPortfolio() {
 
     let totalCo2SavedMeters = 0;
     for (const p of completed) {
-      const gigLoc = (p as Record<string, unknown> & { gigs?: { location?: unknown } })?.gigs?.location;
+      const gigLoc = (p as unknown as Record<string, unknown> & { gigs?: { location?: unknown } })?.gigs?.location;
       if (volParsed && gigLoc) {
         const gigParsed = parseGigLocation(gigLoc);
         if (gigParsed) {
@@ -250,6 +251,7 @@ export function VolunteerPortfolio() {
               <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
                 <Avatar
                   size="xl"
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
                   alt={profile?.name ?? 'VM'}
                 />
                 <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
@@ -266,7 +268,7 @@ export function VolunteerPortfolio() {
             {/* Inline Bio Section */}
             <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Personal Bio</span>
+                <label htmlFor="bio-textarea" className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Personal Bio</label>
                 {!isEditingBio ? (
                   <button
                     type="button"
@@ -285,6 +287,7 @@ export function VolunteerPortfolio() {
               ) : (
                 <div className="mt-2 space-y-3">
                   <textarea
+                    id="bio-textarea"
                     rows={4}
                     value={bioInput}
                     onChange={(e) => setBioInput(e.target.value)}
@@ -373,6 +376,7 @@ export function VolunteerPortfolio() {
                       onChange={(e) => setNewSkill(e.target.value)}
                       onKeyDown={handleSkillKeyDown}
                       placeholder="Type a skill and press Enter"
+                      aria-label="Add a new skill"
                       className="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                     />
                     <button
@@ -557,11 +561,12 @@ export function VolunteerPortfolio() {
 
       {/* ─── Printable Certificate Modal ─── */}
       {selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 no-print animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Certificate of Impact">
           <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl dark:shadow-none dark:shadow-slate-900/50 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={() => setSelectedCert(null)}
+              aria-label="Close certificate"
               className="absolute top-4 right-4 rounded-full p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
             >
               ✕

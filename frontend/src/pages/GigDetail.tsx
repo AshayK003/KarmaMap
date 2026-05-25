@@ -19,6 +19,7 @@ export function GigDetail() {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [gig, setGig] = useState<Gig | null>(null);
+  const [gigError, setGigError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [gigNotFound, setGigNotFound] = useState(false);
@@ -28,12 +29,17 @@ export function GigDetail() {
 
   useEffect(() => {
     if (!id) return;
+    setGigError(null);
     supabase
       .from('gigs')
       .select('*, profiles:ngo_id(name)')
       .eq('id', id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          setGigError(error.message);
+          return;
+        }
         if (!data) setGigNotFound(true);
         setGig(data as Gig | null);
       });
@@ -128,6 +134,18 @@ export function GigDetail() {
           <p className="text-xs font-semibold text-slate-400">
             This opportunity may have been removed or the link is incorrect.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (gigError) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center space-y-2">
+          <span className="text-4xl select-none">⚠️</span>
+          <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">Failed to load gig</h2>
+          <p className="text-xs font-semibold text-slate-400">{gigError}</p>
         </div>
       </div>
     );

@@ -22,7 +22,29 @@ export async function completeParticipation(
   volunteerId: string,
   input: CompleteGigInput
 ): Promise<CompleteGigResult> {
-  const { data: participation, error } = await supabaseAdmin
+  const { data: participation, error: fetchError } = await supabaseAdmin
+    .from('participations')
+    .select('gig_id')
+    .eq('id', participationId)
+    .eq('volunteer_id', volunteerId)
+    .single();
+
+  if (fetchError || !participation) {
+    logger.error({ participationId, volunteerId, error: fetchError?.message }, 'Participation not found for completion');
+    throw new Error('Participation not found');
+  }
+
+  const { data: gig } = await supabaseAdmin
+    .from('gigs')
+    .select('title')
+    .eq('id', participation.gig_id)
+    .single();
+
+  const gigTitle = gig?.title ?? 'Gig';
+
+  const karmaEarned = await awardKarma(volunteerId, input.hours);
+
+  const { data: updated, error: updateError } = await supabaseAdmin
     .from('participations')
     .update({
       status: 'completed',
@@ -32,16 +54,13 @@ export async function completeParticipation(
     })
     .eq('id', participationId)
     .eq('volunteer_id', volunteerId)
-    .select('*, gigs(title)')
+    .select()
     .single();
 
-  if (error || !participation) {
-    throw new Error(error?.message ?? 'Participation not found');
+  if (updateError || !updated) {
+    logger.error({ participationId, error: updateError?.message }, 'Failed to update participation after karma award');
+    throw new Error('Failed to complete participation');
   }
-
-  const gigTitle = (participation as { gigs?: { title: string } }).gigs?.title ?? 'Gig';
-
-  const karmaEarned = await awardKarma(volunteerId, input.hours);
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
@@ -68,7 +87,7 @@ export async function completeParticipation(
     logger.warn({ volunteerId }, 'Failed to send completion email');
   }
 
-  return { participation, karma_earned: karmaEarned };
+  return { participation: updated, karma_earned: karmaEarned };
 }
 
 export async function joinGig(
@@ -89,7 +108,8 @@ export async function joinGig(
     if (error.code === '23505') {
       throw Object.assign(new Error('You have already joined this gig.'), { statusCode: 409 });
     }
-    throw Object.assign(new Error(error.message), { statusCode: 400 });
+    logger.error({ gigId, volunteerId, error: error.message }, 'Failed to join gig');
+    throw Object.assign(new Error('Failed to join gig'), { statusCode: 400 });
   }
 
   return { participation: data };
@@ -119,7 +139,8 @@ export async function awardKarma(
     .single();
 
   if (fetchError) {
-    throw Object.assign(new Error(fetchError.message), { statusCode: 400 });
+    logger.error({ volunteerId, error: fetchError.message }, 'Failed to fetch profile for karma');
+    throw Object.assign(new Error('Failed to award karma'), { statusCode: 400 });
   }
 
   const currentKarma = profile?.karma_points ?? 0;
@@ -134,7 +155,8 @@ export async function awardKarma(
     .eq('id', volunteerId);
 
   if (updateError) {
-    throw Object.assign(new Error(updateError.message), { statusCode: 400 });
+    logger.error({ volunteerId, error: updateError.message }, 'Failed to update karma');
+    throw Object.assign(new Error('Failed to award karma'), { statusCode: 400 });
   }
 
   return karmaEarned;

@@ -15,22 +15,22 @@ import {
 export const createGigSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
-  lat: z.number(),
-  lng: z.number(),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
   required_skills: z.array(z.string()).default([]),
   volunteers_needed: z.number().int().min(1).default(1),
-  gig_date: z.string().min(1),
+  gig_date: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date format'),
   location_label: z.string().optional(),
 });
 
 export const updateGigSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
-  lat: z.number(),
-  lng: z.number(),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
   required_skills: z.array(z.string()).default([]),
   volunteers_needed: z.number().int().min(1).default(1),
-  gig_date: z.string().min(1),
+  gig_date: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date format'),
 });
 
 async function _createGig(req: AuthRequest, res: Response): Promise<void> {

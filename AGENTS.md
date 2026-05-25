@@ -29,13 +29,13 @@ KarmaMap/
 │   │   └── asyncHandler.ts   # Async error wrapper for Express
 │   ├── services/
 │   │   ├── supabase.ts       # service_role admin client
-│   │   ├── matchingService.ts # 0.5*proximity + 0.5*skill, 3-tier fallback
+│   │   ├── matchingService.ts # 0.5*proximity + 0.5*skill, 2-tier fallback
 │   │   ├── emailService.ts   # EmailJS REST via native fetch
 │   │   ├── gigService.ts     # createGig, getNgoAnalytics, verifyGigOwnership
 │   │   └── participationService.ts # joinGig, completeParticipation, awardKarma
 ├── frontend/                 # React SPA (port 5173)
 │   └── src/
-│       ├── App.tsx            # 11 routes + AuthProvider + Navbar
+│       ├── App.tsx            # 11 routes + AuthProvider + Navbar + ErrorBoundary
 │       ├── pages/             # Home, Login, Signup, VolunteerMap, GigDetail,
 │       │                      #   ParticipateGig, NgoDashboard, CreateGig,
 │       │                      #   VolunteerPortfolio, PublicPortfolio,
@@ -44,6 +44,7 @@ KarmaMap/
 │   │   ├── ui/            # 9 shadcn/ui components: Button, Card, Badge,
 │   │   │                  #   Input, Avatar, Progress, Skeleton,
 │   │   │                  #   Tabs, Chart (cn() from lib/utils)
+│   │   ├── ErrorBoundary.tsx # Route-level error boundary (fallback UI)
 │       │   ├── NotificationBell.tsx # In-app notification dropdown (realtime)
 │       │   ├── MapView.tsx    # Leaflet + OSRM routing + cluster markers
 │       │   ├── LocationPicker.tsx
@@ -57,15 +58,15 @@ KarmaMap/
 │       │   ├── Navbar.tsx
 │       │   ├── NavIcons.tsx # 12 inline SVG icons (no icon library)
 │       │   └── ProtectedRoute.tsx # Role-based route guard
-│       ├── context/           # AuthContext.tsx
+│       ├── context/           # AuthContext.tsx, ThemeContext.tsx
 │       ├── hooks/             # useGeolocation, useLocationPicker,
 │       │                      #   useRealtimeGigs, useRealtimeParticipations,
 │       │                      #   useRealtimeNotifications
 │       ├── services/          # gigs.ts, geocoding.ts, storage.ts
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
-│       └── utils/             # api.ts, geo.ts
-├── supabase/migrations/      # 6 SQL files
+│       └── utils/             # api.ts, geo.ts, weather.tsx, format.ts
+├── supabase/migrations/      # 9 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
@@ -132,7 +133,7 @@ KarmaMap/
 
 **Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
 
-**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `match_volunteers_for_gig(gig_id, radius)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
+**Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns featured first, then by distance; `insert_gig(...)`, `update_profile_location(lat, lng)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
 
 **Triggers**: auto-create profile on signup (`handle_new_user`), auto-update `updated_at` (`set_updated_at`), increment `volunteers_joined` on participation insert (`increment_gig_volunteers`).
 
@@ -144,39 +145,41 @@ KarmaMap/
 ```
 final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 ```
-**Fallback chain** (3 tiers):
-1. `match_volunteers_for_gig` RPC (primary — ordered by distance)
-2. `nearby_volunteers_for_gig` RPC (if primary fails)
-3. All volunteer profiles with fixed 5000m distance (last resort)
+**Fallback chain** (2 tiers):
+1. `nearby_volunteers_for_gig` RPC (primary — ordered by distance)
+2. All volunteer profiles scored with fixed 5000m distance (last resort — skips redundant RPC retry)
 
 **Notifications**: `notifyMatchedVolunteers` inserts into `notifications` table; `sendGigMatchEmails` calls EmailJS via `fetch`.
 
 ## Key Architecture Notes
 
 ### Frontend
-- **Auth state**: AuthContext listens to `onAuthStateChange`; `signUp` passes role/skills via `user_metadata`
+- **Auth state**: AuthContext listens to `onAuthStateChange`; `signUp` passes role/skills via `user_metadata`. Auth context functions (`signUp`, `signIn`, `signOut`, `refreshProfile`) wrapped in `useCallback` so `useMemo` on context value actually stabilizes references and prevents cascading re-renders.
+- **Route-level ErrorBoundary** in `App.tsx` wraps all lazy-loaded routes — a crash in any page shows a fallback UI with retry button instead of a white screen.
 - **Map center**: DEFAULT_CENTER = Delhi (28.6139, 77.209), NOT Lucknow. Lucknow RDSO preset = (26.8193, 80.8853) exported as `PRESET_LUCKNOW_RDSO` from `useLocationPicker.ts`. Map zoom = 13.
 - **shadcn/ui**: 9 components in `src/components/ui/` — import via `@/components/ui/button`
 - **Location**: Use `useLocationPicker()` hook which wraps `useGeolocation()` for GPS; supports GPS, preset, manual coords, search (Photon), and map click sources
 - **Realtime**: `useRealtimeGigs(ngoId?)` for gig subscriptions; `useRealtimeParticipations(gigId?)` for participation count updates on GigDetail; `useRealtimeNotifications(userId?)` subscribes to `notifications` channel
 - **Marker clustering**: `react-leaflet-cluster` (v4.1.3) wraps `<Marker>` children in `<MarkerClusterGroup>` — `chunkedLoading`, `maxClusterRadius=60`, `disableClusteringAtZoom=16`; CSS imported from `leaflet.markercluster/dist/`
-- **NotificationBell**: Inline SVG bell icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig
+- **NotificationBell**: Inline SVG bell icon in Navbar for all auth'd users; dropdown with unread count, mark read, mark all read, link to gig. Notification items are keyboard accessible (`role="button"`, `tabIndex={0}`, Enter/Space handlers).
 - **Leaderboard**: `/leaderboard` route — `SELECT name, karma_points, streak FROM profiles WHERE role='volunteer' ORDER BY karma_points DESC LIMIT 50`; Recharts `BarChart` (horizontal, top 10); medals for top 3
 - **Best Match sort**: `sortMode` state in `VolunteerMap.tsx` toggles between `'nearest'` (RPC default) and `'best_match'` (client-side reorder via `skillOverlapScore`) — disabled when profile has no skills
 - **Add to Calendar**: ICS generator button on GigDetail — 3h default duration, GeoJSON/EWKT location parsed via `parseGigLocation`, Blob download
-- **NgoGigCard location edit**: `parseGigLocation()` helper in view mode; lat/lng number inputs in edit mode; `updateGigDetails()` builds GeoJSON `{type:"Point", coordinates:[lng,lat]}` payload
+- **NgoGigCard location edit**: `parseGigLocation()` helper in view mode; lat/lng number inputs in edit mode; `updateGigDetails()` builds GeoJSON `{type:"Point", coordinates:[lng,lat]}` payload. Edit form syncs local state when `gig` prop changes via `useEffect`.
 - **Dark mode**: `ThemeContext` with `ThemeProvider` wrapping app; reads `localStorage('karmamap-theme')` with system `prefers-color-scheme` fallback; toggles `dark` class on `<html>`; Tailwind v4 `@custom-variant dark (&:where(.dark, .dark *))` for class-based dark mode; sun/moon toggle button in Navbar; Leaflet popup dark overrides in `index.css`; `dark:` variants applied across all pages, components, and shadcn/ui
 - **Carbon offset**: `calculateHaversineDistance` × 0.12 kg CO₂/km, rendered in VolunteerPortfolio as eco-savings
-- **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` via dynamic CDN import)
-- **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket. Preview image uses `w-full h-auto object-contain` for dynamic sizing. `compressImage` reads `file.arrayBuffer()` first (fresh Blob), falls back to data URL, then original file — non-fatal on failure
+- **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` npm package). Modal has `role="dialog"`, `aria-modal="true"`, `aria-label="Certificate of Impact"`, and programmatic close button.
+- **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket. Preview image uses `w-full h-auto object-contain` for dynamic sizing. `compressImage` reads `file.arrayBuffer()` first (fresh Blob), falls back to data URL, then original file — non-fatal on failure. Upload button has `aria-label`.
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
-- **Testing**: 120 tests across 11 files — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
+- **Testing**: 120 tests across 11 files (84 backend + 36 frontend) — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
 - **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, OpenObserve) with integration guides.
 - **sonner** — toast notifications (5 pages + Toaster in App.tsx)
-- **No icon library** — inline SVGs in `components/NavIcons.tsx` (12 icons)
+- **No icon library** — inline SVGs in `components/NavIcons.tsx` (12 icons), all with `aria-hidden="true"` by default in base `Icon` component
+- **Accessibility**: Labels use `htmlFor`/`id` pairing throughout. `inputMode` and `autoComplete` on all form fields. Loading spinners have `role="status"`. Toggle buttons use `aria-pressed`. Decorative SVGs are `aria-hidden="true"`.
+- **Mobile responsiveness**: All grids responsive via `sm:`/`lg:` breakpoints. Mobile drawer has backdrop dismiss + Escape key. Form inputs have `inputMode` attributes for correct mobile keyboard.
 - **date-fns** — used in frontend only; removed from backend as unused dependency
 - **No external state library** — React Context + hooks only
-- **No structured logging** — pino recommended (5-8x faster than Winston, JSON to stdout)
+- **Pino logging** — request middleware logs method/path/status/duration; auth failures log context; error handler logs request context. Zero additional dependencies.
 - **Type checking**: use `tsc --build --noEmit` (root `tsconfig.json` uses `"files": []` with project references, so plain `tsc --noEmit` is a no-op). `tsconfig.app.json` has `baseUrl` with `ignoreDeprecations: "6.0"` (deprecated in TS 6, will be removed in TS 7)
 - **Weather**: `utils/weather.tsx` exports `WeatherIcon`, `getWeatherDescription`, `getWeatherAdvisory`, `WeatherForecast` (extracted from GigDetail.tsx)
 - **Vite proxy**: `/api` → `localhost:3001` in dev
@@ -192,11 +195,13 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 ### Backend
 - **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table
 - **Email**: `emailService.ts` uses native `fetch` to POST to EmailJS API (not `@emailjs/node`); gracefully skips if env vars not configured
-- **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500)
+- **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500). Error messages are user-safe (Supabase internals logged server-side, not sent to client).
 - **Duplicate join detection**: first checks via `select`, then catches `23505` unique constraint violation as fallback
-- **Karma award**: `hours * 10` awarded on participation completion; tries `award_karma` RPC first (fast path), falls back to read-then-write direct update on `profiles` table when RPC unavailable (no migration dependency)
+- **Karma award**: `hours * 10` awarded on participation completion; tries `award_karma` RPC first (fast path), falls back to read-then-write direct update on `profiles` table when RPC unavailable. **Write order: karma awarded before participation status updated** — prevents inconsistent state if karma award fails.
 - **Feature gig**: sets `featured_until` column; `nearby_gigs` RPC sorts featured (future) gigs first
 - **Nodemon**: was an unused devDependency; dev script uses `tsx watch --import dotenv/config index.ts` (ESM hoists imports before `dotenv.config()` runs); removed from package.json
+- **pino-pretty**: devDependency only (not deployed to production)
+- **Zod validation**: `gig_date` validated as parseable date, `lat`/`lng` range-checked (-90/90, -180/180), photo URLs validated with `.url()`
 
 ### Cleanup History
 - **4 Responsive* components** deleted (broken encoding): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
@@ -211,6 +216,23 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **@hookform/resolvers**: pinned to `^4.1.3` (v5's built dist incorrectly requires zod/v4/core)
 - **tsconfig.app.json**: added `ignoreDeprecations: "6.0"` for deprecated `baseUrl`
 - **Backend dev script**: changed to `tsx watch --import dotenv/config index.ts` for ESM import hoisting issue
+- **AuthContext useCallback fix**: wrapped `fetchProfile`, `refreshProfile`, `signUp`, `signIn`, `signOut` in `useCallback` so context value `useMemo` stabilizes references — prevents cascading re-renders across all auth consumers
+- **Matching service cleanup**: removed dead `gigData` query (fetched `ngo_id`, never used); removed redundant 2nd RPC call in fallback (the same RPC that just failed was called again); fallback now goes straight to all-profiles scoring
+- **Participation write-order fix**: award karma before updating participation status (was: status set first, karma award failure left DB inconsistent)
+- **Supabase error leak fix**: 8 call sites now log full error server-side and throw user-safe messages instead of raw Supabase/PG error text
+- **NgoGigCard stale state fix**: edit form syncs local state when `gig` prop changes via `useEffect` (was: `useState` never re-initialized)
+- **Zod validation improvements**: `gig_date` validated as parseable date via `refine`; `lat`/`lng` range-checked; photo URLs validated with `.url()` instead of `.string().min(1)`
+- **ErrorBoundary added**: route-level `ErrorBoundary` wrapping `<Routes>` in `App.tsx` — component crashes show fallback UI with retry button instead of white screen
+- **Mobile responsiveness**: `NgoGigCard` edit form grid changed to `grid-cols-1 sm:grid-cols-3`; Navbar mobile drawer has backdrop overlay + `Escape` key listener; `inputMode` and `autoComplete` added to all form fields
+- **Accessibility pass**: programmatic labels (`htmlFor`/`id`) on 6 inputs; keyboard nav on notification items; `role="dialog"`/`aria-modal` on certificate modal; `aria-hidden="true"` on decorative SVGs; `role="status"` on PageLoader; `aria-pressed` on toggle buttons; `aria-label` on photo upload button and certificate close button
+- **Request logging**: per-request logger (method, path, status, duration); auth failure logging; error handler request context — zero new dependencies
+- **Environment audit**: removed unused `DATABASE_URL` from `.env.example`; documented in `docs/reviews/environment-audit.md` (0 critical/high, 1 medium, 3 low findings)
+- **Deployment simplification**: deleted Dockerfiles, docker-compose, nginx.conf, Caddyfile, CI/CD workflow, deploy/backup scripts. `docs/deployment.md` covers Vercel + Render + Supabase only.
+- **lucide-react replaced**: 12 icons replaced with inline SVGs in `NavIcons.tsx` — 1700 fewer modules transformed at build
+- **Avatar component refactored**: replaced initials text fallback with SVG user silhouette icon; `fallback` prop removed. DiceBear initials SVG URL passed as `src` across all 4 avatar usages (VolunteerPortfolio, NgoDashboard, Leaderboard, PublicPortfolio) — consistent avatar generation from user names with graceful SVG icon fallback.
+- **Installed `@types/ws`** (backend devDep) — fixes pre-existing TS7016 error from `@supabase/realtime-js` transitive dependency. `tsc` now clean on both backend and frontend.
+- **Installed `@types/canvas-confetti`** (frontend devDep) — fixes missing declaration errors in ParticipateGig and VolunteerPortfolio.
+- **Frontend tsc cleanup**: fixed 22 pre-existing strict-mode errors across 9 files — `global` declarations in test files, removed unused imports (Tooltip, React, Skeleton), wrapped Supabase `.then()` chains in `Promise.resolve()` to enable `.catch()`, fixed Recharts formatter parameter type, fixed `useRef` initial values in NgoDashboard, added intermediate `unknown` cast in VolunteerPortfolio.
 
 ### Migrations
 - **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql`

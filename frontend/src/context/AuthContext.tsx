@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useCallback,
   useMemo,
   useState,
   type ReactNode,
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const CACHE_PREFIX = 'karmamap-profile-';
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const cacheKey = `${CACHE_PREFIX}${userId}`;
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
@@ -56,14 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Failed to fetch profile:', err);
     }
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       sessionStorage.removeItem(`${CACHE_PREFIX}${user.id}`);
       await fetchProfile(user.id);
     }
-  };
+  }, [user, fetchProfile]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     name: string,
@@ -114,32 +115,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error as Error | null };
     } catch (err) {
       return { error: err as Error };
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.error('Sign out failed:', err);
     }
     setProfile(null);
-    // Clear all sessionStorage caches
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const key = sessionStorage.key(i);
       if (key?.startsWith(CACHE_PREFIX)) {
         sessionStorage.removeItem(key);
       }
     }
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ user, session, profile, loading, signUp, signIn, signOut, refreshProfile }),

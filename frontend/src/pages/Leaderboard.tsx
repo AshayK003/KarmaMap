@@ -33,18 +33,20 @@ export function Leaderboard() {
       } catch { /* ignore */ }
     }
 
-    supabase
-      .from('profiles')
-      .select('name, karma_points, streak')
-      .eq('role', 'volunteer')
-      .not('karma_points', 'is', null)
-      .order('karma_points', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        const entries = (data as LeaderboardEntry[]) ?? [];
-        setVolunteers(entries);
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
-      })
+    Promise.resolve(
+      supabase
+        .from('profiles')
+        .select('name, karma_points, streak')
+        .eq('role', 'volunteer')
+        .not('karma_points', 'is', null)
+        .order('karma_points', { ascending: false })
+        .limit(50)
+        .then(({ data }) => {
+          const entries = (data as LeaderboardEntry[]) ?? [];
+          setVolunteers(entries);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
+        })
+    )
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -91,7 +93,7 @@ export function Leaderboard() {
                       <span className="text-sm font-bold text-slate-400">#{i + 1}</span>
                     )}
                   </span>
-                  <Avatar alt={v.name} size="md" />
+                  <Avatar src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(v.name)}&backgroundType=gradientLinear&fontSize=42`} alt={v.name} size="md" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">{v.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -116,7 +118,7 @@ export function Leaderboard() {
                   <Tooltip
                     cursor={{ fill: '#f1f5f9' }}
                     contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                    formatter={(value: number) => [`${value} Karma`, 'Points']}
+                    formatter={(value) => [`${value} Karma`, 'Points']}
                   />
                   <Bar dataKey="karma_points" radius={[0, 8, 8, 0]} barSize={20}>
                     {chartData.map((_, i) => (

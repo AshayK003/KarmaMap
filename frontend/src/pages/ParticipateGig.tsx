@@ -100,11 +100,10 @@ export function ParticipateGig() {
     setSubmitting(true);
     setPageError(null);
     try {
-      const result = await completeParticipationViaApi(participation.id, {
-        hours: data.hours,
-        before_photo_url: beforeUrl!,
-        after_photo_url: afterUrl!,
-      });
+      const payload: Record<string, unknown> = { hours: data.hours };
+      if (beforeUrl) payload.before_photo_url = beforeUrl;
+      if (afterUrl) payload.after_photo_url = afterUrl;
+      const result = await completeParticipationViaApi(participation.id, payload as Parameters<typeof completeParticipationViaApi>[1]);
 
       const updated = (result as { participation?: Participation }).participation;
       if (updated) {
@@ -114,9 +113,9 @@ export function ParticipateGig() {
           ...participation,
           status: 'completed',
           hours: data.hours,
-          before_photo_url: beforeUrl!,
-          after_photo_url: afterUrl!,
-        });
+          ...(beforeUrl ? { before_photo_url: beforeUrl } : {}),
+          ...(afterUrl ? { after_photo_url: afterUrl } : {}),
+        } as Participation);
       }
 
       setCompleted(true);
@@ -244,6 +243,7 @@ export function ParticipateGig() {
             {...register('hours')}
             id="participate-hours"
             type="number"
+            inputMode="decimal"
             min={0.5}
             max={24}
             step={0.5}

@@ -69,8 +69,9 @@ export function PlaceSearch({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="text-xs font-medium text-gray-600 dark:text-slate-300">Search location</label>
+      <label htmlFor="place-search" className="text-xs font-medium text-gray-600 dark:text-slate-300">Search location</label>
       <input
+        id="place-search"
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

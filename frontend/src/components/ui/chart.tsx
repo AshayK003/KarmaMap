@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   ResponsiveContainer,
   type ResponsiveContainerProps,
-  Tooltip,
 } from 'recharts';
 import { cn } from '@/lib/utils';
 

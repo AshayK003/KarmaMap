@@ -141,11 +141,11 @@ describe('findMatchedVolunteers', async () => {
     expect(result).toHaveLength(2);
   });
 
-  it('falls back to nearby RPC when primary RPC fails', async () => {
-    let fromCalls = 0;
+  it('falls back to direct profile scoring when primary RPC fails', async () => {
+    let useSingle = true;
     mockFrom.mockImplementation(() => {
-      fromCalls++;
-      if (fromCalls === 1) {
+      if (useSingle) {
+        useSingle = false;
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -153,42 +153,32 @@ describe('findMatchedVolunteers', async () => {
             data: { id: 'gig-1', required_skills: ['cleaning'], location: null },
             error: null,
           }),
-        } as any;
-      }
-      if (fromCalls === 2) {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { ngo_id: 'ngo-1' }, error: null }),
-        } as any;
+        };
       }
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as any;
+        not: vi.fn().mockResolvedValue({
+          data: [
+            { id: 'v1', name: 'Dave', skills: ['cleaning'] },
+          ],
+          error: null,
+        }),
+      };
     });
 
-    mockRpc
-      .mockResolvedValueOnce({ data: null, error: { message: 'RPC error' } })
-      .mockResolvedValueOnce({
-        data: [
-          { id: 'v1', name: 'Dave', skills: ['cleaning'], distance_meters: 2000 },
-        ],
-        error: null,
-      });
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'RPC error' } });
 
     const result = await findMatchedVolunteers('gig-1');
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('Dave');
   });
 
-  it('uses last resort when both RPCs fail', async () => {
-    let fromCalls = 0;
+  it('uses last resort when primary RPC fails and no profiles found', async () => {
+    let useSingle = true;
     mockFrom.mockImplementation(() => {
-      fromCalls++;
-      if (fromCalls === 1) {
+      if (useSingle) {
+        useSingle = false;
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -196,26 +186,19 @@ describe('findMatchedVolunteers', async () => {
             data: { id: 'gig-1', required_skills: ['cleaning'], location: null },
             error: null,
           }),
-        } as any;
-      }
-      if (fromCalls === 2) {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { ngo_id: 'ngo-1' }, error: null }),
-        } as any;
+        };
       }
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as any;
+        not: vi.fn().mockResolvedValue({
+          data: null,
+          error: null,
+        }),
+      };
     });
 
-    mockRpc
-      .mockResolvedValueOnce({ data: null, error: { message: 'Primary failed' } })
-      .mockResolvedValueOnce({ data: null, error: { message: 'Nearby failed' } });
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'RPC failed' } });
 
     const result = await findMatchedVolunteers('gig-1');
     expect(result).toHaveLength(0);

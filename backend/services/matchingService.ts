@@ -77,52 +77,16 @@ export async function findMatchedVolunteers(
 }
 
 async function matchVolunteersFallback(
-  gigId: string,
+  _gigId: string,
   requiredSkills: string[],
-  radiusMeters: number,
+  _radiusMeters: number,
   limit: number
 ): Promise<MatchedVolunteer[]> {
-  const { data: gigData } = await supabaseAdmin
-    .from('gigs')
-    .select('ngo_id')
-    .eq('id', gigId)
-    .single();
-
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
     .select('id, name, skills, location')
     .eq('role', 'volunteer')
     .not('location', 'is', null);
-
-  // Try nearby RPC first
-  const { data: nearby } = await supabaseAdmin.rpc('nearby_volunteers_for_gig', {
-    p_gig_id: gigId,
-    p_radius_meters: radiusMeters,
-  });
-
-  if (nearby && nearby.length > 0) {
-    return (nearby as Array<{
-      id: string;
-      name: string;
-      skills: string[];
-      distance_meters: number;
-    }>)
-      .map((v) => {
-        const overlap = skillOverlap(requiredSkills, v.skills ?? []);
-        const distScore = normalizeDistance(v.distance_meters);
-        return {
-          id: v.id,
-          name: v.name,
-          email: '',
-          skills: v.skills ?? [],
-          distance_meters: v.distance_meters,
-          skill_overlap: overlap,
-          final_score: 0.5 * distScore + 0.5 * overlap,
-        };
-      })
-      .sort((a, b) => b.final_score - a.final_score)
-      .slice(0, limit);
-  }
 
   return (profiles ?? [])
     .map((v) => {

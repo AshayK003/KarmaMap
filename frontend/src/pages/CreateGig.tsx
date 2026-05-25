@@ -213,6 +213,7 @@ export function CreateGig() {
                   {...register('volunteers_needed')}
                   id="create-gig-spots"
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={500}
                   step={1}

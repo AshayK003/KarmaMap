@@ -33,6 +33,7 @@ Hyper-local, real-time PWA connecting NGOs with nearby volunteers. Uses PostGIS 
 - **Backend uses `service_role` key** — bypasses RLS for writes. Never expose this key to the client.
 - **Testing** — Vitest + Supertest for backend API tests; Vitest for frontend. Business logic lives in services for unit testability.
 - **No icon library** — all icons are inline SVGs. Zero cost to add a new icon.
+- **Avatars** — DiceBear initials SVG API generates avatars from user names. Falls back to a user silhouette icon on load failure.
 - **No external state library** — plain React Context + hooks.
 - **Graceful fallbacks** — matching, email, and karma award all degrade gracefully when their dependencies (RPC functions, EmailJS, migrations) are unavailable.
 
@@ -151,10 +152,9 @@ cd frontend && npm run build  # → dist/ (static SPA)
 final_score = 0.5 × proximityScore + 0.5 × skillOverlap
 ```
 
-Three-tier fallback (`matchingService.ts`):
-1. `match_volunteers_for_gig` RPC (PostGIS distance sort)
-2. `nearby_volunteers_for_gig` RPC (fallback)
-3. All profiles at fixed 5000m (last resort)
+Two-tier fallback (`matchingService.ts`):
+1. `nearby_volunteers_for_gig` RPC (PostGIS proximity + skill scoring)
+2. All profiles scored at fixed 5000m (last resort — no redundant RPC retry)
 
 Notifications: in-app (`notifications` table) + email (EmailJS via `fetch`).
 

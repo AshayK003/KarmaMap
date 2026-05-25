@@ -51,6 +51,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         <span className="text-xs font-semibold text-gray-400 dark:text-slate-400 mr-auto uppercase tracking-wider">Visual mode</span>
         <button
           type="button"
+          aria-pressed={chartType === 'bar'}
           onClick={() => setChartType('bar')}
           className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
             chartType === 'bar'
@@ -62,6 +63,7 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         </button>
         <button
           type="button"
+          aria-pressed={chartType === 'area'}
           onClick={() => setChartType('area')}
           className={`rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200 ${
             chartType === 'area'

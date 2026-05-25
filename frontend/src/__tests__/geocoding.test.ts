@@ -1,3 +1,5 @@
+declare const global: typeof globalThis;
+
 import { describe, it, expect } from 'vitest';
 
 describe('formatPhotonLabel', () => {

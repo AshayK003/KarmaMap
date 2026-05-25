@@ -83,8 +83,9 @@ export function LocationPicker({
           }}
         >
           <div>
-            <label className="text-xs text-gray-500 dark:text-slate-400">Latitude</label>
+            <label htmlFor="manual-lat" className="text-xs text-gray-500 dark:text-slate-400">Latitude</label>
             <input
+              id="manual-lat"
               name="manual_lat"
               type="number"
               step="any"
@@ -94,8 +95,9 @@ export function LocationPicker({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-slate-400">Longitude</label>
+            <label htmlFor="manual-lng" className="text-xs text-gray-500 dark:text-slate-400">Longitude</label>
             <input
+              id="manual-lng"
               name="manual_lng"
               type="number"
               step="any"

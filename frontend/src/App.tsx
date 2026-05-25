@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 
 const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
@@ -20,7 +21,7 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard').then((m) => ({ defa
 
 function PageLoader() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center">
+    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="Loading page">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
     </div>
   );
@@ -34,8 +35,9 @@ function App() {
         <div className="flex min-h-screen flex-col">
           <Navbar />
           <main className="flex-1 animate-fade-in">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
@@ -91,6 +93,7 @@ function App() {
                 />
               </Routes>
             </Suspense>
+            </ErrorBoundary>
           </main>
         </div>
         </BrowserRouter>

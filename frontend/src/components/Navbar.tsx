@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -38,6 +38,15 @@ export function Navbar() {
   };
 
   const closeMobile = () => setMobileOpen(false);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMobile();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [mobileOpen]);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
@@ -107,9 +116,14 @@ export function Navbar() {
         </button>
       </div>
 
+      {/* Mobile drawer backdrop */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 sm:hidden bg-black/20 backdrop-blur-xs" onClick={closeMobile} aria-hidden="true" />
+      )}
+
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-slate-100 bg-white/95 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95 animate-fade-in">
+        <div className="relative z-50 sm:hidden border-t border-slate-100 bg-white/95 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95 animate-fade-in">
           <div className="px-4 py-3 space-y-2">
             {user && profile ? (
               <>

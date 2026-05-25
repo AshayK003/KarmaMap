@@ -64,12 +64,21 @@ export function NotificationBell() {
               notifications.map((n) => (
                 <div
                   key={n.id}
+                  role="button"
+                  tabIndex={0}
                   className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700 transition-colors cursor-pointer ${
                     !n.read_status ? 'bg-emerald-50/40 dark:bg-emerald-900/30' : ''
                   }`}
                   onClick={() => {
                     if (!n.read_status) markRead(n.id);
                   }}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && !n.read_status) {
+                      e.preventDefault();
+                      markRead(n.id);
+                    }
+                  }}
+                  aria-label={n.read_status ? 'Notification' : 'Unread notification — click to mark as read'}
                 >
                   <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!n.read_status ? 'bg-emerald-500' : 'bg-transparent'}`} />
                   <div className="min-w-0 flex-1">

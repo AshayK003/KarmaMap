@@ -3,6 +3,7 @@ import { formatDate } from '../utils/format';
 import { getKarmaLevel } from '../utils/karma';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import type { Profile, Participation } from '../types/database';
 
@@ -16,35 +17,37 @@ export function PublicPortfolio() {
     if (!slug) return;
     setLoading(true);
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('portfolio_slug', slug)
-      .single()
-      .then(({ data }) => {
-        setProfile(data);
-        if (data) {
-          supabase
-            .from('participations')
-            .select('*, gigs(title, gig_date)')
-            .eq('volunteer_id', data.id)
-            .eq('status', 'completed')
-            .then(({ data: parts }) => {
-              setCompleted((parts as Participation[]) ?? []);
-              setLoading(false);
-            })
-            .catch((err) => {
+    Promise.resolve(
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('portfolio_slug', slug)
+        .single()
+        .then(({ data }) => {
+          setProfile(data);
+          if (data) {
+            Promise.resolve(
+              supabase
+                .from('participations')
+                .select('*, gigs(title, gig_date)')
+                .eq('volunteer_id', data.id)
+                .eq('status', 'completed')
+                .then(({ data: parts }) => {
+                  setCompleted((parts as Participation[]) ?? []);
+                  setLoading(false);
+                })
+            ).catch((err: unknown) => {
               console.error('Failed to fetch participations:', err);
               setLoading(false);
             });
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to fetch profile:', err);
-        setLoading(false);
-      });
+          } else {
+            setLoading(false);
+          }
+        })
+    ).catch((err: unknown) => {
+      console.error('Failed to fetch profile:', err);
+      setLoading(false);
+    });
   }, [slug]);
 
   if (loading) {
@@ -103,12 +106,11 @@ export function PublicPortfolio() {
           <Card className="bg-white dark:bg-slate-800 text-center">
             {/* Avatar block */}
             <div className="flex flex-col items-center">
-              <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
-                <img
+              <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
+                <Avatar
+                  size="xl"
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'VM')}&backgroundType=gradientLinear&fontSize=42`}
-                  alt="Profile Avatar"
-                  className="h-full w-full rounded-full object-cover bg-white dark:bg-slate-700"
-                  loading="lazy"
+                  alt={profile.name}
                 />
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
                   🛡️

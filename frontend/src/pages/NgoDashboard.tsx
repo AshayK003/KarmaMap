@@ -11,7 +11,6 @@ import type { GigStatus } from '../types/database';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type FilterKey = 'all' | GigStatus;
@@ -30,14 +29,14 @@ export function NgoDashboard() {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [analytics, setAnalytics] = useState<{
     total_hours: number;
     completed_gigs: number;
     total_gigs: number;
     chart_data: Array<{ name: string; volunteers: number; completed: number }>;
   } | null>(null);
-  const analyticsTimer = useRef<ReturnType<typeof setTimeout>>();
+  const analyticsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (analyticsTimer.current) clearTimeout(analyticsTimer.current);
@@ -84,7 +83,7 @@ export function NgoDashboard() {
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <Avatar size="lg" alt={profile?.name ?? 'NGO'} />
+            <Avatar size="lg" src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile?.name || 'NGO')}&backgroundType=gradientLinear&fontSize=42`} alt={profile?.name ?? 'NGO'} />
 
             <div className="space-y-0.5">
               <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
@@ -183,6 +182,7 @@ export function NgoDashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by title or skills..."
+                aria-label="Search gigs"
                 className="w-full pl-9 pr-8 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden"
               />
               {searchQuery && (

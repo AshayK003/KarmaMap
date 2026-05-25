@@ -9,8 +9,8 @@ import {
 
 export const completeGigSchema = z.object({
   hours: z.coerce.number().min(0.5).max(24),
-  before_photo_url: z.string().min(1).optional(),
-  after_photo_url: z.string().min(1).optional(),
+  before_photo_url: z.string().url().optional(),
+  after_photo_url: z.string().url().optional(),
 });
 
 async function _completeParticipation(

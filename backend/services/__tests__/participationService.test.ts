@@ -106,17 +106,8 @@ describe('completeParticipation', async () => {
   const { completeParticipation } = await import('../participationService.js');
 
   it('throws when participation not found', async () => {
-    const c = chain({
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-          }),
-        }),
-      }),
-    });
+    const c = chain();
+    c.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
     mockFrom.mockReturnValue(c);
 
     await expect(
@@ -125,24 +116,21 @@ describe('completeParticipation', async () => {
   });
 
   it('completes participation and awards karma on success path', async () => {
-    let fromCallIndex = 0;
-
+    let callIndex = 0;
     mockFrom.mockImplementation(() => {
-      fromCallIndex++;
-      if (fromCallIndex <= 2) {
-        return {
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          select: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'part-1', volunteer_id: 'vol-1', gigs: { title: 'Park Cleanup' } },
-            error: null,
-          }),
-        } as any;
-      }
-      return {
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      } as any;
+      callIndex++;
+      const c = chain();
+      c.single.mockResolvedValue(
+        callIndex === 1
+          ? { data: { gig_id: 'gig-1' }, error: null }
+          : callIndex === 2
+          ? { data: { title: 'Park Cleanup' }, error: null }
+          : callIndex === 3
+          ? { data: { id: 'part-1', volunteer_id: 'vol-1' }, error: null }
+          : { data: { name: 'Alice' }, error: null }
+      );
+      c.insert = vi.fn().mockResolvedValue({ error: null });
+      return c;
     });
 
     mockRpc.mockResolvedValue({ data: 30, error: null });

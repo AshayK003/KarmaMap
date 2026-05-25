@@ -58,6 +58,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
       <label className="text-sm font-medium text-gray-700 dark:text-slate-200">{label}</label>
       <button
         type="button"
+        aria-label={label ? `Upload ${label.toLowerCase()}` : 'Upload photo'}
         onClick={() => {
           if (!isBusy) inputRef.current?.click();
         }}
@@ -101,11 +102,13 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
 
       <input
         ref={inputRef}
+        id="photo-upload-input"
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
         onChange={handleChange}
+        aria-hidden="true"
       />
     </div>
   );

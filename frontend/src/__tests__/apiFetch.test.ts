@@ -1,3 +1,5 @@
+declare const global: typeof globalThis;
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const injectedSession = vi.hoisted(() => ({ current: null as { access_token?: string } | null }));

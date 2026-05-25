@@ -74,7 +74,10 @@ export async function featureGig(
     .update({ featured_until: featuredUntil })
     .eq('id', gigId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error({ gigId, error: error.message }, 'Failed to feature gig');
+    throw new Error('Failed to update gig');
+  }
 
   return { featured_until: featuredUntil };
 }
@@ -118,7 +121,8 @@ export async function createGig(
   });
 
   if (error) {
-    throw new Error(error.message);
+    logger.error({ error: error.message, p_title: input.title }, 'Failed to create gig');
+    throw new Error('Failed to create gig');
   }
 
   if (!data || !data.id || typeof data.id !== 'string') {
@@ -150,7 +154,10 @@ export async function updateGig(
     p_gig_date: input.gig_date,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error({ gigId, error: error.message }, 'Failed to update gig');
+    throw new Error('Failed to update gig');
+  }
   if (!data) throw new Error('Update RPC returned no data');
   return data as Record<string, unknown>;
 }

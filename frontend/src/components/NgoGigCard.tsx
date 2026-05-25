@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Gig, GigStatus } from '../types/database';
 import { updateGigDetails, updateGigStatus } from '../services/gigs';
 import { parseGigLocation } from '../utils/geo';
@@ -72,6 +72,20 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [timePart, setTimePart] = useState(
     gigDate.toTimeString().slice(0, 5)
   );
+
+  useEffect(() => {
+    if (editing) return;
+    setTitle(gig.title);
+    setDescription(gig.description);
+    setVolunteersNeeded(gig.volunteers_needed);
+    setSkills(gig.required_skills.join(', '));
+    const loc = parseGigLocation(gig.location);
+    setLat(loc?.lat ?? 28.6139);
+    setLng(loc?.lng ?? 77.209);
+    const d = new Date(gig.gig_date);
+    setDatePart(d.toISOString().slice(0, 10));
+    setTimePart(d.toTimeString().slice(0, 5));
+  }, [gig.id, gig.title, gig.description, gig.volunteers_needed, gig.required_skills, gig.location, gig.gig_date, editing]);
 
   const runAction = async (action: () => Promise<void>, confirmMsg?: string) => {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -321,7 +335,7 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label htmlFor="ngo-edit-spots" className="text-xs font-bold text-gray-500 dark:text-slate-400">Volunteers Needed</label>
                 <input
