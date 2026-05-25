@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 export type PhotoUploadStatus = 'idle' | 'compressing' | 'uploading' | 'done' | 'error';
 
 function imageToJpegBlob(img: HTMLImageElement): Promise<Blob> {
-  const max = 1920;
+  const max = 1200;
   let { width, height } = img;
   if (width > max || height > max) {
     const ratio = Math.min(max / width, max / height);
@@ -96,6 +96,9 @@ export async function compressAndUpload(
   try {
     compressed = await compressImage(file);
   } catch {
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('Image too large and compression failed');
+    }
     compressed = file;
   }
   onStatus?.('uploading');

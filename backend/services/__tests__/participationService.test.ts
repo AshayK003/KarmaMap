@@ -37,22 +37,48 @@ describe('joinGig', async () => {
   const { joinGig } = await import('../participationService.js');
 
   it('creates participation on fresh join', async () => {
-    const c = chain({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) });
-    c.insert = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { id: 'part-1' }, error: null }),
-      }),
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { status: 'open', volunteers_needed: 5, volunteers_joined: 2 },
+            error: null,
+          }),
+        };
+      }
+      const c = chain({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) });
+      c.insert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: 'part-1' }, error: null }),
+        }),
+      });
+      c.eq = vi.fn().mockReturnValue(c);
+      return c;
     });
-    c.eq = vi.fn().mockReturnValue(c);
-    mockFrom.mockReturnValue(c);
 
     const result = await joinGig('gig-1', 'vol-1');
     expect(result.participation).toEqual({ id: 'part-1' });
   });
 
   it('throws 409 on duplicate join', async () => {
-    mockFrom.mockReturnValue(
-      chain({
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { status: 'open', volunteers_needed: 5, volunteers_joined: 2 },
+            error: null,
+          }),
+        };
+      }
+      return chain({
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -61,8 +87,8 @@ describe('joinGig', async () => {
             }),
           }),
         }),
-      }),
-    );
+      });
+    });
 
     await expect(joinGig('gig-1', 'vol-1')).rejects.toMatchObject({
       message: 'You have already joined this gig.',
@@ -71,16 +97,30 @@ describe('joinGig', async () => {
   });
 
   it('throws 409 on 23505 race condition', async () => {
-    const c = chain({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) });
-    c.insert = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi
-          .fn()
-          .mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate' } }),
-      }),
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { status: 'open', volunteers_needed: 5, volunteers_joined: 2 },
+            error: null,
+          }),
+        };
+      }
+      const c = chain({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) });
+      c.insert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate' } }),
+        }),
+      });
+      c.eq = vi.fn().mockReturnValue(c);
+      return c;
     });
-    c.eq = vi.fn().mockReturnValue(c);
-    mockFrom.mockReturnValue(c);
 
     await expect(joinGig('gig-1', 'vol-1')).rejects.toMatchObject({
       message: 'You have already joined this gig.',

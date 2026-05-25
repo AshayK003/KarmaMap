@@ -36,6 +36,9 @@ const CorporateDashboard = lazy(() =>
 const OrganizationManage = lazy(() =>
   import('./pages/OrganizationManage').then((m) => ({ default: m.OrganizationManage })),
 );
+const NgoProfile = lazy(() =>
+  import('./pages/NgoProfile').then((m) => ({ default: m.NgoProfile })),
+);
 
 function PageLoader() {
   return (
@@ -124,11 +127,12 @@ function App() {
                     <Route
                       path="/corporate/manage"
                       element={
-                        <ProtectedRoute roles={['volunteer']}>
+                        <ProtectedRoute>
                           <OrganizationManage />
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="/ngo/:id" element={<NgoProfile />} />
                   </Routes>
                 </Suspense>
               </ErrorBoundary>

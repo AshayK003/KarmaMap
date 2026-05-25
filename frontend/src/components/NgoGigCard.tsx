@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { updateGigStatus } from '../services/gigs';
 import type { Gig, GigStatus } from '../types/database';
@@ -77,7 +77,7 @@ function LocationDisplay({ gig }: { gig: Gig }) {
   );
 }
 
-export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
+export const NgoGigCard = memo(function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -315,4 +315,4 @@ export function NgoGigCard({ gig, onUpdated }: NgoGigCardProps) {
         </div>
     </article>
   );
-}
+});

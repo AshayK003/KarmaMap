@@ -33,6 +33,16 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setStatus('error');
+      setErrorMessage(`File too large (max 10MB). Got ${(file.size / 1024 / 1024).toFixed(1)}MB`);
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setStatus('error');
+      setErrorMessage('Invalid file type. Use JPEG, PNG, or WebP.');
+      return;
+    }
     if (localPreview) revokePreview(localPreview);
     const preview = createLocalPreview(file);
     setLocalPreview(preview);

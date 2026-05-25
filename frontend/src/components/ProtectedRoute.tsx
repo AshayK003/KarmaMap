@@ -20,6 +20,14 @@ export function ProtectedRoute({ children, roles }: Props) {
 
   if (!user) return <Navigate to="/login" replace />;
 
+  if (roles && !profile) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (roles && profile && !roles.includes(profile.role)) {
     return <Navigate to={profile.role === 'ngo' ? '/ngo/dashboard' : '/map'} replace />;
   }

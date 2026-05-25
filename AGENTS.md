@@ -21,8 +21,8 @@ A hyper-local, real-time PWA connecting local NGOs with nearby volunteers. Uses 
 KarmaMap/
 ├── backend/                  # Express REST API (port 3001)
 │   ├── index.ts              # Entry point + global error handler
-│   ├── routes/               # gigs.ts, participations.ts, payments.ts, organizations.ts
-│   ├── controllers/          # gigController.ts, participationController.ts, paymentController.ts, organizationController.ts
+│   ├── routes/               # gigs.ts, participations.ts, ngo.ts, organizations.ts
+│   ├── controllers/          # gigController.ts, participationController.ts, ngoController.ts, organizationController.ts
 │   ├── middleware/
 │   │   ├── auth.ts           # verifyJwt + requireRole (Supabase Auth)
 │   │   ├── validate.ts       # Zod body validation
@@ -36,7 +36,7 @@ KarmaMap/
 │   │   ├── emailService.ts   # EmailJS REST via native fetch
 │   │   ├── gigService.ts     # createGig, getNgoAnalytics, verifyGigOwnership
 │   │   ├── participationService.ts # joinGig, completeParticipation, awardKarma
-│   │   ├── paymentService.ts  # createPayment, confirmPayment, getNgoPayments
+│   │   ├── ngoService.ts     # updateUpiInfo (UPI ID + QR URL management)
 │   │   └── organizationService.ts # getOrgAnalytics, getMyOrg, updateOptIn,
 │   │                            #   addOrgMember, getOrgMembers, getOrgName
 ├── frontend/                 # React SPA (port 5173)
@@ -69,11 +69,11 @@ KarmaMap/
 │       ├── hooks/             # useGeolocation, useLocationPicker,
 │       │                      #   useRealtimeGigs, useRealtimeParticipations,
 │       │                      #   useRealtimeNotifications
-│       ├── services/          # gigs.ts, geocoding.ts, storage.ts
+│       ├── services/          # gigs.ts, ngo.ts, geocoding.ts, storage.ts
 │       ├── types/             # database.ts (TS types + DB namespace)
 │       ├── lib/               # supabase.ts, utils.ts (tailwind-merge + clsx)
 │       └── utils/             # api.ts, geo.ts, weather.tsx, format.ts
-├── supabase/migrations/      # 12 SQL files
+├── supabase/migrations/      # 13 SQL files
 │   ├── 00_schema_core.sql
 │   ├── 01_functions_and_realtime.sql
 │   ├── 02_featured_gigs.sql
@@ -85,6 +85,7 @@ KarmaMap/
 │   ├── 09_payments.sql
 │   ├── 10_corporate_dashboard.sql
 │   ├── 11_gig_duration.sql
+│   ├── 12_ngo_upi.sql
 │   └── storage_policies.sql
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
@@ -102,10 +103,10 @@ KarmaMap/
 ```
 
 
-## Roles & Routing (13 pages)
+## Roles & Routing (14 pages)
 - **Volunteer**: `/map` (discovery), `/portfolio`, `/gigs/:id`, `/gigs/:id/participate`, `/leaderboard`, `/corporate/dashboard` (if org member), `/corporate/manage` (if org admin)
 - **NGO**: `/ngo/dashboard`, `/ngo/create-gig`, `/leaderboard`, `/corporate/dashboard` (if org member), `/corporate/manage` (if org admin)
-- **Public**: `/` (home), `/login`, `/signup`, `/p/:slug` (public portfolio)
+- **Public**: `/` (home), `/login`, `/signup`, `/p/:slug` (public portfolio), `/ngo/:id` (public NGO profile + donation)
 
 ## API Endpoints (Express backend)
 | Method | Path | Auth | Role | Description |
@@ -117,9 +118,7 @@ KarmaMap/
 | PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | Feature a gig for N hours (sets `featured_until`) |
 | POST | `/api/participations/join/:gigId` | JWT | volunteer | Join a gig (returns 409 if already joined) |
 | PATCH | `/api/participations/:participationId/complete` | JWT | volunteer | Complete with photos/hours + award karma |
-| POST | `/api/payments` | JWT | ngo | Create payment request for feature gig |
-| POST | `/api/payments/:paymentId/confirm` | JWT | ngo | Confirm payment + feature gig (manual invoicing) |
-| GET | `/api/payments` | JWT | ngo | List NGO's payment history |
+| PATCH | `/api/ngo/upi` | JWT | ngo | Update UPI ID and/or QR code URL for direct donations |
 
 **Data flow**: Frontend uses Supabase anon client for reads (RPCs, direct queries). Backend uses service_role client for writes. REST API calls inject JWT via `utils/api.ts`. `apiFetch` tries direct backend URL (`http://localhost:3001`) first, then falls back to Vite proxy.
 
@@ -136,7 +135,7 @@ KarmaMap/
 ### Controllers
 - **gigController.ts**: `createGigSchema` (Zod), `featureGigSchema` (Zod), `createGig`, `getNgoAnalytics`, `featureGig`, `triggerMatching`
 - **participationController.ts**: `completeGigSchema` (Zod), `joinGig`, `completeParticipation`
-- **paymentController.ts**: `createPaymentSchema` (Zod), `createPayment`, `confirmPayment`, `getPayments`
+- **ngoController.ts**: `updateUpiSchema` (Zod), `updateUpi`
 - **organizationController.ts**: `addMemberSchema` (Zod), `getOrgAnalytics`, `getMyOrg`, `updateOptIn`, `addOrgMember`, `getOrgMembers`
 
 ### Middleware
@@ -150,13 +149,13 @@ KarmaMap/
 - **emailService.ts**: `sendEmail(params)`, `sendGigMatchEmails(volunteers, gigTitle)`, `sendCompletionEmail(email, name, gigTitle)`
 - **gigService.ts**: `createGig`, `getNgoAnalytics`, `verifyGigOwnership`, `getGigOwnership`
 - **participationService.ts**: `completeParticipation`, `joinGig`, `awardKarma`
-- **paymentService.ts**: `createPayment`, `confirmPayment`, `getNgoPayments`
+- **ngoService.ts**: `updateUpiInfo` (UPI ID + QR URL management)
 - **organizationService.ts**: `getOrgAnalytics`, `getMyOrg`, `updateOptIn`, `addOrgMember`, `getOrgMembers`, `getOrgName`
 
 ## Database (PostgreSQL + PostGIS)
 **Custom enums**: `user_role` (volunteer, ngo), `gig_status` (open, in_progress, completed, cancelled), `participation_status` (pending, joined, checked_in, completed, cancelled)
 
-**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until, duration), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
+**Core tables**: `profiles` (id, role, skills[], location GEOGRAPHY, karma_points, streak, portfolio_slug, bio, upi_id, upi_qr_url), `gigs` (id, ngo_id, location GEOGRAPHY, required_skills[], volunteers_needed, volunteers_joined, gig_date, status, featured_until, duration), `participations` (id, volunteer_id, gig_id, status, before/after_photo_url, hours), `notifications` (id, user_id, message, read_status, gig_id).
 
 **Key RPCs**: `nearby_gigs(lat, lng, radius_meters)` — returns duration + featured-first sort; `insert_gig(...)` — accepts p_duration; `update_profile_location(lat, lng)`, `nearby_volunteers_for_gig(gig_id, radius)`, `award_karma(p_user_id, p_hours)` — atomic karma increment.
 
@@ -164,7 +163,7 @@ KarmaMap/
 
 **Realtime**: `gigs`, `participations`, `notifications` published to `supabase_realtime`.
 
-**RLS**: 13 policies across all 4 tables + 4 storage policies on `participation-photos` bucket + 1 policy on `organization_members`.
+**RLS**: 14 policies across all 4 tables + 4 storage policies on `participation-photos` bucket + 4 storage policies on `ngo-qr-codes` bucket + 1 policy on `organization_members`.
 
 ## Matching Algorithm (`matchingService.ts`)
 ```
@@ -197,7 +196,8 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` npm package). Modal has `role="dialog"`, `aria-modal="true"`, `aria-label="Certificate of Impact"`, and programmatic close button.
 - **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket. Preview image uses `w-full h-auto object-contain` for dynamic sizing. `compressImage` reads `file.arrayBuffer()` first (fresh Blob), falls back to data URL, then original file — non-fatal on failure. Upload button has `aria-label`.
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
-- **Testing**: 148 tests across 13 files (112 backend + 36 frontend) — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
+- **Testing**: 141 tests across 13 files (105 backend + 36 frontend) — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
+- **OSRM route path update**: marker click handler checks `routeCache` ref first — if cached, `activeRoute` is swapped synchronously (no flash); if not, `activeRoute` is cleared immediately so the old Polyline disappears before the async OSRM fetch begins. `refreshCounter` prop (incremented on every `loadGigs` call) is an explicit useEffect dependency to guarantee route clear on refresh regardless of `React.memo` or array-reference edge cases.
 - **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, OpenObserve) with integration guides.
 - **sonner** — toast notifications (5 pages + Toaster in App.tsx)
 - **No icon library** — inline SVGs in `components/NavIcons.tsx` (12 icons), all with `aria-hidden="true"` by default in base `Icon` component
@@ -217,6 +217,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **GEarth radius**: 6371km used in haversine formula (`utils/geo.ts`)
 - **CSP**: `img-src` includes `blob:` (photo previews) and `https://*.supabase.co` (storage URLs); `connect-src` includes `http://localhost:3001` for direct backend fetch
 - **`@hookform/resolvers`**: pinned to `^4.1.3` — v5 dist incorrectly requires `zod/v4/core`
+- **NGO Donation (UPI)**: Public `/ngo/:id` route shows NGO name, bio, UPI ID, QR code, copy button, and UPI deep-link button. Platform never holds money. NGOs manage UPI settings on their dashboard. QR codes stored in `ngo-qr-codes` Supabase Storage bucket. `profiles` table has `upi_id TEXT` and `upi_qr_url TEXT` columns (nullable). RLS allows anon SELECT on NGO profiles.
 - **Corporate Dashboard**: `/corporate/dashboard` route — `getOrgAnalytics` aggregates hours by department/month, top-20 recent activities, CSV export; Recharts `BarChart` + `AreaChart`; stats cards (total hours, active/total members, completed gigs)
 - **Organization Manage**: `/corporate/manage` route — admin panel; lists members with role/department/opt-in status; add-member form with UUID + department fields; sequential fetch (`/my-org` first, then `/members` only if admin)
 - **Opt-in toggle**: `VolunteerPortfolio.tsx` shows org name and opt-in switch; controls data visibility in company analytics
@@ -270,12 +271,17 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Missing table graceful degradation**: `organizationService.ts` `requireTables()` helper catches `PGRST202` errors and returns 503 instead of 500
 - **organizationService test fix**: thenable chain mock fixed with `c: any` cast — 13 tests now pass
 - **`@types/pg` installed** (backend devDep) — fixes TS7016 for `applyMigration.ts`
+- **OSRM route path update fix**: marker click handler now checks `routeCache` ref first. If cached, `activeRoute` is swapped synchronously (no flash); if not, `activeRoute` is cleared immediately so the old route path disappears before the async fetch. `refreshCounter` prop (VolunteerMap → MapView) added as useEffect dependency to also clear on refresh — eliminates the race window where old route path lingered after `gigs` reference change.
+- **GigCard duration restored**: `{gig.duration}h` was accidentally removed during GigCard redesign, added back to top-right info row.
 
 ### Migrations
-- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql` → `09_payments.sql` → `10_corporate_dashboard.sql` → `11_gig_duration.sql`
+- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql` → `09_payments.sql` → `10_corporate_dashboard.sql` → `11_gig_duration.sql` → `12_ngo_upi.sql`
 
 ### `11_gig_duration.sql`
 Adds `duration INTEGER` column to `gigs` table. Recreates `insert_gig` RPC to accept `p_duration INTEGER DEFAULT NULL`. Recreates `nearby_gigs` RPC to return `duration` in output. Applied manually via Supabase SQL Editor (3 separately executable parts).
+
+### `12_ngo_upi.sql`
+Adds `upi_id TEXT` and `upi_qr_url TEXT` columns to `profiles` table. Adds RLS policy for anon SELECT on NGO profiles (public donation pages). Adds storage policies for `ngo-qr-codes` bucket. Create the bucket manually in Supabase Dashboard before running.
 - Stale/obsolete migrations deleted: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`
 
 ## 🔴 Security: .env.example MUST use placeholder values only

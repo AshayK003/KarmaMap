@@ -119,11 +119,12 @@ cd frontend && npm run build  # → dist/ (static SPA)
 ## Routes
 
 | Path | Page | Access |
-|---|---|---|
+|---|---|---|---|
 | `/` | Home landing | Public |
 | `/login` | Login | Public |
 | `/signup` | Signup (role toggle) | Public |
 | `/p/:slug` | Public Portfolio | Public |
+| `/ngo/:id` | Public NGO Profile + Donation | Public |
 | `/map` | Discovery Map | Volunteer |
 | `/portfolio` | My Portfolio | Volunteer |
 | `/gigs/:id` | Gig Detail | Public |
@@ -131,11 +132,13 @@ cd frontend && npm run build  # → dist/ (static SPA)
 | `/leaderboard` | Leaderboard | Auth'd |
 | `/ngo/dashboard` | NGO Dashboard | NGO |
 | `/ngo/create-gig` | Create Gig | NGO |
+| `/corporate/dashboard` | Corporate Dashboard | Org Member |
+| `/corporate/manage` | Organization Manage | Org Admin |
 
 ## API Endpoints
 
 | Method | Path | Auth | Role | Description |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | GET | `/health` | — | — | Health check |
 | POST | `/api/gigs` | JWT | ngo | Create gig + trigger matching |
 | GET | `/api/gigs/analytics` | JWT | ngo | Dashboard analytics |
@@ -143,6 +146,12 @@ cd frontend && npm run build  # → dist/ (static SPA)
 | PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | Feature gig (N hours) |
 | POST | `/api/participations/join/:gigId` | JWT | volunteer | Join gig (409 on dup) |
 | PATCH | `/api/participations/:id/complete` | JWT | volunteer | Complete + award karma |
+| PATCH | `/api/ngo/upi` | JWT | ngo | Update UPI ID / QR URL |
+| GET | `/api/organizations/analytics` | JWT | — | CSR analytics |
+| GET | `/api/organizations/my-org` | JWT | — | Current user's org membership |
+| POST | `/api/organizations/opt-in` | JWT | — | Toggle data-sharing opt-in |
+| POST | `/api/organizations/members` | JWT | admin | Add member |
+| GET | `/api/organizations/members` | JWT | admin | List members |
 
 **Data flow**: Frontend calls REST API via `utils/api.ts` which injects the Supabase JWT into the `Authorization: Bearer` header.
 
@@ -167,7 +176,7 @@ cd backend   && npx vitest run
 cd frontend  && npx vitest run
 ```
 
-148 tests across 13 files. See `docs/reviews/test-strategy-refined.md` for the full test plan.
+141 tests across 13 files (105 backend + 36 frontend). See `docs/reviews/test-strategy-refined.md` for the full test plan.
 
 ## Migrations
 
@@ -186,9 +195,10 @@ storage_policies.sql            → storage bucket RLS policies
 09_payments.sql                 → payment requests table + RPCs
 10_corporate_dashboard.sql      → organizations + organization_members
 11_gig_duration.sql             → duration column on gigs, RPC updates
+12_ngo_upi.sql                  → upi_id/upi_qr_url on profiles + storage policies
 ```
 
-12 migrations total. Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
+13 migrations total. Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
 
 ## Deployment
 
@@ -213,6 +223,7 @@ storage_policies.sql            → storage bucket RLS policies
 | Map tiles not loading | PWA cache or CORS | OSM tiles are cached with CacheFirst (200 max, 30d) |
 | Auth session lost on refresh | Token expiry | Supabase handles refresh automatically via `onAuthStateChange` |
 | `ZodError` (400) on API | Invalid request body | Check schema — backend validates with zod v4 |
+| Route path not updating on new marker | Stale route stays visible until async OSRM fetch completes | Marker click handler now checks cache first — cached routes swap instantly, uncached routes clear old path immediately before fetching |
 
 ## Contributing
 

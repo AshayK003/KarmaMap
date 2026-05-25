@@ -68,9 +68,10 @@ async function matchVolunteersFallback(
 ): Promise<MatchedVolunteer[]> {
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
-    .select('id, name, skills, location')
+    .select('id, name, skills')
     .eq('role', 'volunteer')
-    .not('location', 'is', null);
+    .not('location', 'is', null)
+    .limit(limit * 5);
 
   return (profiles ?? [])
     .map((v) => {

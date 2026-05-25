@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# KarmaMap — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript 6 SPA with Leaflet maps, Recharts, and PWA support.
 
-Currently, two official plugins are available:
+## Dev
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev        # port 5173, /api proxied to localhost:3001
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build      # → dist/ (static SPA for Vercel deploy)
+npm run preview    # preview production build locally
 ```
+
+## Testing
+
+```bash
+npm run test       # Vitest (36 tests)
+```
+
+## Key Dependencies
+
+| Package | Purpose |
+|---|---|
+| react-leaflet + react-leaflet-cluster | Map, markers, clustering |
+| @supabase/supabase-js | Auth + anon reads |
+| recharts | Analytics charts |
+| canvas-confetti | Certificate celebration |
+| sonner | Toast notifications |
+| vite-plugin-pwa | PWA + OSM tile caching |
+| date-fns | Date formatting |
+| tailwindcss v4 | Styling |
+
+## Project Structure
+
+```
+src/
+├── pages/           # 14 route pages
+├── components/      # Shared UI (MapView, GigCard, Navbar, etc.)
+├── components/ui/   # shadcn/ui primitives (9 components)
+├── context/         # AuthContext, ThemeContext
+├── hooks/           # Geolocation, location picker, realtime subscriptions
+├── services/        # API wrappers (gigs, ngo, geocoding, storage)
+├── types/           # TypeScript interfaces (NearbyGig, etc.)
+├── lib/             # Supabase client, utility functions
+└── utils/           # api.ts, geo.ts, weather.tsx, format.ts
+```
+
+## Architecture Notes
+
+- **Reads via Supabase anon client** — direct RPCs and SELECT queries
+- **Writes via REST API** — backend Express server with JWT auth
+- **No external state library** — React Context + hooks only
+- **No icon library** — inline SVGs in `NavIcons.tsx`
+- **Avatars** — DiceBear initials SVG with user silhouette fallback
+- **Dark mode** — localStorage + system preference, Tailwind v4 class-based

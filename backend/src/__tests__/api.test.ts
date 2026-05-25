@@ -196,15 +196,29 @@ describe('POST /api/participations/join/:gigId', () => {
   it('calls join endpoint', async () => {
     mockUserRole = 'volunteer';
     const { supabaseAdmin } = await import('../../services/supabase.js');
-    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { id: 'part-1' }, error: null }),
+    let callCount = 0;
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { status: 'open', volunteers_needed: 5, volunteers_joined: 2 },
+            error: null,
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: { id: 'part-1' }, error: null }),
+          }),
         }),
-      }),
+      };
     });
 
     const res = await supertest(app)
@@ -234,158 +248,50 @@ describe('PATCH /api/participations/:participationId/complete', () => {
   });
 });
 
-describe('POST /api/payments', () => {
-  it('returns 400 for invalid body (non-uuid gig_id)', async () => {
-    const res = await supertest(app)
-      .post('/api/payments')
-      .set('Authorization', 'Bearer test')
-      .send({ gig_id: 'not-a-uuid', hours: 24 });
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for hours = 0', async () => {
-    const res = await supertest(app)
-      .post('/api/payments')
-      .set('Authorization', 'Bearer test')
-      .send({ gig_id: '00000000-0000-0000-0000-000000000001', hours: 0 });
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 201 for valid NGO request', async () => {
+describe('PATCH /api/ngo/upi', () => {
+  it('returns 200 for valid upi_id', async () => {
     const { supabaseAdmin } = await import('../../services/supabase.js');
     (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'pay-1',
-          gig_id: '00000000-0000-0000-0000-000000000001',
-          ngo_id: 'test-user-id',
-          amount: 240000,
-          status: 'pending',
-          feature_hours: 24,
-        },
+        data: { id: 'test-user-id', name: 'Test NGO', upi_id: 'ngo@upi', upi_qr_url: null },
         error: null,
       }),
-      insert: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-    });
-
-    const res = await supertest(app)
-      .post('/api/payments')
-      .set('Authorization', 'Bearer test')
-      .send({ gig_id: '00000000-0000-0000-0000-000000000001', hours: 24 });
-    expect(res.status).toBe(201);
-    expect(res.body.payment.status).toBe('pending');
-  });
-});
-
-describe('POST /api/payments/:paymentId/confirm', () => {
-  it('returns 200 and features gig on valid confirmation', async () => {
-    const { supabaseAdmin } = await import('../../services/supabase.js');
-
-    let fromCallCount = 0;
-    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      fromCallCount++;
-      if (fromCallCount === 1) {
-        // fetch payment
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: {
-              id: 'pay-1',
-              gig_id: 'gig-1',
-              ngo_id: 'test-user-id',
-              status: 'pending',
-              feature_hours: 24,
-            },
-            error: null,
-          }),
-          order: vi.fn().mockReturnThis(),
-          insert: vi.fn().mockReturnThis(),
-          update: vi.fn().mockReturnThis(),
-        } as any;
-      }
-      if (fromCallCount === 2) {
-        // update gigs.featured_until
-        return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          }),
-        } as any;
-      }
-      // update payment status
-      return {
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: 'pay-1',
-                  status: 'paid',
-                  gig_id: 'gig-1',
-                  ngo_id: 'test-user-id',
-                  feature_hours: 24,
-                },
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      } as any;
-    });
-
-    const res = await supertest(app)
-      .post('/api/payments/pay-1/confirm')
-      .set('Authorization', 'Bearer test');
-    expect(res.status).toBe(200);
-    expect(res.body.payment.status).toBe('paid');
-    expect(res.body).toHaveProperty('featured_until');
-  });
-
-  it('returns 404 for nonexistent payment', async () => {
-    const { supabaseAdmin } = await import('../../services/supabase.js');
-    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
-      order: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
       update: vi.fn().mockReturnThis(),
     });
 
-    mockUserRole = 'ngo';
     const res = await supertest(app)
-      .post('/api/payments/pay-404/confirm')
-      .set('Authorization', 'Bearer test');
-    expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Payment not found');
-  });
-});
-
-describe('GET /api/payments', () => {
-  it('returns list of payments for the NGO', async () => {
-    const { supabaseAdmin } = await import('../../services/supabase.js');
-    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: [
-          { id: 'pay-1', amount: 240000, status: 'paid', gigs: { title: 'Plantation Drive' } },
-          { id: 'pay-2', amount: 120000, status: 'pending', gigs: { title: 'Beach Cleanup' } },
-        ],
-        error: null,
-      }),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-    });
-
-    const res = await supertest(app).get('/api/payments').set('Authorization', 'Bearer test');
+      .patch('/api/ngo/upi')
+      .set('Authorization', 'Bearer test')
+      .send({ upi_id: 'ngo@upi' });
     expect(res.status).toBe(200);
-    expect(res.body.payments).toHaveLength(2);
+    expect(res.body.profile.upi_id).toBe('ngo@upi');
+  });
+
+  it('returns 400 for invalid upi_id format', async () => {
+    const res = await supertest(app)
+      .patch('/api/ngo/upi')
+      .set('Authorization', 'Bearer test')
+      .send({ upi_id: 'notavalidupi' });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for empty body (no fields)', async () => {
+    const res = await supertest(app)
+      .patch('/api/ngo/upi')
+      .set('Authorization', 'Bearer test')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 403 for volunteer role', async () => {
+    mockUserRole = 'volunteer';
+    const res = await supertest(app)
+      .patch('/api/ngo/upi')
+      .set('Authorization', 'Bearer test')
+      .send({ upi_id: 'ngo@upi' });
+    expect(res.status).toBe(403);
   });
 });
 

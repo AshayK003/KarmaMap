@@ -161,14 +161,16 @@ describe('findMatchedVolunteers', async () => {
           }),
         };
       }
-      return {
+      const c = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockResolvedValue({
+        not: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({
           data: [{ id: 'v1', name: 'Dave', skills: ['cleaning'] }],
           error: null,
         }),
       };
+      return c;
     });
 
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'RPC error' } });
@@ -192,14 +194,16 @@ describe('findMatchedVolunteers', async () => {
           }),
         };
       }
-      return {
+      const c = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockResolvedValue({
+        not: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({
           data: null,
           error: null,
         }),
       };
+      return c;
     });
 
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'RPC failed' } });

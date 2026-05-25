@@ -6,9 +6,9 @@ import dotenv from 'dotenv';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import gigRoutes from './routes/gigs.js';
+import ngoRoutes from './routes/ngo.js';
 import organizationRoutes from './routes/organizations.js';
 import participationRoutes from './routes/participations.js';
-import paymentRoutes from './routes/payments.js';
 import { logger } from './src/lib/logger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -43,16 +43,14 @@ export function createApp() {
     next();
   });
 
-  if (!isDev) {
-    const generalLimiter = rateLimit({
-      windowMs: 60 * 1000,
-      max: 100,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: { error: 'Too many requests, please try again later' },
-    });
-    app.use('/api/', generalLimiter);
-  }
+  const generalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: isDev ? 1000 : 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later' },
+  });
+  app.use('/api/', generalLimiter);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'karmamap-api' });
@@ -60,7 +58,7 @@ export function createApp() {
 
   app.use('/api/gigs', gigRoutes);
   app.use('/api/participations', participationRoutes);
-  app.use('/api/payments', paymentRoutes);
+  app.use('/api/ngo', ngoRoutes);
   app.use('/api/organizations', organizationRoutes);
 
   app.use(

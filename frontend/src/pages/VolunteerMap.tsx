@@ -68,7 +68,10 @@ export function VolunteerMap() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS_METERS);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'nearest' | 'best_match'>('nearest');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const lastSavedLoc = useRef<{ lat: number; lng: number } | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadGigs = useCallback(async () => {
     setLoading(true);
@@ -82,12 +85,13 @@ export function VolunteerMap() {
         try {
           await updateProfileLocation(lat, lng);
         } catch {
-          // Profile location update is best-effort; don't block gig loading
+          /* best-effort */
         }
         lastSavedLoc.current = { lat, lng };
       }
       const data = await fetchNearbyGigs(lat, lng, radius);
       setGigs(data);
+      setRefreshCounter((c) => c + 1);
     } catch (err) {
       console.error(err);
       setLoadError(err instanceof Error ? err.message : 'Could not load gigs');
@@ -97,9 +101,25 @@ export function VolunteerMap() {
     }
   }, [lat, lng, radius]);
 
+  const debouncedLoadGigs = useCallback(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(loadGigs, 400);
+  }, [loadGigs]);
+
+  const allSkills = useMemo(() => {
+    const set = new Set<string>();
+    gigs.forEach((g) => g.required_skills.forEach((s) => set.add(s)));
+    return Array.from(set).sort();
+  }, [gigs]);
+
+  const filteredGigs = useMemo(() => {
+    if (!categoryFilter) return gigs;
+    return gigs.filter((g) => g.required_skills.some((s) => s.toLowerCase() === categoryFilter.toLowerCase()));
+  }, [gigs, categoryFilter]);
+
   const sortedGigs = useMemo(() => {
-    if (sortMode === 'nearest' || !profile?.skills) return gigs;
-    const withScore = gigs.map((g) => ({
+    if (sortMode === 'nearest' || !profile?.skills) return filteredGigs;
+    const withScore = filteredGigs.map((g) => ({
       ...g,
       matchScore: skillOverlapScore(g.required_skills, profile.skills),
     }));
@@ -108,12 +128,15 @@ export function VolunteerMap() {
       return a.distance_meters - b.distance_meters;
     });
     return withScore;
-  }, [gigs, sortMode, profile?.skills]);
+  }, [filteredGigs, sortMode, profile?.skills]);
 
   useEffect(() => {
     if (geoLoading && source === 'gps') return;
-    loadGigs();
-  }, [loadGigs, geoLoading, source]);
+    debouncedLoadGigs();
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [debouncedLoadGigs, geoLoading, source]);
 
   useEffect(() => {
     const channel = supabase
@@ -121,18 +144,18 @@ export function VolunteerMap() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'gigs', filter: 'status=eq.open' },
-        loadGigs,
+        debouncedLoadGigs,
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'gigs', filter: 'status=eq.open' },
-        loadGigs,
+        debouncedLoadGigs,
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadGigs]);
+  }, [debouncedLoadGigs]);
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
@@ -196,6 +219,7 @@ export function VolunteerMap() {
               height="100%"
               pickMode
               onMapClick={setFromMap}
+              refreshCounter={refreshCounter}
             />
           </div>
 
@@ -268,11 +292,47 @@ export function VolunteerMap() {
               )}
             </Card>
 
+            {/* Category filters */}
+            {allSkills.length > 0 && (
+              <Card className="p-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-2">
+                  Filter by Category
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryFilter(null)}
+                    className={`rounded-lg px-2.5 py-1 text-[10px] sm:text-xs font-bold transition-colors ${
+                      categoryFilter === null
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {allSkills.map((skill) => (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => setCategoryFilter(categoryFilter === skill ? null : skill)}
+                      className={`rounded-lg px-2.5 py-1 text-[10px] sm:text-xs font-bold transition-colors ${
+                        categoryFilter === skill
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Gig list in sidebar */}
-            <div className="space-y-3" style={{ contentVisibility: 'auto' }}>
+            <div className="space-y-3">
               <div className="flex items-center justify-between px-0.5">
                 <h2 className="text-xs font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-400">
-                  Nearby Opportunities
+                  {categoryFilter ? categoryFilter : 'All'} Opportunities
                 </h2>
                 {!loading && sortedGigs.length > 0 && (
                   <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400">
@@ -317,7 +377,7 @@ export function VolunteerMap() {
                     </svg>
                   </span>
                   <p className="text-sm font-extrabold text-amber-900 dark:text-amber-200 mt-1">
-                    No open gigs nearby
+                    No {categoryFilter ? `${categoryFilter} ` : ''}gigs nearby
                   </p>
                   <ul className="text-xs font-semibold text-amber-700 dark:text-amber-300 text-left space-y-1.5 mt-2">
                     <li className="flex items-start gap-1.5">
@@ -333,7 +393,7 @@ export function VolunteerMap() {
                 </div>
               ) : (
                 sortedGigs.map((gig) => (
-                  <div key={gig.id} style={{ contentVisibility: 'auto' }}>
+                  <div key={gig.id}>
                     <GigCard gig={gig} volunteerSkills={profile?.skills} />
                   </div>
                 ))

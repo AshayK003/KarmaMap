@@ -68,21 +68,20 @@ export async function completeParticipation(
     throw new Error('Failed to complete participation');
   }
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('name')
-    .eq('id', volunteerId)
-    .single();
+  const [profile, notifResult] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name').eq('id', volunteerId).single(),
+    supabaseAdmin
+      .from('notifications')
+      .insert({
+        user_id: volunteerId,
+        message: `You earned ${karmaEarned} karma points for completing "${gigTitle}"!`,
+        read_status: false,
+      }),
+  ]);
 
-  const { error: notifError } = await supabaseAdmin.from('notifications').insert({
-    user_id: volunteerId,
-    message: `You earned ${karmaEarned} karma points for completing "${gigTitle}"!`,
-    read_status: false,
-  });
-
-  if (notifError) {
+  if (notifResult?.error) {
     logger.warn(
-      { participationId, error: notifError.message },
+      { participationId, error: notifResult.error.message },
       'Failed to insert completion notification',
     );
   }
@@ -90,7 +89,7 @@ export async function completeParticipation(
   try {
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(volunteerId);
     if (user?.user?.email) {
-      await sendCompletionEmail(user.user.email, profile?.name ?? 'Volunteer', gigTitle);
+      await sendCompletionEmail(user.user.email, profile?.data?.name ?? 'Volunteer', gigTitle);
     }
   } catch {
     logger.warn({ volunteerId }, 'Failed to send completion email');
@@ -100,6 +99,25 @@ export async function completeParticipation(
 }
 
 export async function joinGig(gigId: string, volunteerId: string): Promise<JoinGigResult> {
+  const { data: gig, error: gigError } = await supabaseAdmin
+    .from('gigs')
+    .select('status, volunteers_needed, volunteers_joined')
+    .eq('id', gigId)
+    .single();
+
+  if (gigError || !gig) {
+    logger.error({ gigId, error: gigError?.message }, 'Gig not found for join');
+    throw Object.assign(new Error('Gig not found'), { statusCode: 404 });
+  }
+
+  if (gig.status !== 'open' && gig.status !== 'in_progress') {
+    throw Object.assign(new Error('This gig is no longer accepting volunteers'), { statusCode: 400 });
+  }
+
+  if (gig.volunteers_joined >= gig.volunteers_needed) {
+    throw Object.assign(new Error('This gig is full'), { statusCode: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('participations')
     .insert({

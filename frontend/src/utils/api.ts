@@ -39,13 +39,20 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const base = getBase();
   const urls = base ? [base + path] : [`${DIRECT_API}${path}`, path];
 
+  const delays = [500, 1000, 2000];
   let lastErr: unknown;
-  for (const url of urls) {
-    try {
-      const res = await tryFetch(url, opts);
-      return res.json() as Promise<T>;
-    } catch (e) {
-      lastErr = e;
+
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    for (const url of urls) {
+      try {
+        const res = await tryFetch(url, opts);
+        return res.json() as Promise<T>;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (attempt < delays.length) {
+      await new Promise((r) => setTimeout(r, delays[attempt]));
     }
   }
 

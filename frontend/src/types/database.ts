@@ -12,6 +12,8 @@ export interface Profile {
   location?: unknown;
   bio?: string;
   portfolio_slug?: string;
+  upi_id?: string | null;
+  upi_qr_url?: string | null;
   created_at: string;
   updated_at: string;
 }

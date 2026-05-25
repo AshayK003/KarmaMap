@@ -6,7 +6,7 @@ Bug reports with reproduction steps, root cause analysis, and resolution trackin
 
 ## Contents
 
-*(Add entries here as files are created)*
+- [routing-path-not-updating-on-marker-switch.md](./routing-path-not-updating-on-marker-switch.md) — OSRM route path not updating when selecting different gig markers or clicking Refresh
 
 ## Template
 

@@ -1,5 +1,33 @@
-export const DEFAULT_CENTER: [number, number] = [28.6139, 77.209]; // Delhi fallback
+export const DEFAULT_CENTER: [number, number] = [28.6139, 77.209];
 export const DEFAULT_RADIUS_METERS = 10000;
+
+export function isStartingSoon(gigDate: string): boolean {
+  const diff = new Date(gigDate).getTime() - Date.now();
+  return diff > 0 && diff < 24 * 60 * 60 * 1000;
+}
+
+export function isFillingFast(joined: number, needed: number): boolean {
+  if (needed <= 0) return false;
+  return needed - joined <= Math.max(1, Math.round(needed * 0.2));
+}
+
+export function urgencyLabel(gig: {
+  gig_date: string;
+  volunteers_joined: number;
+  volunteers_needed: number;
+  featured_until?: string;
+}): { label: string; variant: 'amber' | 'destructive' | 'default' } | null {
+  if (gig.featured_until && new Date(gig.featured_until) > new Date()) {
+    return { label: '⭐ Featured', variant: 'amber' };
+  }
+  if (isStartingSoon(gig.gig_date)) {
+    return { label: '🔥 Starting Soon', variant: 'destructive' };
+  }
+  if (isFillingFast(gig.volunteers_joined, gig.volunteers_needed)) {
+    return { label: '⚡ Filling Fast', variant: 'amber' };
+  }
+  return null;
+}
 
 export function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)} m`;
