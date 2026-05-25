@@ -17,10 +17,28 @@ if (!supabaseConfigOk) {
   );
 }
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Supabase is not configured. Create frontend/.env from .env.example and restart the dev server.'
-  );
-}
+const noop = () => ({ data: null, error: new Error('Supabase not configured') });
+const noopChain = () => ({ data: null, error: new Error('Supabase not configured') });
+const selectChain = () => ({
+  eq: () => ({ single: noopChain, in: noop, not: noop, maybeSingle: noopChain }),
+  in: noop,
+  order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }),
+});
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : {
+      auth: {
+        getSession: noop,
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      },
+      rpc: noop,
+      from: () => ({
+        select: selectChain,
+        insert: () => ({ select: () => ({ single: noopChain }) }),
+        update: () => ({ eq: () => noop }),
+      }),
+      channel: () => ({ on: () => ({ subscribe: () => {}, unsubscribe: () => {} }) }),
+      storage: { from: () => ({ upload: noop, getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
+      removeChannel: () => {},
+    } as unknown as ReturnType<typeof createClient>;

@@ -64,7 +64,7 @@ cp .env.production backend/.env
 | `Caddyfile` | Reverse proxy with auto TLS |
 | `scripts/deploy.sh` | Pull images, migrate DB, restart stack |
 | `scripts/backup.sh` | pg_dump to S3-compatible storage |
-| `docker-compose.monitoring.yml` | Prometheus + Grafana + Loki (optional) |
+| ~~`docker-compose.monitoring.yml`~~ | Removed — monitoring stack was configured but backend had no `/metrics` endpoint. Re-add if `prom-client` is implemented. |
 | `.github/workflows/deploy.yml` | CI: lint → build → push images → deploy via SSH |
 
 ## Environment Variables
@@ -133,7 +133,7 @@ Production logging strategy:
 |-------|------|-----------|
 | App stdout | `docker logs` | 3 files × 10MB |
 | Structured | JSON lines to stdout | — |
-| Aggregated | Loki + Promtail + Grafana (optional, via monitoring profile) | Configurable |
+| Aggregated | (Monitoring stack removed — backend had no `/metrics` endpoint) | — |
 
 Backend logs structured JSON in production. View via:
 
@@ -148,17 +148,7 @@ Minimal viable stack (no payment required):
 
 1. **Health endpoint**: `/health` returns `{"status":"ok"}` — monitored via Uptime Kuma (free, self-hosted or their cloud)
 2. **Docker health checks**: Built into docker-compose — containers auto-restart on failure
-3. **Prometheus + Grafana** (optional): `docker compose -f docker-compose.monitoring.yml up -d`
-4. **Note**: Prometheus scraping requires adding `prom-client` to the backend and exposing a `/metrics` endpoint. Without it, the monitoring stack only collects container-level metrics via cAdvisor (not included by default).
-
-### Grafana Dashboard
-
-After starting the monitoring stack:
-
-1. Open `http://YOUR_HOST:3000`, login `admin`/`admin`
-2. Add Loki datasource: `http://loki:3100`
-3. Add Prometheus datasource: `http://prometheus:9090`
-4. Import dashboard `1860` (Node Exporter) or create custom
+3. ~~**Prometheus + Grafana**~~: Monitoring stack removed — `prometheus.yml`, `loki.yml`, and `docker-compose.monitoring.yml` were deleted because the backend had no `/metrics` endpoint. Re-add if `prom-client` is implemented.
 
 ## Backup Strategy
 

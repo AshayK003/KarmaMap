@@ -20,6 +20,7 @@ function chain(overrides: Record<string, unknown> = {}) {
   chainable.eq.mockReturnValue(chainable);
   chainable.in.mockReturnValue(chainable);
   chainable.single.mockReturnValue(chainable);
+  chainable.update.mockReturnValue(chainable);
   return chainable;
 }
 
@@ -41,11 +42,18 @@ describe('joinGig', async () => {
   });
 
   it('throws 409 on duplicate join', async () => {
-    const c = chain({
-      maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'existing' }, error: null }),
-    });
-    c.eq = vi.fn().mockReturnValue(c);
-    mockFrom.mockReturnValue(c);
+    mockFrom.mockReturnValue(
+      chain({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { code: '23505', message: 'duplicate key' },
+            }),
+          }),
+        }),
+      })
+    );
 
     await expect(joinGig('gig-1', 'vol-1')).rejects.toMatchObject({
       message: 'You have already joined this gig.',
@@ -81,30 +89,16 @@ describe('awardKarma', async () => {
     expect(mockRpc).toHaveBeenCalledWith('award_karma', { p_user_id: 'vol-1', p_hours: 5 });
   });
 
-  it('falls back to read-then-write when RPC fails', async () => {
+  it('falls back to direct update when RPC fails', async () => {
+    const c = chain();
+    c.single.mockResolvedValue({ data: { karma_points: 20, streak: 3 }, error: null });
+    mockFrom.mockReturnValue(c);
     mockRpc.mockResolvedValue({ data: null, error: { message: 'RPC not found' } });
 
-    let callIndex = 0;
-    mockFrom.mockImplementation(() => {
-      callIndex++;
-      if (callIndex === 1) {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { karma_points: 100, streak: 5 },
-            error: null,
-          }),
-        } as any;
-      }
-      return {
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      } as any;
-    });
-
-    const result = await awardKarma('vol-1', 3);
-    expect(result).toBe(30);
+    const result = await awardKarma('vol-1', 6);
+    expect(result).toBe(60);
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
   });
 });
 
@@ -128,5 +122,35 @@ describe('completeParticipation', async () => {
     await expect(
       completeParticipation('part-1', 'vol-1', { hours: 2 })
     ).rejects.toThrow('Participation not found');
+  });
+
+  it('completes participation and awards karma on success path', async () => {
+    let fromCallIndex = 0;
+
+    mockFrom.mockImplementation(() => {
+      fromCallIndex++;
+      if (fromCallIndex <= 2) {
+        return {
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'part-1', volunteer_id: 'vol-1', gigs: { title: 'Park Cleanup' } },
+            error: null,
+          }),
+        } as any;
+      }
+      return {
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      } as any;
+    });
+
+    mockRpc.mockResolvedValue({ data: 30, error: null });
+
+    const result = await completeParticipation('part-1', 'vol-1', { hours: 3 });
+
+    expect(result.karma_earned).toBe(30);
+    expect(result.participation.id).toBe('part-1');
+    expect(mockRpc).toHaveBeenCalledWith('award_karma', { p_user_id: 'vol-1', p_hours: 3 });
   });
 });

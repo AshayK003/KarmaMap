@@ -32,13 +32,8 @@ async function _completeParticipation(
 async function _joinGig(req: AuthRequest, res: Response): Promise<void> {
   const gigId = String(req.params.gigId);
 
-  try {
-    const result = await joinGigService(gigId, req.user!.id);
-    res.status(201).json(result);
-  } catch (err) {
-    const statusCode = (err as Error & { statusCode?: number }).statusCode ?? 400;
-    res.status(statusCode).json({ error: (err as Error).message });
-  }
+  const result = await joinGigService(gigId, req.user!.id);
+  res.status(201).json(result);
 }
 
 export const completeParticipation = asyncHandler(_completeParticipation);

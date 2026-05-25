@@ -125,6 +125,8 @@ AS $$
 BEGIN
   IF NEW.status = 'joined' AND (OLD IS NULL OR OLD.status = 'pending') THEN
     UPDATE public.gigs SET volunteers_joined = volunteers_joined + 1 WHERE id = NEW.gig_id;
+  ELSIF NEW.status = 'cancelled' AND OLD.status = 'joined' THEN
+    UPDATE public.gigs SET volunteers_joined = GREATEST(volunteers_joined - 1, 0) WHERE id = NEW.gig_id;
   END IF;
   RETURN NEW;
 END;

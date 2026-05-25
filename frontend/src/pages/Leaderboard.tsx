@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface LeaderboardEntry {
   name: string;
@@ -64,7 +65,7 @@ export function Leaderboard() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
+            <Skeleton key={i} className="h-16 rounded-2xl" />
           ))}
         </div>
       ) : volunteers.length === 0 ? (

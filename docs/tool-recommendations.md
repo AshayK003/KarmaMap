@@ -341,8 +341,8 @@ not worth it for this app's simple date needs.
 ## 7. OpenObserve — Self-Hosted Observability (Infrastructure)
 
 **Current state**: No logging infrastructure beyond terminal output. The
-`docker-compose.monitoring.yml` file exists in `docs/deployment.md` but is not
-deployed.
+`docker-compose.monitoring.yml` file was removed (configured but backend had no
+`/metrics` endpoint and prom-client was never wired).
 
 **Recommendation**: Deploy OpenObserve (not SigNoz) for this project's scale.
 

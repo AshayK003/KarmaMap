@@ -1,5 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { skillOverlap, normalizeDistance } from '../matchingService.js';
+
+const mockFrom = vi.fn();
+const mockRpc = vi.fn();
+
+vi.mock('../supabase.js', () => ({
+  supabaseAdmin: {
+    from: (...args: unknown[]) => mockFrom(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
+  },
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('skillOverlap', () => {
   it('returns 1 when no skills are required', () => {
@@ -59,5 +73,175 @@ describe('normalizeDistance', () => {
 
   it('returns correct score for 25% distance', () => {
     expect(normalizeDistance(12500)).toBe(0.75);
+  });
+});
+
+describe('findMatchedVolunteers', async () => {
+  const { findMatchedVolunteers } = await import('../matchingService.js');
+
+  it('throws when gig not found', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
+    });
+
+    await expect(findMatchedVolunteers('gig-1')).rejects.toThrow('Gig not found');
+  });
+
+  it('returns ranked volunteers from primary RPC', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'gig-1', required_skills: ['cleaning', 'driving'], location: null },
+        error: null,
+      }),
+    });
+
+    mockRpc.mockResolvedValue({
+      data: [
+        { id: 'v1', name: 'Alice', email: 'a@t.com', skills: ['cleaning', 'driving'], distance_meters: 1000 },
+        { id: 'v2', name: 'Bob', email: 'b@t.com', skills: ['cleaning'], distance_meters: 500 },
+        { id: 'v3', name: 'Carol', email: 'c@t.com', skills: ['cooking'], distance_meters: 300 },
+      ],
+      error: null,
+    });
+
+    const result = await findMatchedVolunteers('gig-1', 10000, 10);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].name).toBe('Alice');
+    expect(result[0].skill_overlap).toBe(1);
+    expect(result[0].final_score).toBeGreaterThan(0);
+    expect(result[1].name).toBe('Bob');
+    expect(result[2].name).toBe('Carol');
+  });
+
+  it('limits results to the limit parameter', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'gig-1', required_skills: ['a'], location: null },
+        error: null,
+      }),
+    });
+
+    mockRpc.mockResolvedValue({
+      data: [
+        { id: 'v1', name: 'A', email: 'a@t.com', skills: ['a'], distance_meters: 100 },
+        { id: 'v2', name: 'B', email: 'b@t.com', skills: ['a'], distance_meters: 200 },
+        { id: 'v3', name: 'C', email: 'c@t.com', skills: ['a'], distance_meters: 300 },
+      ],
+      error: null,
+    });
+
+    const result = await findMatchedVolunteers('gig-1', 10000, 2);
+    expect(result).toHaveLength(2);
+  });
+
+  it('falls back to nearby RPC when primary RPC fails', async () => {
+    let fromCalls = 0;
+    mockFrom.mockImplementation(() => {
+      fromCalls++;
+      if (fromCalls === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'gig-1', required_skills: ['cleaning'], location: null },
+            error: null,
+          }),
+        } as any;
+      }
+      if (fromCalls === 2) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { ngo_id: 'ngo-1' }, error: null }),
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        not: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as any;
+    });
+
+    mockRpc
+      .mockResolvedValueOnce({ data: null, error: { message: 'RPC error' } })
+      .mockResolvedValueOnce({
+        data: [
+          { id: 'v1', name: 'Dave', skills: ['cleaning'], distance_meters: 2000 },
+        ],
+        error: null,
+      });
+
+    const result = await findMatchedVolunteers('gig-1');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Dave');
+  });
+
+  it('uses last resort when both RPCs fail', async () => {
+    let fromCalls = 0;
+    mockFrom.mockImplementation(() => {
+      fromCalls++;
+      if (fromCalls === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'gig-1', required_skills: ['cleaning'], location: null },
+            error: null,
+          }),
+        } as any;
+      }
+      if (fromCalls === 2) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { ngo_id: 'ngo-1' }, error: null }),
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        not: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as any;
+    });
+
+    mockRpc
+      .mockResolvedValueOnce({ data: null, error: { message: 'Primary failed' } })
+      .mockResolvedValueOnce({ data: null, error: { message: 'Nearby failed' } });
+
+    const result = await findMatchedVolunteers('gig-1');
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('notifyMatchedVolunteers', async () => {
+  const { notifyMatchedVolunteers } = await import('../matchingService.js');
+
+  it('skips notification when no volunteers', async () => {
+    await notifyMatchedVolunteers('gig-1', [], 'Test Gig');
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('inserts notifications for each volunteer', async () => {
+    const insertFn = vi.fn().mockResolvedValue({ error: null });
+    mockFrom.mockReturnValue({ insert: insertFn });
+
+    await notifyMatchedVolunteers('gig-1', [
+      { id: 'v1', name: 'A', email: 'a@t.com', skills: [], distance_meters: 100, skill_overlap: 0.5, final_score: 0.5 },
+      { id: 'v2', name: 'B', email: 'b@t.com', skills: [], distance_meters: 200, skill_overlap: 0.5, final_score: 0.5 },
+    ], 'Park Cleanup');
+
+    expect(insertFn).toHaveBeenCalledWith([
+      expect.objectContaining({ user_id: 'v1', message: expect.stringContaining('Park Cleanup') }),
+      expect.objectContaining({ user_id: 'v2', message: expect.stringContaining('Park Cleanup') }),
+    ]);
   });
 });

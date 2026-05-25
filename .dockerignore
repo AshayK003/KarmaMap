@@ -10,8 +10,6 @@ docs/
 scripts/
 docker-compose*
 Dockerfile*
-prometheus.yml
-loki.yml
 nginx.conf
 Caddyfile
 .cursor/

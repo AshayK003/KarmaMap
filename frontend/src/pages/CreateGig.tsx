@@ -27,10 +27,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="mt-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">{message}</p>;
-}
+import { FieldError } from '@/components/ui/field-error';
 
 export function CreateGig() {
   const {
@@ -162,12 +159,12 @@ export function CreateGig() {
               <label htmlFor="create-gig-title" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                 Gig Title
               </label>
-              <input
+              <Input
                 {...register('title')}
                 id="create-gig-title"
                 type="text"
                 placeholder="e.g. Community Garden Planting Day"
-                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="mt-2"
               />
               <FieldError message={errors.title?.message} />
             </div>
@@ -192,12 +189,12 @@ export function CreateGig() {
               <label htmlFor="create-gig-skills" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                 Required Skills
               </label>
-              <input
+              <Input
                 {...register('required_skills')}
                 id="create-gig-skills"
                 type="text"
                 placeholder="e.g. cleanup, botany, teaching (comma separated)"
-                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                className="mt-2"
               />
               <FieldError message={errors.required_skills?.message} />
               <p className="mt-1.5 text-[10px] font-bold text-slate-400 leading-normal">
@@ -212,14 +209,14 @@ export function CreateGig() {
                 <label htmlFor="create-gig-spots" className="block text-xs font-extrabold uppercase tracking-widest text-slate-400">
                   Spots Available
                 </label>
-                <input
+                <Input
                   {...register('volunteers_needed')}
                   id="create-gig-spots"
                   type="number"
                   min={1}
                   max={500}
                   step={1}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                  className="mt-2"
                   onWheel={(e) => e.currentTarget.blur()}
                 />
                 <FieldError message={errors.volunteers_needed?.message} />
@@ -280,7 +277,7 @@ export function CreateGig() {
 
             {/* Submit */}
             <Button type="submit" disabled={isSubmitting} size="lg" className="w-full">
-              {isSubmitting ? 'Broadcasting to Volunteers...' : 'Publish & Match Gig'}
+              {isSubmitting ? 'Publishing…' : 'Publish gig'}
             </Button>
             </form>
           </Card>

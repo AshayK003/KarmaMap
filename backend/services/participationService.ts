@@ -89,7 +89,7 @@ export async function joinGig(
     if (error.code === '23505') {
       throw Object.assign(new Error('You have already joined this gig.'), { statusCode: 409 });
     }
-    throw new Error(error.message);
+    throw Object.assign(new Error(error.message), { statusCode: 400 });
   }
 
   return { participation: data };
@@ -110,18 +110,32 @@ export async function awardKarma(
     return data;
   }
 
-  logger.warn({ volunteerId, error: error?.message }, 'award_karma RPC failed, retrying once');
-  const { data: data2, error: error2 } = await supabaseAdmin.rpc('award_karma', {
-    p_user_id: volunteerId,
-    p_hours: hours,
-  });
+  logger.warn({ volunteerId, error: error?.message }, 'award_karma RPC unavailable, falling back to direct update');
 
-  if (!error2 && typeof data2 === 'number') {
-    return data2;
+  const { data: profile, error: fetchError } = await supabaseAdmin
+    .from('profiles')
+    .select('karma_points, streak')
+    .eq('id', volunteerId)
+    .single();
+
+  if (fetchError) {
+    throw Object.assign(new Error(fetchError.message), { statusCode: 400 });
   }
 
-  throw Object.assign(
-    new Error(error2?.message ?? 'award_karma RPC unavailable — apply migration 03_atomic_karma.sql'),
-    { statusCode: 400 }
-  );
+  const currentKarma = profile?.karma_points ?? 0;
+  const currentStreak = profile?.streak ?? 0;
+
+  const { error: updateError } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      karma_points: currentKarma + karmaEarned,
+      streak: currentStreak + 1,
+    })
+    .eq('id', volunteerId);
+
+  if (updateError) {
+    throw Object.assign(new Error(updateError.message), { statusCode: 400 });
+  }
+
+  return karmaEarned;
 }

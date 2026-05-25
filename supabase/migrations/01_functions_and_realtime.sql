@@ -78,33 +78,7 @@ AS $$
   ORDER BY distance_meters ASC;
 $$;
 
-CREATE OR REPLACE FUNCTION public.match_volunteers_for_gig(
-  p_gig_id UUID,
-  p_radius_meters DOUBLE PRECISION DEFAULT 10000
-)
-RETURNS TABLE (
-  id UUID,
-  name TEXT,
-  email TEXT,
-  skills TEXT[],
-  distance_meters DOUBLE PRECISION
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, extensions
-AS $$
-  SELECT
-    nv.id,
-    nv.name,
-    ''::TEXT AS email,
-    nv.skills,
-    nv.distance_meters
-  FROM public.nearby_volunteers_for_gig(p_gig_id, p_radius_meters) nv;
-$$;
-
 GRANT EXECUTE ON FUNCTION public.nearby_volunteers_for_gig TO service_role;
-GRANT EXECUTE ON FUNCTION public.match_volunteers_for_gig TO service_role;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE public.gigs;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.participations;

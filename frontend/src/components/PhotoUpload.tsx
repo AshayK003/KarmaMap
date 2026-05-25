@@ -20,6 +20,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<PhotoUploadStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -35,11 +36,13 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
     if (localPreview) revokePreview(localPreview);
     const preview = createLocalPreview(file);
     setLocalPreview(preview);
+    setUploadedUrl(null);
     setErrorMessage(null);
     setStatus('compressing');
 
     try {
       const url = await compressAndUpload(user.id, file, label.toLowerCase().includes('before') ? 'before' : 'after', setStatus);
+      setUploadedUrl(url);
       onUploadComplete(url);
     } catch (err) {
       setStatus('error');
@@ -48,6 +51,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
   };
 
   const isBusy = status === 'compressing' || status === 'uploading';
+  const displaySrc = status === 'done' && uploadedUrl ? uploadedUrl : localPreview;
 
   return (
     <div className="flex flex-col gap-2">
@@ -58,14 +62,14 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
           if (!isBusy) inputRef.current?.click();
         }}
         disabled={isBusy}
-        className="flex min-h-[120px] flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 disabled:cursor-wait disabled:opacity-70"
+        className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 disabled:cursor-wait disabled:opacity-70"
         style={{
           borderColor: status === 'error' ? '#fca5a5' : status === 'done' ? '#6ee7b7' : '#6ee7b7',
           backgroundColor: status === 'error' ? '#fef2f2' : status === 'done' ? '#ecfdf5' : '#ecfdf5',
         }}
       >
-        {localPreview ? (
-          <img src={localPreview} alt={label} className="max-h-32 rounded-lg object-cover" />
+        {displaySrc ? (
+          <img src={displaySrc} alt={label} className="w-full h-auto rounded-lg object-contain" onError={() => console.error('Photo display failed:', displaySrc)} />
         ) : (
           <span className="text-2xl">📷</span>
         )}

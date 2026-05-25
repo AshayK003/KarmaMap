@@ -11,8 +11,5 @@ dev-dist/
 backend/.env
 frontend/.env
 backups/
-prometheus_data/
-loki_data/
-grafana_data/
 caddy_data/
 caddy_config/

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
@@ -25,6 +26,17 @@ export function createApp() {
     })
   );
   app.use(express.json({ limit: '1mb' }));
+
+  if (!isDev) {
+    const generalLimiter = rateLimit({
+      windowMs: 60 * 1000,
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Too many requests, please try again later' },
+    });
+    app.use('/api/', generalLimiter);
+  }
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'karmamap-api' });
@@ -74,5 +86,4 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     logger.info({ port: PORT }, 'KarmaMap API running');
   });
-  import('./services/queue.js').then(({ startWorker }) => startWorker());
 }

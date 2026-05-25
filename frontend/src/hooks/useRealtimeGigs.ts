@@ -13,6 +13,16 @@ async function enrichGigProfile(gig: Gig): Promise<Gig> {
   return gig;
 }
 
+const MAX_CACHE = 50;
+
+function cacheProfile(cache: Map<string, string>, key: string, value: string) {
+  if (cache.size >= MAX_CACHE) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) cache.delete(firstKey);
+  }
+  cache.set(key, value);
+}
+
 export function useRealtimeGigs(ngoId?: string) {
   const [gigs, setGigs] = useState<Gig[]>([]);
   const profileCache = useRef<Map<string, string>>(new Map());
@@ -51,7 +61,7 @@ export function useRealtimeGigs(ngoId?: string) {
             setGigs((prev) => [newGig, ...prev]);
             const enriched = await enrichGigProfile(newGig);
             if (enriched.profiles?.name) {
-              profileCache.current.set(enriched.ngo_id, enriched.profiles.name);
+              cacheProfile(profileCache.current, enriched.ngo_id, enriched.profiles.name);
               setGigs((prev) => prev.map((g) => (g.id === enriched.id ? enriched : g)));
             }
           }

@@ -193,6 +193,7 @@ export const MapView = memo(function MapView({
             <button
               key={mode}
               type="button"
+              aria-label={`Travel mode: ${mode === 'foot' ? 'walking' : mode === 'bicycle' ? 'cycling' : 'driving'}`}
               onClick={() => setTravelMode(mode)}
               className={`rounded-xl px-3 py-2 text-xs font-black transition-all duration-200 cursor-pointer select-none ${
                 isActive

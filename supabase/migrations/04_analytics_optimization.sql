@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION get_ngo_analytics(p_ngo_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 STABLE
+SET search_path = 'public'
 AS $$
 DECLARE
   result JSON;

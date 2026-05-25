@@ -4,8 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -33,14 +35,14 @@ export function Login() {
       return;
     }
     try {
-      const { data: session } = await import('../lib/supabase').then((m) =>
-        m.supabase.auth.getSession()
-      );
+      const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user?.id;
       if (userId) {
-        const { data: prof } = await import('../lib/supabase').then((m) =>
-          m.supabase.from('profiles').select('role').eq('id', userId).single()
-        );
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
         navigate(prof?.role === 'ngo' ? '/ngo/dashboard' : '/map');
       } else {
         navigate('/map');
@@ -84,14 +86,14 @@ export function Login() {
                 className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-800/40 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-all focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
               />
             </div>
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1" role="alert">
-                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <FieldError
+              message={errors.email?.message}
+              icon={
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                 </svg>
-                {errors.email.message}
-              </p>
-            )}
+              }
+            />
           </div>
 
           {/* Password input field */}
@@ -128,14 +130,14 @@ export function Login() {
                 )}
               </button>
             </div>
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1" role="alert">
-                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <FieldError
+              message={errors.password?.message}
+              icon={
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                 </svg>
-                {errors.password.message}
-              </p>
-            )}
+              }
+            />
           </div>
 
           {errors.root && (

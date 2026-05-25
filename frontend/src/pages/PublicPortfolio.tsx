@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
+import { getKarmaLevel } from '../utils/karma';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Card } from '@/components/ui/card';
 import type { Profile, Participation } from '../types/database';
 
 export function PublicPortfolio() {
@@ -73,13 +75,6 @@ export function PublicPortfolio() {
   const totalHours = completed.reduce((s, p) => s + Number(p.hours ?? 0), 0);
 
   // Dynamic Karma Level calculation
-  const getKarmaLevel = (points: number) => {
-    if (points >= 1000) return { title: 'Legendary Leader 🌟', color: 'from-purple-600 to-indigo-600', max: 5000 };
-    if (points >= 500) return { title: 'Community Champion 🟣', color: 'from-violet-500 to-fuchsia-500', max: 1000 };
-    if (points >= 100) return { title: 'Impact Hero 🔵', color: 'from-blue-500 to-cyan-500', max: 500 };
-    return { title: 'Karma Novice 🟢', color: 'from-emerald-500 to-teal-500', max: 100 };
-  };
-
   const karma = profile.karma_points ?? 0;
   const level = getKarmaLevel(karma);
   const nextMilestonePercent = Math.min(100, (karma / level.max) * 100);
@@ -105,7 +100,7 @@ export function PublicPortfolio() {
         {/* ─── Left Column: Profile Card & QR Share ─── */}
         <div className="lg:col-span-4 space-y-6">
           {/* Main Public Profile Info Card */}
-          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50 text-center">
+          <Card className="bg-white dark:bg-slate-800 text-center">
             {/* Avatar block */}
             <div className="flex flex-col items-center">
               <div className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
@@ -156,8 +151,7 @@ export function PublicPortfolio() {
                 </div>
               </div>
             )}
-          </div>
-
+          </Card>
 
         </div>
 
@@ -166,7 +160,7 @@ export function PublicPortfolio() {
           {/* Metrics Overview Grid */}
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Karma */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
@@ -186,10 +180,10 @@ export function PublicPortfolio() {
                   />
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Streak */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Active Streak</span>
@@ -199,10 +193,10 @@ export function PublicPortfolio() {
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Shows active engagement and reliable daily community service.
               </p>
-            </div>
+            </Card>
 
             {/* Hours */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden bg-white dark:bg-slate-800 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Verified Time</span>
@@ -212,11 +206,11 @@ export function PublicPortfolio() {
               <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
                 Total accumulated volunteer time verified across open NGO projects.
               </p>
-            </div>
+            </Card>
           </div>
 
           {/* Completed Gigs list */}
-          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+          <Card className="bg-white dark:bg-slate-800">
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <span>📋</span> Volunteer History & Accomplishments
             </h2>
@@ -238,7 +232,7 @@ export function PublicPortfolio() {
                   const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
                   const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
                   const dateStr = rawDate
-                    ? format(rawDate, 'MMM d, yyyy')
+                    ? formatDate(rawDate, { month: 'short', day: 'numeric', year: 'numeric' })
                     : 'Verified Date';
 
                   return (
@@ -274,7 +268,7 @@ export function PublicPortfolio() {
                 })
               )}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

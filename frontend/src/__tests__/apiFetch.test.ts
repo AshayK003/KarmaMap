@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const injectedSession = vi.hoisted(() => ({ current: null as { access_token?: string } | null }));
+
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getSession: vi.fn().mockImplementation(() =>
+        Promise.resolve({ data: { session: injectedSession.current } })
+      ),
     },
     channel: vi.fn(),
   },
@@ -11,6 +15,7 @@ vi.mock('../lib/supabase', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  injectedSession.current = null;
 });
 
 describe('apiFetch', () => {
@@ -47,10 +52,7 @@ describe('apiFetch', () => {
   });
 
   it('sends Authorization header when session has token', async () => {
-    const { supabase } = await import('../lib/supabase');
-    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
-      data: { session: { access_token: 'test-token' } },
-    });
+    injectedSession.current = { access_token: 'test-token' };
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,

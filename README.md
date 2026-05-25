@@ -34,6 +34,7 @@ Hyper-local, real-time PWA connecting NGOs with nearby volunteers. Uses PostGIS 
 - **Testing** — Vitest + Supertest for backend API tests; Vitest for frontend. Business logic lives in services for unit testability.
 - **No icon library** — all icons are inline SVGs. Zero cost to add a new icon.
 - **No external state library** — plain React Context + hooks.
+- **Graceful fallbacks** — matching, email, and karma award all degrade gracefully when their dependencies (RPC functions, EmailJS, migrations) are unavailable.
 
 ## Prerequisites
 
@@ -166,7 +167,7 @@ cd backend   && npx vitest run
 cd frontend  && npx vitest run
 ```
 
-See `docs/testing-strategy.md` for the test plan.
+120 tests across 11 files. See `docs/reviews/test-strategy-refined.md` for the full test plan.
 
 ## Migrations
 
@@ -181,6 +182,7 @@ storage_policies.sql            → storage bucket RLS policies
 04_analytics_optimization.sql   → aggregated analytics RPC
 06_location_label.sql           → location_label support
 07_fix_location_drift.sql       → conditional update_gic location fix
+08_drop_match_volunteers_for_gig.sql → remove dead wrapper RPC
 ```
 
 Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
@@ -192,9 +194,9 @@ Stale/obsolete migration files have been removed: `20240523000000_initial_schema
 - `vercel.json` configures build, output dir, SPA rewrites
 - Set env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`
 
-### Backend (Render)
+### Backend
 
-- `render.yaml` defines Node 22 service, build/start commands
+- `docker-compose up backend` (recommended) or deploy manually
 - Set env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, EmailJS vars
 
 ## Common Troubleshooting
@@ -202,7 +204,8 @@ Stale/obsolete migration files have been removed: `20240523000000_initial_schema
 | Symptom | Cause | Fix |
 |---|---|---|
 | `"You have already joined this gig."` (409) | Duplicate participation | Each volunteer can join a gig once |
-| Matching returns empty | PostGIS not enabled or RPCs missing | Run `fix_matching_functions.sql` |
+| Matching returns empty | PostGIS not enabled or RPCs missing | Run missing migration files |
+| `award_karma` function not found | Migration `03_atomic_karma.sql` not applied | Run the migration, or the backend falls back to direct update automatically |
 | Emails not sending | EmailJS env vars missing | Skip is safe — in-app notifications still work |
 | Map tiles not loading | PWA cache or CORS | OSM tiles are cached with CacheFirst (200 max, 30d) |
 | Auth session lost on refresh | Token expiry | Supabase handles refresh automatically via `onAuthStateChange` |

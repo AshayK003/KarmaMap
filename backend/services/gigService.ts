@@ -1,7 +1,7 @@
 import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
-import { enqueueMatching } from './queue.js';
-import { getCached, setCache } from '../src/lib/cache.js';
+import { findMatchedVolunteers, notifyMatchedVolunteers, type MatchedVolunteer } from './matchingService.js';
+import { sendGigMatchEmails } from './emailService.js';
 
 export interface CreateGigInput {
   title: string;
@@ -50,6 +50,46 @@ async function getGigOwnership(gigId: string): Promise<GigOwnership | null> {
   return data as GigOwnership | null;
 }
 
+async function runMatching(
+  gigId: string,
+  gigTitle: string
+): Promise<{ matched_count: number; volunteers: MatchedVolunteer[] }> {
+  const matched = await findMatchedVolunteers(gigId);
+  await notifyMatchedVolunteers(gigId, matched, gigTitle);
+  await sendGigMatchEmails(matched, gigTitle);
+  return { matched_count: matched.length, volunteers: matched };
+}
+
+export async function featureGig(
+  gigId: string,
+  ngoId: string,
+  hours: number
+): Promise<{ featured_until: string }> {
+  await verifyGigOwnership(gigId, ngoId);
+
+  const featuredUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabaseAdmin
+    .from('gigs')
+    .update({ featured_until: featuredUntil })
+    .eq('id', gigId);
+
+  if (error) throw new Error(error.message);
+
+  return { featured_until: featuredUntil };
+}
+
+export async function triggerMatching(
+  gigId: string,
+  ngoId: string
+): Promise<{ matched: number; volunteers: MatchedVolunteer[] }> {
+  const gig = await verifyGigOwnership(gigId, ngoId);
+
+  const result = await runMatching(gigId, gig.title);
+
+  return { matched: result.matched_count, volunteers: result.volunteers };
+}
+
 export async function verifyGigOwnership(
   gigId: string,
   ngoId: string
@@ -85,23 +125,13 @@ export async function createGig(
     throw new Error('Gig creation RPC returned no valid id');
   }
 
-  const gigId = data.id as string;
-  const queued = await enqueueMatching(gigId, input.title);
-  if (!queued) {
-    try {
-      const { findMatchedVolunteers, notifyMatchedVolunteers } = await import('./matchingService.js');
-      const { sendGigMatchEmails } = await import('./emailService.js');
-      const matched = await findMatchedVolunteers(data.id);
-      await notifyMatchedVolunteers(data.id, matched, input.title);
-      await sendGigMatchEmails(matched, input.title);
-      return { gig: data, matched_count: matched.length };
-    } catch (matchErr) {
-      logger.warn({ gigId, error: (matchErr as Error).message }, 'Matching skipped after gig creation');
-      return { gig: data, matched_count: 0 };
-    }
+  try {
+    const { matched_count } = await runMatching(data.id, input.title);
+    return { gig: data, matched_count };
+  } catch (matchErr) {
+    logger.warn({ gigId: data.id, error: (matchErr as Error).message }, 'Matching skipped after gig creation');
+    return { gig: data, matched_count: 0 };
   }
-
-  return { gig: data, matched_count: 0 };
 }
 
 export async function updateGig(
@@ -126,10 +156,6 @@ export async function updateGig(
 }
 
 export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
-  const cacheKey = `analytics-${ngoId}`;
-  const cached = getCached<AnalyticsResult>(cacheKey);
-  if (cached) return cached;
-
   // Try aggregated RPC first (returns JSON), fall back to manual joins
   let gigsData: Array<Record<string, unknown>> | null = null;
   let participationsData: Array<Record<string, unknown>> | null = null;
@@ -139,11 +165,7 @@ export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
       p_ngo_id: ngoId,
     });
     if (!error && agg && typeof agg === 'object' && 'total_gigs' in (agg as Record<string, unknown>)) {
-      const result = agg as unknown as AnalyticsResult;
-      if (result.total_gigs > 0 || result.total_hours > 0 || result.completed_gigs > 0) {
-        setCache<AnalyticsResult>(cacheKey, result);
-        return result;
-      }
+      return agg as unknown as AnalyticsResult;
     }
   } catch {
     // RPC not available, fall through to manual query
@@ -177,12 +199,10 @@ export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
     completed: g.status === 'completed' ? 1 : 0,
   }));
 
-  const result: AnalyticsResult = {
+  return {
     total_hours: totalHours,
     completed_gigs: completedGigs,
     total_gigs: gigsData?.length ?? 0,
     chart_data: chartData,
   };
-  setCache<AnalyticsResult>(cacheKey, result);
-  return result;
 }

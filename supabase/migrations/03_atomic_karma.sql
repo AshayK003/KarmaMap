@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION award_karma(
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
+SET search_path = 'public'
 AS $$
 DECLARE
   v_earned INTEGER;

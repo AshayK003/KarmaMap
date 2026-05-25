@@ -2,19 +2,15 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { supabaseAdmin } from '../services/supabase.js';
 import {
   createGig as createGigService,
   updateGig as updateGigService,
   getNgoAnalytics as getAnalyticsService,
+  featureGig as featureGigService,
+  triggerMatching as triggerMatchingService,
   verifyGigOwnership,
   type CreateGigInput,
 } from '../services/gigService.js';
-import {
-  findMatchedVolunteers,
-  notifyMatchedVolunteers,
-} from '../services/matchingService.js';
-import { sendGigMatchEmails } from '../services/emailService.js';
 
 export const createGigSchema = z.object({
   title: z.string().min(3),
@@ -76,21 +72,8 @@ async function _featureGig(req: AuthRequest, res: Response): Promise<void> {
 
   const { hours } = req.body as z.infer<typeof featureGigSchema>;
 
-  await verifyGigOwnership(gigId, req.user!.id);
-
-  const featuredUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-
-  const { error } = await supabaseAdmin
-    .from('gigs')
-    .update({ featured_until: featuredUntil })
-    .eq('id', gigId);
-
-  if (error) {
-    res.status(400).json({ error: error.message });
-    return;
-  }
-
-  res.json({ featured_until: featuredUntil });
+  const result = await featureGigService(gigId, req.user!.id, hours);
+  res.json(result);
 }
 
 async function _triggerMatching(req: AuthRequest, res: Response): Promise<void> {
@@ -99,13 +82,9 @@ async function _triggerMatching(req: AuthRequest, res: Response): Promise<void> 
     res.status(400).json({ error: 'Missing gigId parameter' });
     return;
   }
-  const gig = await verifyGigOwnership(gigId, req.user!.id);
 
-  const matched = await findMatchedVolunteers(gigId);
-  await notifyMatchedVolunteers(gigId, matched, gig.title);
-  await sendGigMatchEmails(matched, gig.title);
-
-  res.json({ matched: matched.length, volunteers: matched });
+  const result = await triggerMatchingService(gigId, req.user!.id);
+  res.json(result);
 }
 
 export const createGig = asyncHandler(_createGig);

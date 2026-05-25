@@ -72,13 +72,20 @@ KarmaMap/
 │   ├── 04_analytics_optimization.sql
 │   ├── 06_location_label.sql
 │   ├── 07_fix_location_drift.sql
+│   ├── 08_drop_match_volunteers_for_gig.sql
 │   └── storage_policies.sql
-├── render.yaml               # Backend deploy (Render)
+├── render.yaml               # Backend deploy (Render) — DELETED, use docker-compose
 ├── vercel.json               # Frontend deploy (Vercel)
 ├── docs/
 │   ├── deployment.md          # Docker Compose + Caddy + VPS deploy guide
-│   ├── testing-strategy.md    # 75-test plan, test pyramid, sprint breakdown
-│   └── recommendations.md     # Full audit with prioritized fixes
+│   ├── INDEX.md               # Master table of contents for docs/
+│   ├── architecture/          # System architecture docs
+│   ├── decisions/             # ADRs
+│   ├── reviews/               # Code review records, audit reports
+│   ├── bugs/                  # Bug reports
+│   ├── refactors/             # Refactoring plans and records
+│   ├── flows/                 # Data flows and process workflows
+│   └── deployment/            # Runbooks and operational guides
 ├── .env.example
 ├── AGENTS.md
 ├── Dockerfile.frontend
@@ -166,15 +173,17 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Dark mode**: `ThemeContext` with `ThemeProvider` wrapping app; reads `localStorage('karmamap-theme')` with system `prefers-color-scheme` fallback; toggles `dark` class on `<html>`; Tailwind v4 `@custom-variant dark (&:where(.dark, .dark *))` for class-based dark mode; sun/moon toggle button in Navbar; Leaflet popup dark overrides in `index.css`; `dark:` variants applied across all pages, components, and shadcn/ui
 - **Carbon offset**: `calculateHaversineDistance` × 0.12 kg CO₂/km, rendered in VolunteerPortfolio as eco-savings
 - **Certificate**: Printable gold-bordered "Certificate of Impact" with confetti celebration (`canvas-confetti` via dynamic CDN import)
-- **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket
+- **Photo upload**: Camera capture (`capture: environment`), local preview via `URL.createObjectURL`, upload to `participation-photos` Supabase Storage bucket. Preview image uses `w-full h-auto object-contain` for dynamic sizing. `compressImage` reads `file.arrayBuffer()` first (fresh Blob), falls back to data URL, then original file — non-fatal on failure
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
-- **Testing**: 75 tests across 9 files — Vitest + Supertest + happy-dom. See `docs/testing-strategy.md`.
+- **Testing**: 120 tests across 11 files — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
 - **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, OpenObserve) with integration guides.
 - **No toast library** — sonner is the shadcn/ui default, install it for form feedback
 - **No icon library** — lucide-react referenced in components.json but not installed; currently using inline SVGs
 - **date-fns** — used in frontend only; removed from backend as unused dependency
 - **No external state library** — React Context + hooks only
 - **No structured logging** — pino recommended (5-8x faster than Winston, JSON to stdout)
+- **Type checking**: use `tsc --build --noEmit` (root `tsconfig.json` uses `"files": []` with project references, so plain `tsc --noEmit` is a no-op). `tsconfig.app.json` has `baseUrl` with `ignoreDeprecations: "6.0"` (deprecated in TS 6, will be removed in TS 7)
+- **Weather**: `utils/weather.tsx` exports `WeatherIcon`, `getWeatherDescription`, `getWeatherAdvisory`, `WeatherForecast` (extracted from GigDetail.tsx)
 - **Vite proxy**: `/api` → `localhost:3001` in dev
 - **`@/` path alias**: configured in `tsconfig.app.json` and `vite.config.ts`
 - **PWA**: auto-update with registration; OSM tiles cached (CacheFirst, 200 max, 30 days)
@@ -182,27 +191,59 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Duplicate join**: backend returns 409; frontend handles in `JoinGig` with try/catch
 - **OSRM profiles**: uses `walking`, `cycling`, `driving` (not `foot`, `bicycle`, `car`)
 - **GEarth radius**: 6371km used in haversine formula (`utils/geo.ts`)
+- **CSP**: `img-src` includes `blob:` (photo previews) and `https://*.supabase.co` (storage URLs)
+- **`@hookform/resolvers`**: pinned to `^4.1.3` — v5 dist incorrectly requires `zod/v4/core`
 
 ### Backend
 - **Auth middleware**: `verifyJwt` checks Bearer token via `supabaseAdmin.auth.getUser()`, then fetches role from `profiles` table
 - **Email**: `emailService.ts` uses native `fetch` to POST to EmailJS API (not `@emailjs/node`); gracefully skips if env vars not configured
 - **Global error handler**: catches `ZodError` (400), Supabase errors with `PGRST`/`235` prefix (400), everything else (500)
 - **Duplicate join detection**: first checks via `select`, then catches `23505` unique constraint violation as fallback
-- **Karma award**: `hours * 10` awarded on participation completion; uses `award_karma` RPC (atomic) with read-then-write fallback
+- **Karma award**: `hours * 10` awarded on participation completion; tries `award_karma` RPC first (fast path), falls back to read-then-write direct update on `profiles` table when RPC unavailable (no migration dependency)
 - **Feature gig**: sets `featured_until` column; `nearby_gigs` RPC sorts featured (future) gigs first
-- **Nodemon**: was an unused devDependency; dev script uses `tsx watch index.ts`; removed from package.json
+- **Nodemon**: was an unused devDependency; dev script uses `tsx watch --import dotenv/config index.ts` (ESM hoists imports before `dotenv.config()` runs); removed from package.json
 
 ### Cleanup History
 - **4 Responsive* components** deleted (broken encoding): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
 - **Removed unused deps**: `jsonwebtoken`, `@types/jsonwebtoken`, `nodemon` (backend); `@emailjs/browser` (frontend); `date-fns` (backend)
 - **Removed dead code**: unused `supabaseAdmin` import in `emailService.ts`, unused `useDefault` callback in `useLocationPicker.ts`, redundant `dotenv.config()` in `supabase.ts`, duplicate ZodError check in `index.ts`, dead CSS classes (`glass-panel`, `mobile-nav-open`), dead UI components (`Separator`, `TabsContent`, `CardHeader`/`CardTitle`/`CardDescription`/`CardFooter`), unused `gigStatus.ts` constants, stale `_apply_mig*.mjs` scripts
 - **Removed stale migration files**: `20240523000000_initial_schema.sql` (obsolete combined file, missing columns), `fix_matching_functions.sql` (band-aid), `fix_postgis_functions.sql` (outdated), `05_update_gig.sql` (superseded)
+- **Extracted weather logic**: from GigDetail.tsx into `utils/weather.tsx` (WeatherIcon, getWeatherDescription, getWeatherAdvisory, WeatherForecast) — reduces GigDetail by ~85 lines
+- **CSP fix**: added `blob:` and `https://*.supabase.co` to `img-src` directive so photo upload previews and storage URLs are not blocked
+- **Photo upload dynamic sizing**: removed `min-h-[120px]` and `max-h-32 object-cover`, replaced with `w-full h-auto object-contain` — container adjusts to photo's natural aspect ratio
+- **awardKarma fallback**: replaced RPC-only approach with RPC fast path + read-then-write direct update fallback (eliminates migration dependency)
+- **compressImage refactor**: reads `file.arrayBuffer()` to create fresh Blob before compression; non-fatal 3-layer fallback (blob URL → data URL → original file)
+- **@hookform/resolvers**: pinned to `^4.1.3` (v5's built dist incorrectly requires zod/v4/core)
+- **tsconfig.app.json**: added `ignoreDeprecations: "6.0"` for deprecated `baseUrl`
+- **Backend dev script**: changed to `tsx watch --import dotenv/config index.ts` for ESM import hoisting issue
 
 ### Migrations
-- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql`
+- **Order**: `00_schema_core.sql` → `01_functions_and_realtime.sql` → `02_featured_gigs.sql` → `storage_policies.sql` → `03_atomic_karma.sql` → `04_analytics_optimization.sql` → `06_location_label.sql` → `07_fix_location_drift.sql` → `08_drop_match_volunteers_for_gig.sql`
 - Stale/obsolete migrations deleted: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`
 
 ## 🔴 Security: .env.example MUST use placeholder values only
 Never put real Supabase keys in `.env.example` — they get committed to git.
 Current `.env.example` files have been sanitized, but the leaked keys must be **rotated** in Supabase dashboard.
 See `docs/recommendations.md` for full audit and priority list.
+
+## Project Governance (docs/)
+
+Local project memory for all architecture decisions, reviews, bugs, refactors, flows, and deployment context.
+
+```
+docs/
+├── INDEX.md             # Master table of contents
+├── architecture/        # System architecture, data models, component diagrams
+├── decisions/           # ADRs — what was decided and why (MADR template)
+├── reviews/             # Code review records, audit reports
+├── bugs/                # Bug reports with reproduction, root cause, fix
+├── refactors/           # Refactoring plans, before/after, migration notes
+├── flows/               # Data flows, process workflows, state machines
+└── deployment/          # Runbooks, environment configs, operational guides
+```
+
+**Rules:**
+- Every significant decision, bug, review, or refactor gets a file in the appropriate folder.
+- AI must check these docs before proposing changes to understand prior context.
+- AI must update these docs after completing any change (add ADR, bug resolution, review record).
+- Conventions and templates are defined in each folder's `INDEX.md`.

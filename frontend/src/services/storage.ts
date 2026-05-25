@@ -1,45 +1,68 @@
 import { supabase } from '../lib/supabase';
 
-export async function compressImage(file: File): Promise<File> {
+export type PhotoUploadStatus = 'idle' | 'compressing' | 'uploading' | 'done' | 'error';
+
+function imageToJpegBlob(img: HTMLImageElement): Promise<Blob> {
+  const max = 1920;
+  let { width, height } = img;
+  if (width > max || height > max) {
+    const ratio = Math.min(max / width, max / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context not available');
+
+  ctx.drawImage(img, 0, 0, width, height);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
+        resolve(blob);
+      },
+      'image/jpeg',
+      0.8
+    );
+  });
+}
+
+function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      let { width, height } = img;
-      const max = 1920;
-      if (width > max || height > max) {
-        const ratio = Math.min(max / width, max / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('Canvas 2D context not available')); return; }
-
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
-          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
-        },
-        'image/jpeg',
-        0.8
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image for compression'));
-    };
-
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image for compression'));
     img.src = url;
   });
+}
+
+export async function compressImage(file: File): Promise<File> {
+  const buffer = await file.arrayBuffer();
+  const mime = file.type || 'image/jpeg';
+
+  // Try blob URL first, fall back to data URL if the Image can't decode the format
+  let img: HTMLImageElement;
+  const blobUrl = URL.createObjectURL(new Blob([buffer], { type: mime }));
+  try {
+    img = await loadImageFromUrl(blobUrl);
+  } catch {
+    URL.revokeObjectURL(blobUrl);
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image data'));
+      reader.readAsDataURL(new Blob([buffer], { type: mime }));
+    });
+    img = await loadImageFromUrl(dataUrl);
+  }
+  URL.revokeObjectURL(blobUrl);
+
+  const jpegBlob = await imageToJpegBlob(img);
+  return new File([jpegBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
 }
 
 export async function uploadParticipationPhoto(
@@ -47,8 +70,7 @@ export async function uploadParticipationPhoto(
   file: File,
   type: 'before' | 'after'
 ): Promise<string> {
-  const ext = 'jpg';
-  const path = `${userId}/${type}-${Date.now()}.${ext}`;
+  const path = `${userId}/${type}-${Date.now()}.jpg`;
 
   const { error } = await supabase.storage
     .from('participation-photos')
@@ -60,8 +82,6 @@ export async function uploadParticipationPhoto(
   return data.publicUrl;
 }
 
-export type PhotoUploadStatus = 'idle' | 'compressing' | 'uploading' | 'done' | 'error';
-
 export async function compressAndUpload(
   userId: string,
   file: File,
@@ -69,7 +89,12 @@ export async function compressAndUpload(
   onStatus?: (status: PhotoUploadStatus) => void
 ): Promise<string> {
   onStatus?.('compressing');
-  const compressed = await compressImage(file);
+  let compressed: File;
+  try {
+    compressed = await compressImage(file);
+  } catch {
+    compressed = file;
+  }
   onStatus?.('uploading');
   const url = await uploadParticipationPhoto(userId, compressed, type);
   onStatus?.('done');

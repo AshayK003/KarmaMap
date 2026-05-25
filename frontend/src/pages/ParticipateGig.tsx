@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,6 +12,9 @@ import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
 import { toast } from 'sonner';
 import type { Participation } from '../types/database';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FieldError } from '@/components/ui/field-error';
+import confetti from 'canvas-confetti';
 
 const schema = z.object({
   hours: z.coerce
@@ -89,7 +92,7 @@ export function ParticipateGig() {
     }
   };
 
-  const canSubmit = !submitting && beforeUrl && afterUrl;
+  const canSubmit = !submitting;
 
   const onSubmit = async (data: FormData) => {
     if (!user || !participation) return;
@@ -121,8 +124,6 @@ export function ParticipateGig() {
       await refreshProfile();
 
       try {
-        const module = await import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm');
-        const confetti = module.default || module;
         confetti({
           particleCount: 150,
           spread: 85,
@@ -179,27 +180,29 @@ export function ParticipateGig() {
           volunteerName={profile.name}
           participation={participation}
           gigTitle={gigTitle}
-          completedDate={format(new Date(), 'MMM d, yyyy')}
+          completedDate={formatDate(new Date(), { month: 'short', day: 'numeric', year: 'numeric' })}
         />
-        {(participation.before_photo_url || participation.after_photo_url) && (
+        {(participation.before_photo_url || participation.after_photo_url || beforeUrl || afterUrl) && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {participation.before_photo_url && (
+            {(participation.before_photo_url || beforeUrl) && (
               <div>
                 <p className="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">Before</p>
                 <img
-                  src={participation.before_photo_url}
+                  src={participation.before_photo_url || beforeUrl!}
                   alt="Before"
-                  className="w-full rounded-lg object-cover max-h-48"
+                  className="w-full h-auto rounded-lg object-contain"
+                  onError={() => console.error('Before photo failed to load:', participation.before_photo_url || beforeUrl)}
                 />
               </div>
             )}
-            {participation.after_photo_url && (
+            {(participation.after_photo_url || afterUrl) && (
               <div>
                 <p className="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">After</p>
                 <img
-                  src={participation.after_photo_url}
+                  src={participation.after_photo_url || afterUrl!}
                   alt="After"
-                  className="w-full rounded-lg object-cover max-h-48"
+                  className="w-full h-auto rounded-lg object-contain"
+                  onError={() => console.error('After photo failed to load:', participation.after_photo_url || afterUrl)}
                 />
               </div>
             )}
@@ -216,29 +219,39 @@ export function ParticipateGig() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-xl font-bold">Complete: {gigTitle}</h1>
       <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-        Upload photos while you fill in the details — they'll start uploading right away.
+        Upload photos (optional) while you fill in the details — they'll start uploading right away.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6" noValidate>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <PhotoUpload label="Before photo" onUploadComplete={setBeforeUrl} />
-          <PhotoUpload label="After photo" onUploadComplete={setAfterUrl} />
+          <div className="flex flex-col gap-2">
+            <PhotoUpload label="Before photo" onUploadComplete={setBeforeUrl} />
+            {beforeUrl && (
+              <img src={beforeUrl} alt="Before" className="w-full h-auto rounded-lg object-contain" />
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <PhotoUpload label="After photo" onUploadComplete={setAfterUrl} />
+            {afterUrl && (
+              <img src={afterUrl} alt="After" className="w-full h-auto rounded-lg object-contain" />
+            )}
+          </div>
         </div>
 
         <div>
           <label htmlFor="participate-hours" className="text-sm font-medium">Hours volunteered</label>
-          <input
+          <Input
             {...register('hours')}
             id="participate-hours"
             type="number"
             min={0.5}
             max={24}
             step={0.5}
-            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2"
+            className="mt-1"
             onWheel={(e) => e.currentTarget.blur()}
           />
           {errors.hours && (
-            <p className="mt-1 text-xs text-red-600" role="alert">{errors.hours.message}</p>
+            <FieldError message={errors.hours.message} />
           )}
         </div>
 
@@ -256,11 +269,7 @@ export function ParticipateGig() {
           disabled={!canSubmit}
           className="w-full"
         >
-          {submitting
-            ? 'Submitting…'
-            : !beforeUrl || !afterUrl
-              ? 'Wait for photo uploads…'
-              : 'Complete gig & earn karma'}
+          {submitting ? 'Submitting…' : 'Complete gig'}
         </Button>
       </form>
     </div>

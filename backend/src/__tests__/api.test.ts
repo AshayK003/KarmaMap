@@ -123,6 +123,16 @@ describe('PATCH /api/gigs/:gigId/feature', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 403 when ngo does not own the gig', async () => {
+    // Default supabaseAdmin mock: single() returns { data: null } → gig not found → 403
+    const res = await supertest(app)
+      .patch('/api/gigs/gig-1/feature')
+      .set('Authorization', 'Bearer test')
+      .send({ hours: 2 });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('Not authorized');
+  });
+
   it('returns 200 for valid hours', async () => {
     const { supabaseAdmin } = await import('../../services/supabase.js');
     (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -142,6 +152,48 @@ describe('PATCH /api/gigs/:gigId/feature', () => {
       .set('Authorization', 'Bearer test')
       .send({ hours: 2 });
     expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/gigs/:gigId/match', () => {
+  it('returns matched volunteers after triggering matching', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    let fromCallCount = 0;
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      fromCallCount++;
+      if (fromCallCount <= 2) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: {
+              id: 'gig-1',
+              ngo_id: 'test-user-id',
+              title: 'Test Gig',
+              required_skills: ['cleaning'],
+            },
+            error: null,
+          }),
+        } as any;
+      }
+      return {
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      } as any;
+    });
+
+    (supabaseAdmin.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: [
+        { id: 'v1', name: 'Alice', email: 'a@t.com', skills: ['cleaning'], distance_meters: 500 },
+      ],
+      error: null,
+    });
+
+    const res = await supertest(app)
+      .post('/api/gigs/gig-1/match')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(200);
+    expect(res.body.matched).toBe(1);
+    expect(res.body.volunteers[0].name).toBe('Alice');
   });
 });
 

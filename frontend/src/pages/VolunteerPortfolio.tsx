@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
+import { getKarmaLevel } from '../utils/karma';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { generatePortfolioSlug, calculateHaversineDistance } from '../utils/geo';
+import { generatePortfolioSlug, calculateHaversineDistance, parseGigLocation } from '../utils/geo';
 import type { Participation } from '../types/database';
 import { Certificate } from '../components/Certificate';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import confetti from 'canvas-confetti';
 
 export function VolunteerPortfolio() {
   const { profile, user, refreshProfile } = useAuth();
@@ -144,9 +147,6 @@ export function VolunteerPortfolio() {
     });
 
     try {
-      // @ts-ignore
-      const module = await import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm');
-      const confetti = module.default || module;
       // Cannon from left
       confetti({
         particleCount: 50,
@@ -174,36 +174,22 @@ export function VolunteerPortfolio() {
   );
 
   const { co2SavedKg, treesPlanted } = useMemo(() => {
-    const volLocation = profile?.location;
-    const volMatch = volLocation ? String(volLocation).match(/POINT\(([^ ]+) ([^ ]+)\)/) : null;
-    const volLng = volMatch ? parseFloat(volMatch[1]) : null;
-    const volLat = volMatch ? parseFloat(volMatch[2]) : null;
+    const volParsed = profile?.location ? parseGigLocation(profile.location) : null;
 
     let totalCo2SavedMeters = 0;
     for (const p of completed) {
       const gigLoc = (p as Record<string, unknown> & { gigs?: { location?: unknown } })?.gigs?.location;
-      if (volLat !== null && volLng !== null && gigLoc) {
-        const gigMatch = String(gigLoc).match(/POINT\(([^ ]+) ([^ ]+)\)/);
-        if (gigMatch) {
-          const gigLng = parseFloat(gigMatch[1]);
-          const gigLat = parseFloat(gigMatch[2]);
-          if (!isNaN(gigLng) && !isNaN(gigLat)) {
-            const distance = calculateHaversineDistance(volLat, volLng, gigLat, gigLng);
-            totalCo2SavedMeters += distance * 2;
-          }
+      if (volParsed && gigLoc) {
+        const gigParsed = parseGigLocation(gigLoc);
+        if (gigParsed) {
+          const distance = calculateHaversineDistance(volParsed.lat, volParsed.lng, gigParsed.lat, gigParsed.lng);
+          totalCo2SavedMeters += distance * 2;
         }
       }
     }
     const c = (totalCo2SavedMeters / 1000) * 0.120;
     return { co2SavedKg: c, treesPlanted: c / 22 };
   }, [completed, profile?.location]);
-
-  const getKarmaLevel = (points: number) => {
-    if (points >= 1000) return { title: 'Legendary Leader 🌟', color: 'from-purple-600 to-indigo-600', max: 5000 };
-    if (points >= 500) return { title: 'Community Champion 🟣', color: 'from-violet-500 to-fuchsia-500', max: 1000 };
-    if (points >= 100) return { title: 'Impact Hero 🔵', color: 'from-blue-500 to-cyan-500', max: 500 };
-    return { title: 'Karma Novice 🟢', color: 'from-emerald-500 to-teal-500', max: 100 };
-  };
 
   const karma = profile?.karma_points ?? 0;
   const level = useMemo(() => getKarmaLevel(karma), [karma]);
@@ -258,7 +244,7 @@ export function VolunteerPortfolio() {
         {/* ─── Left Sidebar: Profile Details ─── */}
         <div className="lg:col-span-4 space-y-6">
           {/* Main profile glass card */}
-          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+          <Card>
             <div className="flex flex-col items-center text-center">
               {/* Profile Avatar Glow ring */}
               <div className={`relative rounded-full bg-gradient-to-tr ${level.color} p-1 shadow-lg`}>
@@ -418,7 +404,7 @@ export function VolunteerPortfolio() {
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* ─── Right Pane: Stats and Gigs Timeline ─── */}
@@ -426,7 +412,7 @@ export function VolunteerPortfolio() {
           {/* Stats Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Karma Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Karma</span>
@@ -444,10 +430,10 @@ export function VolunteerPortfolio() {
                   indicatorClassName={`bg-gradient-to-r ${level.color}`}
                 />
               </div>
-            </div>
+            </Card>
 
             {/* Streak Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">Day Streak</span>
@@ -459,10 +445,10 @@ export function VolunteerPortfolio() {
                   ? 'Awesome momentum! Keep making an impact to extend your streak.'
                   : 'Complete nearby gigs to launch your daily streak!'}
               </p>
-            </div>
+            </Card>
 
             {/* Hours Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-500/10 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Dedicated Hours</span>
@@ -474,10 +460,10 @@ export function VolunteerPortfolio() {
                   ? `Incredible contribution! You spent ${totalHours} hours serving local NGOs.`
                   : 'Your volunteer logs and time contributions will display here.'}
               </p>
-            </div>
+            </Card>
 
             {/* Eco-Hero Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-700 bg-emerald-50/25 dark:bg-emerald-900/20 backdrop-blur-md p-5 shadow-xs dark:shadow-none dark:shadow-slate-900/50">
+            <Card className="relative overflow-hidden bg-emerald-50/25 dark:bg-emerald-900/20 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/25 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Eco-Savings</span>
@@ -496,11 +482,11 @@ export function VolunteerPortfolio() {
                   indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500"
                 />
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Completed Gigs List / Timeline */}
-          <div className="rounded-3xl border border-white/20 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 shadow-md dark:shadow-none dark:shadow-slate-900/50">
+          <Card>
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <span>📋</span> Completed Gigs & Achievements
             </h2>
@@ -522,7 +508,7 @@ export function VolunteerPortfolio() {
                   const gigTitle = (p as Participation & { gigs?: { title: string } }).gigs?.title ?? 'Volunteer Gig';
                   const rawDate = (p as Participation & { gigs?: { gig_date: string } }).gigs?.gig_date;
                   const dateStr = rawDate
-                    ? format(rawDate, 'MMM d, yyyy')
+                    ? formatDate(rawDate, { month: 'short', day: 'numeric', year: 'numeric' })
                     : 'Verified Date';
 
                   return (
@@ -565,7 +551,7 @@ export function VolunteerPortfolio() {
                 })
               )}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -586,7 +572,7 @@ export function VolunteerPortfolio() {
                 volunteerName={profile?.name || ''}
                 participation={selectedCert.participation}
                 gigTitle={selectedCert.title}
-                completedDate={format(selectedCert.date, 'MMMM d, yyyy')}
+                completedDate={formatDate(selectedCert.date, { month: 'long', day: 'numeric', year: 'numeric' })}
               />
             </div>
 
@@ -594,15 +580,12 @@ export function VolunteerPortfolio() {
               <button
                 onClick={() => {
                   window.print();
-                  // @ts-ignore
-                  import('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm')
-                    .then((m) => (m.default || m)({
-                      particleCount: 80,
-                      spread: 60,
-                      origin: { y: 0.7 },
-                      colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
-                    }))
-                    .catch(() => {});
+                  confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
+                  });
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 dark:bg-slate-900 hover:bg-slate-900 dark:hover:bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md dark:shadow-none dark:shadow-slate-900/50 shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
               >

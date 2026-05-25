@@ -1,7 +1,7 @@
 import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
 
-interface MatchedVolunteer {
+export interface MatchedVolunteer {
   id: string;
   name: string;
   email: string;
@@ -40,7 +40,7 @@ export async function findMatchedVolunteers(
   }
 
   const { data: volunteers, error } = await supabaseAdmin.rpc(
-    'match_volunteers_for_gig',
+    'nearby_volunteers_for_gig',
     {
       p_gig_id: gigId,
       p_radius_meters: radiusMeters,

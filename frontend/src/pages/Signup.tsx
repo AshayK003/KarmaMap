@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { UserRole } from '../types/database';
@@ -57,6 +58,7 @@ export function Signup() {
       return;
     }
 
+    toast.success('Account created! Check your email to verify your account.');
     navigate(data.role === 'ngo' ? '/ngo/dashboard' : '/map');
   };
 
