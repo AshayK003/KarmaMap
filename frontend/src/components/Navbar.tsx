@@ -6,19 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from './NotificationBell';
 import {
-  MapPin,
-  Award,
-  ClipboardList,
-  PlusCircle,
-  LogOut,
-  LogIn,
-  Sun,
-  Moon,
-  Menu,
-  X,
-  LayoutDashboard,
-  UserCircle,
-} from 'lucide-react';
+  MapPinIcon,
+  AwardIcon,
+  ClipboardListIcon,
+  PlusCircleIcon,
+  LogOutIcon,
+  LogInIcon,
+  SunIcon,
+  MoonIcon,
+  MenuIcon,
+  XIcon,
+  LayoutDashboardIcon,
+  UserCircleIcon,
+} from './NavIcons';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
@@ -44,7 +44,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         <Link to="/" className="flex items-center gap-2 group transition-all" onClick={closeMobile}>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/10 group-hover:scale-105 transition-transform duration-200">
-            <MapPin className="h-5 w-5" />
+            <MapPinIcon className="h-5 w-5" />
           </div>
           <span className="text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
             Karma<span className="text-emerald-600">Map</span>
@@ -57,16 +57,16 @@ export function Navbar() {
             <>
               {profile.role === 'volunteer' && (
                 <>
-                  <Link to="/map" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><MapPin className="h-4 w-4" /> Discovery Map</Link>
-                  <Link to="/portfolio" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UserCircle className="h-4 w-4" /> My Portfolio</Link>
-                  <Link to="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><Award className="h-4 w-4" /> Leaderboard</Link>
+                  <Link to="/map" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><MapPinIcon className="h-4 w-4" /> Discovery Map</Link>
+                  <Link to="/portfolio" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><UserCircleIcon className="h-4 w-4" /> My Portfolio</Link>
+                  <Link to="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><AwardIcon className="h-4 w-4" /> Leaderboard</Link>
                   <Badge variant="default" className="px-3 py-1.5 text-xs">{profile.karma_points} Karma Points</Badge>
                 </>
               )}
               {profile.role === 'ngo' && (
                 <>
-                  <Link to="/ngo/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><LayoutDashboard className="h-4 w-4" /> NGO Dashboard</Link>
-                  <Link to="/ngo/create-gig"><Button size="sm"><PlusCircle className="h-4 w-4 mr-1" /> Create Opportunity</Button></Link>
+                  <Link to="/ngo/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:text-emerald-600 rounded-xl hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 transition-all duration-200"><LayoutDashboardIcon className="h-4 w-4" /> NGO Dashboard</Link>
+                  <Link to="/ngo/create-gig"><Button size="sm"><PlusCircleIcon className="h-4 w-4 mr-1" /> Create Opportunity</Button></Link>
                 </>
               )}
               <button
@@ -76,17 +76,17 @@ export function Navbar() {
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-5 w-5 text-slate-400 hover:text-amber-400 transition-colors" />
+                  <SunIcon className="h-5 w-5 text-slate-400 hover:text-amber-400 transition-colors" />
                 ) : (
-                  <Moon className="h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
+                  <MoonIcon className="h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
                 )}
               </button>
               <NotificationBell />
-              <Button variant="ghost" onClick={handleSignOut}><LogOut className="h-4 w-4 mr-1" /> Sign Out</Button>
+              <Button variant="ghost" onClick={handleSignOut}><LogOutIcon className="h-4 w-4 mr-1" /> Sign Out</Button>
             </>
           ) : (
             <>
-              <Link to="/login"><Button variant="ghost" size="sm"><LogIn className="h-4 w-4 mr-1" /> Sign In</Button></Link>
+              <Link to="/login"><Button variant="ghost" size="sm"><LogInIcon className="h-4 w-4 mr-1" /> Sign In</Button></Link>
               <Link to="/signup"><Button size="sm">Get Started</Button></Link>
             </>
           )}
@@ -100,9 +100,9 @@ export function Navbar() {
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
         >
           {mobileOpen ? (
-            <X className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+            <XIcon className="h-5 w-5 text-slate-700 dark:text-slate-200" />
           ) : (
-            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+            <MenuIcon className="h-5 w-5 text-slate-700 dark:text-slate-200" />
           )}
         </button>
       </div>
@@ -116,15 +116,15 @@ export function Navbar() {
                 {profile.role === 'volunteer' && (
                   <>
                     <Link to="/map" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <MapPin className="h-4 w-4 shrink-0" />
+                      <MapPinIcon className="h-4 w-4 shrink-0" />
                       Discovery Map
                     </Link>
                     <Link to="/portfolio" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <ClipboardList className="h-4 w-4 shrink-0" />
+                      <ClipboardListIcon className="h-4 w-4 shrink-0" />
                       My Portfolio
                     </Link>
                     <Link to="/leaderboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <Award className="h-4 w-4 shrink-0" />
+                      <AwardIcon className="h-4 w-4 shrink-0" />
                       Leaderboard
                     </Link>
                     <div className="px-3 py-2"><Badge variant="default" className="text-xs">{profile.karma_points} Karma Points</Badge></div>
@@ -133,11 +133,11 @@ export function Navbar() {
                 {profile.role === 'ngo' && (
                   <>
                     <Link to="/ngo/dashboard" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      <LayoutDashboardIcon className="h-4 w-4 shrink-0" />
                       NGO Dashboard
                     </Link>
                     <Link to="/ngo/create-gig" onClick={closeMobile} className="flex items-center gap-2.5 px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors">
-                      <PlusCircle className="h-4 w-4 shrink-0" />
+                      <PlusCircleIcon className="h-4 w-4 shrink-0" />
                       Create Opportunity
                     </Link>
                   </>
@@ -150,9 +150,9 @@ export function Navbar() {
                     aria-label="Toggle theme"
                   >
                     {theme === 'dark' ? (
-                      <Sun className="h-5 w-5 text-slate-400 dark:text-slate-300" />
+                      <SunIcon className="h-5 w-5 text-slate-400 dark:text-slate-300" />
                     ) : (
-                      <Moon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                      <MoonIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     )}
                   </button>
                   <NotificationBell />
@@ -163,7 +163,7 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"><LogIn className="h-4 w-4 mr-2" /> Sign In</Link>
+                <Link to="/login" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-slate-600 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"><LogInIcon className="h-4 w-4 mr-2" /> Sign In</Link>
                 <Link to="/signup" onClick={closeMobile} className="flex items-center px-3 py-3 text-sm font-bold text-emerald-700 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/40 transition-colors">Get Started</Link>
               </>
             )}

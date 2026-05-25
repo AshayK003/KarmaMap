@@ -55,6 +55,7 @@ KarmaMap/
 │       │   ├── Certificate.tsx # Printable gold-bordered certificate
 │       │   ├── PhotoUpload.tsx # Camera capture + local preview
 │       │   ├── Navbar.tsx
+│       │   ├── NavIcons.tsx # 12 inline SVG icons (no icon library)
 │       │   └── ProtectedRoute.tsx # Role-based route guard
 │       ├── context/           # AuthContext.tsx
 │       ├── hooks/             # useGeolocation, useLocationPicker,
@@ -177,8 +178,8 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 - **Skill overlap**: `skillOverlapScore(required, volunteer)` in `utils/geo.ts` — returns percentage (0–100)
 - **Testing**: 120 tests across 11 files — Vitest + Supertest + happy-dom + @testing-library/react. Backend vitest config: `src/**/*.test.ts`, `services/**/*.test.ts`, `middleware/**/*.test.ts`, `controllers/**/*.test.ts`. See `docs/reviews/test-strategy-refined.md`.
 - **Tool recommendations**: `docs/tool-recommendations.md` — curated OSS tools (Pino, pg-boss, Biome, Sonner, Lucide, OpenObserve) with integration guides.
-- **No toast library** — sonner is the shadcn/ui default, install it for form feedback
-- **No icon library** — lucide-react referenced in components.json but not installed; currently using inline SVGs
+- **sonner** — toast notifications (5 pages + Toaster in App.tsx)
+- **No icon library** — inline SVGs in `components/NavIcons.tsx` (12 icons)
 - **date-fns** — used in frontend only; removed from backend as unused dependency
 - **No external state library** — React Context + hooks only
 - **No structured logging** — pino recommended (5-8x faster than Winston, JSON to stdout)
@@ -205,7 +206,7 @@ final_score = 0.5 * proximityScore + 0.5 * skillOverlap
 
 ### Cleanup History
 - **4 Responsive* components** deleted (broken encoding): `ResponsiveForm.tsx`, `ResponsiveMapView.tsx`, `ResponsiveNavbar.tsx`, `ResponsiveLayout.tsx`
-- **Removed unused deps**: `jsonwebtoken`, `@types/jsonwebtoken`, `nodemon` (backend); `@emailjs/browser` (frontend); `date-fns` (backend)
+- **Removed unused deps**: `jsonwebtoken`, `@types/jsonwebtoken`, `nodemon` (backend); `@emailjs/browser`, `lucide-react` (frontend); `date-fns` (backend)
 - **Removed dead code**: unused `supabaseAdmin` import in `emailService.ts`, unused `useDefault` callback in `useLocationPicker.ts`, redundant `dotenv.config()` in `supabase.ts`, duplicate ZodError check in `index.ts`, dead CSS classes (`glass-panel`, `mobile-nav-open`), dead UI components (`Separator`, `TabsContent`, `CardHeader`/`CardTitle`/`CardDescription`/`CardFooter`), unused `gigStatus.ts` constants, stale `_apply_mig*.mjs` scripts
 - **Removed stale migration files**: `20240523000000_initial_schema.sql` (obsolete combined file, missing columns), `fix_matching_functions.sql` (band-aid), `fix_postgis_functions.sql` (outdated), `05_update_gig.sql` (superseded)
 - **Extracted weather logic**: from GigDetail.tsx into `utils/weather.tsx` (WeatherIcon, getWeatherDescription, getWeatherAdvisory, WeatherForecast) — reduces GigDetail by ~85 lines
