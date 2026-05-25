@@ -5,7 +5,12 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['src/**/*.test.ts', 'services/**/*.test.ts', 'middleware/**/*.test.ts', 'controllers/**/*.test.ts'],
+    include: [
+      'src/**/*.test.ts',
+      'services/**/*.test.ts',
+      'middleware/**/*.test.ts',
+      'controllers/**/*.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       include: ['services/**/*.ts', 'middleware/**/*.ts', 'controllers/**/*.ts'],

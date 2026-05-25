@@ -1,14 +1,14 @@
-import express from 'express';
-import cors from 'cors';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+import cors from 'cors';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
 import gigRoutes from './routes/gigs.js';
+import organizationRoutes from './routes/organizations.js';
 import participationRoutes from './routes/participations.js';
 import paymentRoutes from './routes/payments.js';
-import organizationRoutes from './routes/organizations.js';
 import { logger } from './src/lib/logger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,18 +21,24 @@ export function createApp() {
   app.use(compression());
   app.use(
     cors({
-      origin: isDev
-        ? true
-        : process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: isDev ? true : process.env.FRONTEND_URL || 'http://localhost:5173',
       credentials: true,
-    })
+    }),
   );
   app.use(express.json({ limit: '1mb' }));
 
   app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
-      logger.info({ method: req.method, path: req.originalUrl, status: res.statusCode, duration: Date.now() - start }, 'request');
+      logger.info(
+        {
+          method: req.method,
+          path: req.originalUrl,
+          status: res.statusCode,
+          duration: Date.now() - start,
+        },
+        'request',
+      );
     });
     next();
   });
@@ -62,12 +68,20 @@ export function createApp() {
       err: Error & { statusCode?: number },
       req: express.Request,
       res: express.Response,
-      _next: express.NextFunction
+      _next: express.NextFunction,
     ) => {
-      logger.error({ err, method: req.method, path: req.originalUrl, statusCode: err.statusCode ?? 500 });
+      logger.error({
+        err,
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: err.statusCode ?? 500,
+      });
 
       if (err.name === 'ZodError') {
-        res.status(400).json({ error: 'Validation error', details: (err as Error & { issues?: unknown }).issues });
+        res.status(400).json({
+          error: 'Validation error',
+          details: (err as Error & { issues?: unknown }).issues,
+        });
         return;
       }
 
@@ -85,7 +99,7 @@ export function createApp() {
       }
 
       res.status(500).json({ error: 'Internal server error' });
-    }
+    },
   );
 
   return app;

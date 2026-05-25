@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 function chain(): any {
-  const c: any = { };
+  const c: any = {};
   c.select = vi.fn().mockReturnValue(c);
   c.eq = vi.fn().mockReturnValue(c);
   c.in = vi.fn().mockReturnValue(c);
@@ -26,9 +26,12 @@ function chain(): any {
   c.single = vi.fn().mockResolvedValue({ data: null, error: null });
   c.maybeSingle = vi.fn().mockReturnValue(c);
   c.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-  c.then = (resolve: (v: unknown) => void) => resolve(c._resolveValue ?? { data: null, error: null });
+  c.then = (resolve: (v: unknown) => void) =>
+    resolve(c._resolveValue ?? { data: null, error: null });
   c.catch = () => c;
-  c.setResolve = (val: unknown) => { c._resolveValue = val; };
+  c.setResolve = (val: unknown) => {
+    c._resolveValue = val;
+  };
   return c;
 }
 
@@ -81,8 +84,18 @@ describe('getOrgAnalytics', () => {
       } else if (callCount === 2) {
         c.setResolve({
           data: [
-            { profile_id: 'v1', department: 'Engineering', role: 'member', profiles: { name: 'Alice' } },
-            { profile_id: 'v2', department: 'Marketing', role: 'member', profiles: { name: 'Bob' } },
+            {
+              profile_id: 'v1',
+              department: 'Engineering',
+              role: 'member',
+              profiles: { name: 'Alice' },
+            },
+            {
+              profile_id: 'v2',
+              department: 'Marketing',
+              role: 'member',
+              profiles: { name: 'Bob' },
+            },
           ],
           error: null,
         });
@@ -97,8 +110,18 @@ describe('getOrgAnalytics', () => {
       } else if (callCount === 4) {
         c.setResolve({
           data: [
-            { volunteer_id: 'v1', hours: 4, created_at: '2026-05-01T00:00:00Z', gigs: { title: 'Beach Cleanup', gig_date: '2026-05-01' } },
-            { volunteer_id: 'v2', hours: 6, created_at: '2026-05-15T00:00:00Z', gigs: { title: 'Tree Planting', gig_date: '2026-05-15' } },
+            {
+              volunteer_id: 'v1',
+              hours: 4,
+              created_at: '2026-05-01T00:00:00Z',
+              gigs: { title: 'Beach Cleanup', gig_date: '2026-05-01' },
+            },
+            {
+              volunteer_id: 'v2',
+              hours: 6,
+              created_at: '2026-05-15T00:00:00Z',
+              gigs: { title: 'Tree Planting', gig_date: '2026-05-15' },
+            },
           ],
           error: null,
         });
@@ -134,7 +157,12 @@ describe('getMyOrg', () => {
     const { getMyOrg } = await import('../organizationService.js');
     const c = chain();
     c.maybeSingle.mockResolvedValue({
-      data: { role: 'member', department: 'Engineering', opted_in: true, organizations: { name: 'Acme Corp', slug: 'acme-corp' } },
+      data: {
+        role: 'member',
+        department: 'Engineering',
+        opted_in: true,
+        organizations: { name: 'Acme Corp', slug: 'acme-corp' },
+      },
       error: null,
     });
     mockFrom.mockReturnValue(c);

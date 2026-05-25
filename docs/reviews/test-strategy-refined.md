@@ -51,7 +51,6 @@ Test every Express endpoint for: correct status code, correct response shape, au
 |---|---|
 | `GET /health` | Returns `{ status: 'ok' }` — 200 |
 | `POST /api/gigs` | Valid NGO (201), missing title (400), volunteer role (403), no auth (401) |
-| `PATCH /api/gigs/:gigId` | Own gig (200), not own gig (403), invalid UUID (400) |
 | `GET /api/gigs/analytics` | Has data (200), no data (200), wrong role (403) |
 | `POST /api/gigs/:gigId/match` | Own gig (200), not own (403) |
 | `PATCH /api/gigs/:gigId/feature` | Valid hours (200), hours=0 (400), **not own → 403 (currently 500 — bug)** |
@@ -120,7 +119,6 @@ Test the backend Zod schemas directly — no HTTP needed.
 | Schema | Cases |
 |---|---|
 | `createGigSchema` | Title ≥3 chars, desc ≥10 chars, volunteers_needed 1-500, lat -90..90, lng -180..180, required_skills not empty |
-| `updateGigSchema` | Same as create but all fields optional |
 | `featureGigSchema` | hours > 0 |
 | `completeGigSchema` | hours 0.5-24, photos optional strings |
 

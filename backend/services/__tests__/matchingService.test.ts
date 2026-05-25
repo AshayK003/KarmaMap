@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { skillOverlap, normalizeDistance } from '../matchingService.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { normalizeDistance, skillOverlap } from '../matchingService.js';
 
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
@@ -101,7 +101,13 @@ describe('findMatchedVolunteers', async () => {
 
     mockRpc.mockResolvedValue({
       data: [
-        { id: 'v1', name: 'Alice', email: 'a@t.com', skills: ['cleaning', 'driving'], distance_meters: 1000 },
+        {
+          id: 'v1',
+          name: 'Alice',
+          email: 'a@t.com',
+          skills: ['cleaning', 'driving'],
+          distance_meters: 1000,
+        },
         { id: 'v2', name: 'Bob', email: 'b@t.com', skills: ['cleaning'], distance_meters: 500 },
         { id: 'v3', name: 'Carol', email: 'c@t.com', skills: ['cooking'], distance_meters: 300 },
       ],
@@ -159,9 +165,7 @@ describe('findMatchedVolunteers', async () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         not: vi.fn().mockResolvedValue({
-          data: [
-            { id: 'v1', name: 'Dave', skills: ['cleaning'] },
-          ],
+          data: [{ id: 'v1', name: 'Dave', skills: ['cleaning'] }],
           error: null,
         }),
       };
@@ -217,10 +221,30 @@ describe('notifyMatchedVolunteers', async () => {
     const insertFn = vi.fn().mockResolvedValue({ error: null });
     mockFrom.mockReturnValue({ insert: insertFn });
 
-    await notifyMatchedVolunteers('gig-1', [
-      { id: 'v1', name: 'A', email: 'a@t.com', skills: [], distance_meters: 100, skill_overlap: 0.5, final_score: 0.5 },
-      { id: 'v2', name: 'B', email: 'b@t.com', skills: [], distance_meters: 200, skill_overlap: 0.5, final_score: 0.5 },
-    ], 'Park Cleanup');
+    await notifyMatchedVolunteers(
+      'gig-1',
+      [
+        {
+          id: 'v1',
+          name: 'A',
+          email: 'a@t.com',
+          skills: [],
+          distance_meters: 100,
+          skill_overlap: 0.5,
+          final_score: 0.5,
+        },
+        {
+          id: 'v2',
+          name: 'B',
+          email: 'b@t.com',
+          skills: [],
+          distance_meters: 200,
+          skill_overlap: 0.5,
+          final_score: 0.5,
+        },
+      ],
+      'Park Cleanup',
+    );
 
     expect(insertFn).toHaveBeenCalledWith([
       expect.objectContaining({ user_id: 'v1', message: expect.stringContaining('Park Cleanup') }),

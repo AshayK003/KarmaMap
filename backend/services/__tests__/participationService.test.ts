@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
@@ -15,7 +15,16 @@ beforeEach(() => {
 });
 
 function chain(overrides: Record<string, unknown> = {}) {
-  const chainable = { select: vi.fn(), eq: vi.fn(), single: vi.fn(), in: vi.fn(), insert: vi.fn(), update: vi.fn(), maybeSingle: vi.fn(), ...overrides };
+  const chainable = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    single: vi.fn(),
+    in: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    maybeSingle: vi.fn(),
+    ...overrides,
+  };
   chainable.select.mockReturnValue(chainable);
   chainable.eq.mockReturnValue(chainable);
   chainable.in.mockReturnValue(chainable);
@@ -52,7 +61,7 @@ describe('joinGig', async () => {
             }),
           }),
         }),
-      })
+      }),
     );
 
     await expect(joinGig('gig-1', 'vol-1')).rejects.toMatchObject({
@@ -65,7 +74,9 @@ describe('joinGig', async () => {
     const c = chain({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) });
     c.insert = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate' } }),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate' } }),
       }),
     });
     c.eq = vi.fn().mockReturnValue(c);
@@ -110,9 +121,9 @@ describe('completeParticipation', async () => {
     c.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
     mockFrom.mockReturnValue(c);
 
-    await expect(
-      completeParticipation('part-1', 'vol-1', { hours: 2 })
-    ).rejects.toThrow('Participation not found');
+    await expect(completeParticipation('part-1', 'vol-1', { hours: 2 })).rejects.toThrow(
+      'Participation not found',
+    );
   });
 
   it('completes participation and awards karma on success path', async () => {
@@ -124,10 +135,10 @@ describe('completeParticipation', async () => {
         callIndex === 1
           ? { data: { gig_id: 'gig-1' }, error: null }
           : callIndex === 2
-          ? { data: { title: 'Park Cleanup' }, error: null }
-          : callIndex === 3
-          ? { data: { id: 'part-1', volunteer_id: 'vol-1' }, error: null }
-          : { data: { name: 'Alice' }, error: null }
+            ? { data: { title: 'Park Cleanup' }, error: null }
+            : callIndex === 3
+              ? { data: { id: 'part-1', volunteer_id: 'vol-1' }, error: null }
+              : { data: { name: 'Alice' }, error: null },
       );
       c.insert = vi.fn().mockResolvedValue({ error: null });
       return c;

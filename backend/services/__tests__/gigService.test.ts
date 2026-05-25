@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
@@ -98,7 +98,7 @@ describe('createGig', () => {
         required_skills: [],
         volunteers_needed: 1,
         gig_date: '2026-06-01',
-      })
+      }),
     ).rejects.toThrow('Insert failed');
   });
 });

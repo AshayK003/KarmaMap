@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import { verifyJwt } from '../middleware/auth.js';
-import { validateBody } from '../middleware/validate.js';
 import {
-  getAnalytics,
-  getMyOrgHandler,
-  updateOptInHandler,
   addMember,
   addMemberSchema,
-  optInSchema,
+  getAnalytics,
   getMembers,
+  getMyOrgHandler,
   getOrgNameHandler,
+  optInSchema,
+  updateOptInHandler,
 } from '../controllers/organizationController.js';
+import { verifyJwt } from '../middleware/auth.js';
+import { validateBody } from '../middleware/validate.js';
 
 const router = Router();
 
@@ -20,20 +20,10 @@ router.get('/my-org', verifyJwt, getMyOrgHandler);
 
 router.get('/org-name', verifyJwt, getOrgNameHandler);
 
-router.patch(
-  '/my-org/opt-in',
-  verifyJwt,
-  validateBody(optInSchema),
-  updateOptInHandler
-);
+router.patch('/my-org/opt-in', verifyJwt, validateBody(optInSchema), updateOptInHandler);
 
 router.get('/members', verifyJwt, getMembers);
 
-router.post(
-  '/members',
-  verifyJwt,
-  validateBody(addMemberSchema),
-  addMember
-);
+router.post('/members', verifyJwt, validateBody(addMemberSchema), addMember);
 
 export default router;

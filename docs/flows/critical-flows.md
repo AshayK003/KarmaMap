@@ -213,13 +213,13 @@
         ├─ Create new gig → /ngo/create-gig
         ├─ Feature gig → PATCH /api/gigs/:gigId/feature
         ├─ Trigger re-match → POST /api/gigs/:gigId/match
-        └─ Edit gig details → PATCH /api/gigs/:gigId
+        └─ (Edit gig removed)
 ```
 
 **State transitions (gig):** `open → in_progress → completed | cancelled`
 
 **NGO actions per gig status:**
-- `open`: can feature, can edit, can cancel
+- `open`: can feature, can cancel
 - `in_progress`: can mark complete
 - `completed`: read-only
 

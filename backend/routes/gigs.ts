@@ -1,50 +1,29 @@
 import { Router } from 'express';
-import { verifyJwt, requireRole } from '../middleware/auth.js';
-import { validateBody } from '../middleware/validate.js';
 import {
   createGig,
   createGigSchema,
-  updateGig,
-  updateGigSchema,
-  getNgoAnalytics,
   featureGig,
   featureGigSchema,
+  getNgoAnalytics,
   triggerMatching,
 } from '../controllers/gigController.js';
+import { requireRole, verifyJwt } from '../middleware/auth.js';
+import { validateBody } from '../middleware/validate.js';
 
 const router = Router();
 
-router.post(
-  '/',
-  verifyJwt,
-  requireRole('ngo'),
-  validateBody(createGigSchema),
-  createGig
-);
+router.post('/', verifyJwt, requireRole('ngo'), validateBody(createGigSchema), createGig);
 
 router.get('/analytics', verifyJwt, requireRole('ngo'), getNgoAnalytics);
 
-router.post(
-  '/:gigId/match',
-  verifyJwt,
-  requireRole('ngo'),
-  triggerMatching
-);
+router.post('/:gigId/match', verifyJwt, requireRole('ngo'), triggerMatching);
 
 router.patch(
   '/:gigId/feature',
   verifyJwt,
   requireRole('ngo'),
   validateBody(featureGigSchema),
-  featureGig
-);
-
-router.patch(
-  '/:gigId',
-  verifyJwt,
-  requireRole('ngo'),
-  validateBody(updateGigSchema),
-  updateGig
+  featureGig,
 );
 
 export default router;

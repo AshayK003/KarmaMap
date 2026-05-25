@@ -27,7 +27,7 @@ verifyGigOwnership() throws { statusCode: 403 }
 
 **Verdict: Correct.** No bug exists. `Object.assign(new Error('Not authorized'), { statusCode: 403 })` adds `statusCode` as an own property, and the global error handler checks `typeof err.statusCode === 'number'` (line 50), which evaluates to `true` for 403.
 
-All other endpoints (`_updateGig`, `_triggerMatching`) that call `verifyGigOwnership` share the same `asyncHandler` wrapper and error handler — all propagate 403 correctly.
+All other endpoints (`_triggerMatching`) that call `verifyGigOwnership` share the same `asyncHandler` wrapper and error handler — all propagate 403 correctly.
 
 ## Verification
 

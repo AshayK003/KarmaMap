@@ -44,7 +44,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => 'Unknown error');
+    const _text = await res.text().catch(() => 'Unknown error');
     logger.error({ to_email: params.to_email, status: res.status }, 'Email send failed');
   }
 
@@ -53,7 +53,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
 
 export async function sendGigMatchEmails(
   volunteers: Array<{ email: string; name: string }>,
-  gigTitle: string
+  gigTitle: string,
 ): Promise<void> {
   const results = await Promise.allSettled(
     volunteers
@@ -65,8 +65,8 @@ export async function sendGigMatchEmails(
           subject: `New volunteer opportunity: ${gigTitle}`,
           message: `A new gig "${gigTitle}" matches your skills and location. Open KarmaMap to join!`,
           gig_title: gigTitle,
-        })
-      )
+        }),
+      ),
   );
 
   const failures = results.filter((r) => r.status === 'rejected');
@@ -78,7 +78,7 @@ export async function sendGigMatchEmails(
 export async function sendCompletionEmail(
   email: string,
   name: string,
-  gigTitle: string
+  gigTitle: string,
 ): Promise<void> {
   const ok = await sendEmail({
     to_email: email,

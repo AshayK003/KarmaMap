@@ -395,7 +395,7 @@ completeParticipation
 |---|---|---|
 | Job queue | `queue.ts` | 0% |
 | Cache | `cache.ts` | 0% |
-| `updateGig` endpoint | `gigController.ts` | 0% |
+
 | `featureGig` endpoint | `gigController.ts` | 0% |
 | `triggerMatching` endpoint | `gigController.ts` | 0% |
 | `completeParticipation` success | `participationService.ts` | 0% (error-only tested) |
@@ -564,7 +564,6 @@ Component → supabase.channel('gigs').on('postgres_changes', handler)
 |---|---|---|---|---|---|
 | GET | `/health` | — | — | — | `{ status: 'ok' }` |
 | POST | `/api/gigs` | JWT | ngo | `createGigSchema` | `{ gig, matched_count }` |
-| PATCH | `/api/gigs/:gigId` | JWT | ngo | `updateGigSchema` | `{ gig }` |
 | GET | `/api/gigs/analytics` | JWT | ngo | — | `{ gigsData, participationsData, chartData }` |
 | POST | `/api/gigs/:gigId/match` | JWT | ngo | **None** | `{ matched_count }` |
 | PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | `featureGigSchema` | `{ gig }` |

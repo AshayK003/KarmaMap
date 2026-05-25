@@ -1,10 +1,10 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
-import { AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import type { AuthRequest } from '../middleware/auth.js';
 import {
-  createPayment as createPaymentService,
   confirmPayment as confirmPaymentService,
+  createPayment as createPaymentService,
   getNgoPayments as getPaymentsService,
 } from '../services/paymentService.js';
 

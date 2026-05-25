@@ -9,6 +9,7 @@ Capture every significant technical decision: what was decided, why, what altern
 | ADR | Status | Summary |
 |---|---|---|
 | [ADR-001: Manual Invoicing](ADR-001-manual-invoicing.md) | Accepted | Delaying Stripe/PayU; using manual payment tracking for MVP validation |
+| [ADR-002: Corporate CSR Dashboard MVP](ADR-002-corporate-dashboard-mvp.md) | Accepted | Single-tenant, manual-onboarding corporate dashboard with org membership and opt-in privacy model |
 
 ## Template
 

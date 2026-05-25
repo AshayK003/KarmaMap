@@ -1,5 +1,16 @@
-import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
+import { supabaseAdmin } from './supabase.js';
+
+const PGRST_TABLE_NOT_FOUND = 'PGRST202';
+
+function requireTables(error: { code?: string; message?: string }): void {
+  if (error.code === PGRST_TABLE_NOT_FOUND) {
+    throw Object.assign(
+      new Error('Corporate features not configured. Ask an admin to apply the database migration.'),
+      { statusCode: 503 },
+    );
+  }
+}
 
 export interface OrgAnalyticsResult {
   total_hours: number;
@@ -29,7 +40,13 @@ async function getAdminOrgId(profileId: string): Promise<string> {
     .eq('role', 'admin')
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    requireTables(error);
+    logger.error({ profileId, error: error.message }, 'Failed to check admin status');
+    throw Object.assign(new Error('Failed to verify permissions'), { statusCode: 500 });
+  }
+
+  if (!data) {
     throw Object.assign(new Error('Not authorized'), { statusCode: 403 });
   }
 
@@ -43,16 +60,18 @@ async function getMemberOrgId(profileId: string): Promise<string> {
     .eq('profile_id', profileId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    requireTables(error);
+    throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
+  }
+  if (!data) {
     throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
   }
 
   return data.organization_id;
 }
 
-export async function getOrgAnalytics(
-  profileId: string
-): Promise<OrgAnalyticsResult> {
+export async function getOrgAnalytics(profileId: string): Promise<OrgAnalyticsResult> {
   const orgId = await getMemberOrgId(profileId);
 
   const { data: members, error: mErr } = await supabaseAdmin
@@ -170,8 +189,18 @@ export async function getMyOrg(profileId: string) {
     .maybeSingle();
 
   if (error) {
-    logger.error({ profileId, error: error.message }, 'Failed to fetch org membership');
-    throw new Error('Failed to fetch organization');
+    requireTables(error);
+    logger.error(
+      {
+        profileId,
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      },
+      'Failed to fetch org membership',
+    );
+    throw Object.assign(new Error(error.message), { statusCode: 400, code: error.code });
   }
 
   return data;
@@ -179,14 +208,19 @@ export async function getMyOrg(profileId: string) {
 
 export async function updateOptIn(
   profileId: string,
-  optedIn: boolean
+  optedIn: boolean,
 ): Promise<Record<string, unknown>> {
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: existingErr } = await supabaseAdmin
     .from('organization_members')
     .select('id')
     .eq('profile_id', profileId)
     .maybeSingle();
 
+  if (existingErr) {
+    requireTables(existingErr);
+    logger.error({ profileId, error: existingErr.message }, 'Failed to check org membership');
+    throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
+  }
   if (!existing) {
     throw Object.assign(new Error('Not a member of any organization'), { statusCode: 403 });
   }
@@ -209,7 +243,7 @@ export async function updateOptIn(
 export async function addOrgMember(
   adminProfileId: string,
   targetProfileId: string,
-  department?: string
+  department?: string,
 ): Promise<Record<string, unknown>> {
   const orgId = await getAdminOrgId(adminProfileId);
 
@@ -237,7 +271,7 @@ export async function addOrgMember(
 }
 
 export async function getOrgMembers(
-  adminProfileId: string
+  adminProfileId: string,
 ): Promise<Array<Record<string, unknown>>> {
   const orgId = await getAdminOrgId(adminProfileId);
 
@@ -248,8 +282,9 @@ export async function getOrgMembers(
     .order('created_at', { ascending: false });
 
   if (error) {
-    logger.error({ orgId, error: error.message }, 'Failed to list members');
-    throw new Error('Failed to fetch members');
+    requireTables(error);
+    logger.error({ orgId, error: error.message, details: error }, 'Failed to list members');
+    throw Object.assign(new Error('Failed to fetch members'), { statusCode: 400 });
   }
 
   return (data ?? []) as Array<Record<string, unknown>>;
@@ -262,7 +297,11 @@ export async function getOrgName(profileId: string): Promise<string | null> {
     .eq('profile_id', profileId)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    requireTables(error);
+    return null;
+  }
+  if (!data) return null;
 
   return (data as unknown as { organizations: { name: string } }).organizations?.name ?? null;
 }

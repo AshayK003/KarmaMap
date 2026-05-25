@@ -251,19 +251,14 @@ Single component handling:
 
 ---
 
-### HIGH: `NgoGigCard.tsx` — 413 lines
+### Previously: `NgoGigCard.tsx` — 413 lines (inline editor removed)
 
-**File:** `frontend/src/components/NgoGigCard.tsx`
-
-Single component handling:
+The inline edit feature (title, description, skills, location, date editing) was removed entirely. The component now handles:
 - Gig status display with color themes
 - Volunteer progress bar
-- Inline location editing (lat/lng inputs)
-- Inline title/description editing
+- Location display
 - Status transitions (open → in_progress → completed)
 - Feature gig button
-
-**Fix:** Extract inline editor into `GigInlineEditor` sub-component. Extract status controls into `GigStatusControls`.
 
 ---
 
@@ -477,7 +472,7 @@ The split follows feature boundaries. No component is split too aggressively. Th
 | **MEDIUM** | Standardize API consumption pattern (document or consolidate) | Developer clarity | Medium | All frontend files |
 | **LOW** | Remove `render.yaml` | Cleans stale config | Tiny | `render.yaml` |
 | **LOW** | Extract `VolunteerPortfolio` sub-components | Improves maintainability | Large | `VolunteerPortfolio.tsx` |
-| **LOW** | Extract `NgoGigCard` inline editor | Improves readability | Medium | `NgoGigCard.tsx` |
+| **DONE** | Remove `NgoGigCard` inline editor (feature removed) | Cleans up tech debt | — | `NgoGigCard.tsx` |
 | **LOW** | Migrate inline SVGs to `lucide-react` | Consistency | Large | 12 files |
 
 ---

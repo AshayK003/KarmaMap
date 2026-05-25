@@ -1,6 +1,6 @@
-import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
 import { sendCompletionEmail } from './emailService.js';
+import { supabaseAdmin } from './supabase.js';
 
 interface CompleteGigInput {
   hours: number;
@@ -20,7 +20,7 @@ interface JoinGigResult {
 export async function completeParticipation(
   participationId: string,
   volunteerId: string,
-  input: CompleteGigInput
+  input: CompleteGigInput,
 ): Promise<CompleteGigResult> {
   const { data: participation, error: fetchError } = await supabaseAdmin
     .from('participations')
@@ -30,7 +30,10 @@ export async function completeParticipation(
     .single();
 
   if (fetchError || !participation) {
-    logger.error({ participationId, volunteerId, error: fetchError?.message }, 'Participation not found for completion');
+    logger.error(
+      { participationId, volunteerId, error: fetchError?.message },
+      'Participation not found for completion',
+    );
     throw new Error('Participation not found');
   }
 
@@ -58,7 +61,10 @@ export async function completeParticipation(
     .single();
 
   if (updateError || !updated) {
-    logger.error({ participationId, error: updateError?.message }, 'Failed to update participation after karma award');
+    logger.error(
+      { participationId, error: updateError?.message },
+      'Failed to update participation after karma award',
+    );
     throw new Error('Failed to complete participation');
   }
 
@@ -75,7 +81,10 @@ export async function completeParticipation(
   });
 
   if (notifError) {
-    logger.warn({ participationId, error: notifError.message }, 'Failed to insert completion notification');
+    logger.warn(
+      { participationId, error: notifError.message },
+      'Failed to insert completion notification',
+    );
   }
 
   try {
@@ -90,10 +99,7 @@ export async function completeParticipation(
   return { participation: updated, karma_earned: karmaEarned };
 }
 
-export async function joinGig(
-  gigId: string,
-  volunteerId: string
-): Promise<JoinGigResult> {
+export async function joinGig(gigId: string, volunteerId: string): Promise<JoinGigResult> {
   const { data, error } = await supabaseAdmin
     .from('participations')
     .insert({
@@ -115,10 +121,7 @@ export async function joinGig(
   return { participation: data };
 }
 
-export async function awardKarma(
-  volunteerId: string,
-  hours: number
-): Promise<number> {
+export async function awardKarma(volunteerId: string, hours: number): Promise<number> {
   const karmaEarned = Math.round(hours * 10);
 
   const { data, error } = await supabaseAdmin.rpc('award_karma', {
@@ -130,7 +133,10 @@ export async function awardKarma(
     return data;
   }
 
-  logger.warn({ volunteerId, error: error?.message }, 'award_karma RPC unavailable, falling back to direct update');
+  logger.warn(
+    { volunteerId, error: error?.message },
+    'award_karma RPC unavailable, falling back to direct update',
+  );
 
   const { data: profile, error: fetchError } = await supabaseAdmin
     .from('profiles')

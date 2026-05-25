@@ -1,7 +1,7 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
-import { AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import type { AuthRequest } from '../middleware/auth.js';
 import {
   completeParticipation as completeParticipationService,
   joinGig as joinGigService,
@@ -13,10 +13,7 @@ export const completeGigSchema = z.object({
   after_photo_url: z.string().url().optional(),
 });
 
-async function _completeParticipation(
-  req: AuthRequest,
-  res: Response
-): Promise<void> {
+async function _completeParticipation(req: AuthRequest, res: Response): Promise<void> {
   const participationId = String(req.params.participationId);
   const body = req.body as z.infer<typeof completeGigSchema>;
 

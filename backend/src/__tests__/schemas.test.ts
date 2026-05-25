@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   createGigSchema,
-  updateGigSchema,
   featureGigSchema,
 } from '../../controllers/gigController.js';
 import { completeGigSchema } from '../../controllers/participationController.js';
@@ -74,29 +73,6 @@ describe('createGigSchema', () => {
 
   it('rejects empty gig_date', () => {
     const result = createGigSchema.safeParse({ ...validInput, gig_date: '' });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe('updateGigSchema', () => {
-  const validInput = {
-    title: 'Cleanup Drive',
-    description: 'Join us for a monthly cleanup of the park',
-    lat: 28.6139,
-    lng: 77.209,
-    required_skills: ['cleaning'],
-    volunteers_needed: 3,
-    gig_date: '2026-06-15T09:00:00Z',
-  };
-
-  it('accepts valid input', () => {
-    const result = updateGigSchema.safeParse(validInput);
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects missing lat', () => {
-    const { lat, ...rest } = validInput;
-    const result = updateGigSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
 });

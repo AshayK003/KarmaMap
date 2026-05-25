@@ -167,7 +167,7 @@ cd backend   && npx vitest run
 cd frontend  && npx vitest run
 ```
 
-120 tests across 11 files. See `docs/reviews/test-strategy-refined.md` for the full test plan.
+148 tests across 13 files. See `docs/reviews/test-strategy-refined.md` for the full test plan.
 
 ## Migrations
 

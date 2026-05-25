@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import supertest from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 let mockUserRole = 'ngo';
 
@@ -8,13 +8,15 @@ vi.mock('../../middleware/auth.js', () => ({
     req.user = { id: 'test-user-id', role: mockUserRole };
     next();
   },
-  requireRole: (...roles: string[]) => (req: any, _res: any, next: any) => {
-    if (!req.user?.role || !roles.includes(req.user.role)) {
-      _res.status(403).json({ error: 'Insufficient permissions' });
-      return;
-    }
-    next();
-  },
+  requireRole:
+    (...roles: string[]) =>
+    (req: any, _res: any, next: any) => {
+      if (!req.user?.role || !roles.includes(req.user.role)) {
+        _res.status(403).json({ error: 'Insufficient permissions' });
+        return;
+      }
+      next();
+    },
 }));
 
 vi.mock('../../services/supabase.js', () => ({
@@ -31,6 +33,7 @@ vi.mock('../../services/supabase.js', () => ({
 }));
 
 import { createApp } from '../../index.js';
+
 let app: ReturnType<typeof createApp>;
 
 beforeEach(() => {
@@ -57,25 +60,19 @@ describe('POST /api/gigs', () => {
   });
 
   it('returns 400 for missing required fields', async () => {
-    const res = await supertest(app)
-      .post('/api/gigs')
-      .set('Authorization', 'Bearer test')
-      .send({});
+    const res = await supertest(app).post('/api/gigs').set('Authorization', 'Bearer test').send({});
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for volunteers_needed = 0', async () => {
-    const res = await supertest(app)
-      .post('/api/gigs')
-      .set('Authorization', 'Bearer test')
-      .send({
-        title: 'Test Gig',
-        description: 'Valid description for a test gig',
-        lat: 28.6,
-        lng: 77.2,
-        volunteers_needed: 0,
-        gig_date: '2026-06-01',
-      });
+    const res = await supertest(app).post('/api/gigs').set('Authorization', 'Bearer test').send({
+      title: 'Test Gig',
+      description: 'Valid description for a test gig',
+      lat: 28.6,
+      lng: 77.2,
+      volunteers_needed: 0,
+      gig_date: '2026-06-01',
+    });
     expect(res.status).toBe(400);
   });
 
@@ -105,9 +102,7 @@ describe('POST /api/gigs', () => {
 
 describe('GET /api/gigs/analytics', () => {
   it('returns analytics for NGO', async () => {
-    const res = await supertest(app)
-      .get('/api/gigs/analytics')
-      .set('Authorization', 'Bearer test');
+    const res = await supertest(app).get('/api/gigs/analytics').set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('total_hours');
     expect(res.body).toHaveProperty('chart_data');
@@ -262,7 +257,14 @@ describe('POST /api/payments', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { id: 'pay-1', gig_id: '00000000-0000-0000-0000-000000000001', ngo_id: 'test-user-id', amount: 240000, status: 'pending', feature_hours: 24 },
+        data: {
+          id: 'pay-1',
+          gig_id: '00000000-0000-0000-0000-000000000001',
+          ngo_id: 'test-user-id',
+          amount: 240000,
+          status: 'pending',
+          feature_hours: 24,
+        },
         error: null,
       }),
       insert: vi.fn().mockReturnThis(),
@@ -292,7 +294,13 @@ describe('POST /api/payments/:paymentId/confirm', () => {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({
-            data: { id: 'pay-1', gig_id: 'gig-1', ngo_id: 'test-user-id', status: 'pending', feature_hours: 24 },
+            data: {
+              id: 'pay-1',
+              gig_id: 'gig-1',
+              ngo_id: 'test-user-id',
+              status: 'pending',
+              feature_hours: 24,
+            },
             error: null,
           }),
           order: vi.fn().mockReturnThis(),
@@ -314,7 +322,13 @@ describe('POST /api/payments/:paymentId/confirm', () => {
           eq: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { id: 'pay-1', status: 'paid', gig_id: 'gig-1', ngo_id: 'test-user-id', feature_hours: 24 },
+                data: {
+                  id: 'pay-1',
+                  status: 'paid',
+                  gig_id: 'gig-1',
+                  ngo_id: 'test-user-id',
+                  feature_hours: 24,
+                },
                 error: null,
               }),
             }),
@@ -369,9 +383,7 @@ describe('GET /api/payments', () => {
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
     });
 
-    const res = await supertest(app)
-      .get('/api/payments')
-      .set('Authorization', 'Bearer test');
+    const res = await supertest(app).get('/api/payments').set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);
     expect(res.body.payments).toHaveLength(2);
   });
@@ -405,12 +417,20 @@ describe('GET /api/organizations/analytics', () => {
     (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementation(() => {
       callCount++;
       const c: any = {
-        select: vi.fn(), eq: vi.fn(), single: vi.fn(), maybeSingle: vi.fn(),
-        in: vi.fn(), insert: vi.fn(), update: vi.fn(), order: vi.fn(),
+        select: vi.fn(),
+        eq: vi.fn(),
+        single: vi.fn(),
+        maybeSingle: vi.fn(),
+        in: vi.fn(),
+        insert: vi.fn(),
+        update: vi.fn(),
+        order: vi.fn(),
       };
       c.then = (resolve: (v: unknown) => void) => resolve(c._val ?? { data: null, error: null });
       c.catch = () => c;
-      c.setVal = (v: unknown) => { c._val = v; };
+      c.setVal = (v: unknown) => {
+        c._val = v;
+      };
       c.select = vi.fn().mockReturnValue(c);
       c.eq = vi.fn().mockReturnValue(c);
       c.in = vi.fn().mockReturnValue(c);
@@ -429,21 +449,29 @@ describe('GET /api/organizations/analytics', () => {
       } else if (callCount === 2) {
         c.setVal({
           data: [
-            { profile_id: 'v1', department: 'Engineering', role: 'member', profiles: { name: 'Alice' } },
+            {
+              profile_id: 'v1',
+              department: 'Engineering',
+              role: 'member',
+              profiles: { name: 'Alice' },
+            },
           ],
           error: null,
         });
       } else if (callCount === 3) {
         c.setVal({
-          data: [
-            { profile_id: 'v1', role: 'member' },
-          ],
+          data: [{ profile_id: 'v1', role: 'member' }],
           error: null,
         });
       } else if (callCount === 4) {
         c.setVal({
           data: [
-            { volunteer_id: 'v1', hours: 4, created_at: '2026-05-01T00:00:00Z', gigs: { title: 'Beach Cleanup', gig_date: '2026-05-01' } },
+            {
+              volunteer_id: 'v1',
+              hours: 4,
+              created_at: '2026-05-01T00:00:00Z',
+              gigs: { title: 'Beach Cleanup', gig_date: '2026-05-01' },
+            },
           ],
           error: null,
         });

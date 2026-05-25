@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-25
 **Batch:** 3 (5 items evaluated, 2 actionable, 2 false positives, 1 already handled)
-**Coverage:** 121 tests pass (85 backend + 36 frontend), TypeScript compiles cleanly.
+**Coverage:** 148 tests pass (112 backend + 36 frontend), TypeScript compiles cleanly.
 
 ---
 
@@ -120,4 +120,4 @@ This is clean, maintainable, and handles preflight requests. Replacing with manu
 | 50 | Dynamic supabase import | Done | +1 (static import), -12 (dynamic) |
 | 51 | Inline cors | Already minimal | 0 |
 
-**Net change:** -11 lines of code. Zero behavioral changes. 121 tests pass.
+**Net change:** -11 lines of code. Zero behavioral changes. 148 tests pass.

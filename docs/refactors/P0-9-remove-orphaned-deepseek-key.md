@@ -28,5 +28,5 @@ None — the variables were not consumed anywhere.
 
 ## Verification
 - `rg DEEPSEEK` across entire repo returns only hits in docs files (audit records and priority matrix, now updated)
-- All 121 tests pass
+- All 148 tests pass
 - Server starts and routes work normally

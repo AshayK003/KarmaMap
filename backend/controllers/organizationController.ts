@@ -1,14 +1,14 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
-import { AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import type { AuthRequest } from '../middleware/auth.js';
 import {
-  getOrgAnalytics,
-  getMyOrg,
-  updateOptIn,
   addOrgMember,
+  getMyOrg,
+  getOrgAnalytics,
   getOrgMembers,
   getOrgName,
+  updateOptIn,
 } from '../services/organizationService.js';
 
 export const addMemberSchema = z.object({

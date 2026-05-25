@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { supabaseAdmin } from '../services/supabase.js';
 import { logger } from '../src/lib/logger.js';
 
@@ -9,7 +9,7 @@ export interface AuthRequest extends Request {
 export async function verifyJwt(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -45,7 +45,10 @@ export async function verifyJwt(
 export function requireRole(...roles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user?.role || !roles.includes(req.user.role)) {
-      logger.warn({ path: req.originalUrl, userId: req.user?.id, role: req.user?.role, required: roles }, 'Insufficient permissions');
+      logger.warn(
+        { path: req.originalUrl, userId: req.user?.id, role: req.user?.role, required: roles },
+        'Insufficient permissions',
+      );
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }

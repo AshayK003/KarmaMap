@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
-const mockSingle = vi.fn();
-const mockOrder = vi.fn();
-const mockInsert = vi.fn();
-const mockUpdate = vi.fn();
+const _mockSelect = vi.fn();
+const _mockEq = vi.fn();
+const _mockSingle = vi.fn();
+const _mockOrder = vi.fn();
+const _mockInsert = vi.fn();
+const _mockUpdate = vi.fn();
 const mockFrom = vi.fn();
 
 vi.mock('../supabase.js', () => ({
@@ -42,7 +42,14 @@ describe('createPayment', () => {
     const { createPayment } = await import('../paymentService.js');
     const c = makeChain();
     c.single.mockResolvedValue({
-      data: { id: 'pay-1', gig_id: 'gig-1', ngo_id: 'ngo-1', amount: 240000, status: 'pending', feature_hours: 24 },
+      data: {
+        id: 'pay-1',
+        gig_id: 'gig-1',
+        ngo_id: 'ngo-1',
+        amount: 240000,
+        status: 'pending',
+        feature_hours: 24,
+      },
       error: null,
     });
     mockFrom.mockReturnValue(c);
@@ -66,7 +73,9 @@ describe('createPayment', () => {
     c.single.mockResolvedValue({ data: null, error: { message: 'Insert failed' } });
     mockFrom.mockReturnValue(c);
 
-    await expect(createPayment('gig-1', 'ngo-1', 10)).rejects.toThrow('Failed to create payment request');
+    await expect(createPayment('gig-1', 'ngo-1', 10)).rejects.toThrow(
+      'Failed to create payment request',
+    );
   });
 });
 
@@ -81,7 +90,13 @@ describe('confirmPayment', () => {
         // fetch payment
         const fetchChain = makeChain();
         fetchChain.single.mockResolvedValue({
-          data: { id: 'pay-1', gig_id: 'gig-1', ngo_id: 'ngo-1', status: 'pending', feature_hours: 48 },
+          data: {
+            id: 'pay-1',
+            gig_id: 'gig-1',
+            ngo_id: 'ngo-1',
+            status: 'pending',
+            feature_hours: 48,
+          },
           error: null,
         });
         return fetchChain;
@@ -124,7 +139,13 @@ describe('confirmPayment', () => {
     const { confirmPayment } = await import('../paymentService.js');
     const c = makeChain();
     c.single.mockResolvedValue({
-      data: { id: 'pay-1', gig_id: 'gig-1', ngo_id: 'ngo-other', status: 'pending', feature_hours: 24 },
+      data: {
+        id: 'pay-1',
+        gig_id: 'gig-1',
+        ngo_id: 'ngo-other',
+        status: 'pending',
+        feature_hours: 24,
+      },
       error: null,
     });
     mockFrom.mockReturnValue(c);

@@ -1,10 +1,10 @@
-import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
+import { supabaseAdmin } from './supabase.js';
 
 export async function createPayment(
   gigId: string,
   ngoId: string,
-  hours: number
+  hours: number,
 ): Promise<Record<string, unknown>> {
   const amount = hours * 10000;
 
@@ -30,7 +30,7 @@ export async function createPayment(
 
 export async function confirmPayment(
   paymentId: string,
-  ngoId: string
+  ngoId: string,
 ): Promise<{ payment: Record<string, unknown>; featured_until: string }> {
   const { data: payment, error: fetchError } = await supabaseAdmin
     .from('payments')
@@ -51,9 +51,7 @@ export async function confirmPayment(
     throw Object.assign(new Error('Payment is not pending'), { statusCode: 400 });
   }
 
-  const featuredUntil = new Date(
-    Date.now() + payment.feature_hours * 60 * 60 * 1000
-  ).toISOString();
+  const featuredUntil = new Date(Date.now() + payment.feature_hours * 60 * 60 * 1000).toISOString();
 
   const { error: gigError } = await supabaseAdmin
     .from('gigs')
@@ -61,7 +59,10 @@ export async function confirmPayment(
     .eq('id', payment.gig_id);
 
   if (gigError) {
-    logger.error({ paymentId, gigId: payment.gig_id, error: gigError.message }, 'Failed to feature gig');
+    logger.error(
+      { paymentId, gigId: payment.gig_id, error: gigError.message },
+      'Failed to feature gig',
+    );
     throw new Error('Failed to feature gig');
   }
 
@@ -73,16 +74,17 @@ export async function confirmPayment(
     .single();
 
   if (payError || !updated) {
-    logger.error({ paymentId, error: payError?.message }, 'Failed to update payment status after gig featured');
+    logger.error(
+      { paymentId, error: payError?.message },
+      'Failed to update payment status after gig featured',
+    );
     throw new Error('Failed to confirm payment');
   }
 
   return { payment: updated, featured_until: featuredUntil };
 }
 
-export async function getNgoPayments(
-  ngoId: string
-): Promise<Array<Record<string, unknown>>> {
+export async function getNgoPayments(ngoId: string): Promise<Array<Record<string, unknown>>> {
   const { data, error } = await supabaseAdmin
     .from('payments')
     .select('*, gigs!inner(title)')

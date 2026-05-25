@@ -101,7 +101,7 @@
 | 44 | Standardize font weights | ❌ Deferred | Inconsistent weight usage. Zero behavioral change. | 1h |
 | 45 | Add missing `sr-only` labels | ✅ Already handled | P2-41 (MapView travel mode buttons) + Navbar/NotificationBell already had `aria-label`. No unlabeled interactive SVGs remain. | — |
 | 46 | Extract `VolunteerPortfolio` sub-components | ❌ Deferred | 624 lines, but coherent as-is. Zero behavioral change. | 3h |
-| 47 | Extract `NgoGigCard` inline editor | ❌ Deferred | 413 lines, inline editing is tight. Zero behavioral change. | 2h |
+| 47 | Extract `NgoGigCard` inline editor | ✅ Removed | Inline edit feature was removed entirely. | — |
 | 48 | Extract weather advisory logic | ✅ Done | Moved `WeatherIcon`, `getWeatherDescription`, `getWeatherAdvisory`, `WeatherForecast` to `utils/weather.ts`. GigDetail imports them. | 15m |
 | 49 | Remove dead `skillOverlap` export check | ✅ False positive | `skillOverlap` is exported AND imported by `matchingService.test.ts` (21 tests). Not dead code. | — |
 | 50 | Remove dynamic supabase import in Login | ✅ Done | Replaced two `await import('../lib/supabase')` calls with static top-level import of `supabase`. | 5m |
@@ -131,7 +131,7 @@ All P0/P1 risks have been mitigated. Remaining risk: none for already-completed 
 - ✅ **Frontend**: 36 tests pass (4 files)
 - ✅ **TS compile**: Both packages compile cleanly
 - ✅ **No new `@ts-ignore`**: Confirmed zero introductions
-- ✅ **Total**: 121 tests across 11 files, all passing
+- ✅ **Total**: 148 tests across 13 files, all passing
 - ✅ **P0**: 9/9 security items complete
 - ✅ **P1**: 17/17 maintainability items complete
 - ✅ **P2**: 15/15 stable cleanup items complete

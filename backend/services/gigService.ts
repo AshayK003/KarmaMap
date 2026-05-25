@@ -1,7 +1,11 @@
-import { supabaseAdmin } from './supabase.js';
 import { logger } from '../src/lib/logger.js';
-import { findMatchedVolunteers, notifyMatchedVolunteers, type MatchedVolunteer } from './matchingService.js';
 import { sendGigMatchEmails } from './emailService.js';
+import {
+  findMatchedVolunteers,
+  type MatchedVolunteer,
+  notifyMatchedVolunteers,
+} from './matchingService.js';
+import { supabaseAdmin } from './supabase.js';
 
 export interface CreateGigInput {
   title: string;
@@ -12,16 +16,6 @@ export interface CreateGigInput {
   volunteers_needed: number;
   gig_date: string;
   location_label?: string;
-}
-
-interface UpdateGigInput {
-  title: string;
-  description: string;
-  lat: number;
-  lng: number;
-  required_skills: string[];
-  volunteers_needed: number;
-  gig_date: string;
 }
 
 interface CreateGigResult {
@@ -52,7 +46,7 @@ async function getGigOwnership(gigId: string): Promise<GigOwnership | null> {
 
 async function runMatching(
   gigId: string,
-  gigTitle: string
+  gigTitle: string,
 ): Promise<{ matched_count: number; volunteers: MatchedVolunteer[] }> {
   const matched = await findMatchedVolunteers(gigId);
   await notifyMatchedVolunteers(gigId, matched, gigTitle);
@@ -63,7 +57,7 @@ async function runMatching(
 export async function featureGig(
   gigId: string,
   ngoId: string,
-  hours: number
+  hours: number,
 ): Promise<{ featured_until: string }> {
   await verifyGigOwnership(gigId, ngoId);
 
@@ -84,7 +78,7 @@ export async function featureGig(
 
 export async function triggerMatching(
   gigId: string,
-  ngoId: string
+  ngoId: string,
 ): Promise<{ matched: number; volunteers: MatchedVolunteer[] }> {
   const gig = await verifyGigOwnership(gigId, ngoId);
 
@@ -93,10 +87,7 @@ export async function triggerMatching(
   return { matched: result.matched_count, volunteers: result.volunteers };
 }
 
-export async function verifyGigOwnership(
-  gigId: string,
-  ngoId: string
-): Promise<GigOwnership> {
+export async function verifyGigOwnership(gigId: string, ngoId: string): Promise<GigOwnership> {
   const gig = await getGigOwnership(gigId);
   if (!gig || gig.ngo_id !== ngoId) {
     throw Object.assign(new Error('Not authorized'), { statusCode: 403 });
@@ -104,10 +95,7 @@ export async function verifyGigOwnership(
   return gig;
 }
 
-export async function createGig(
-  ngoId: string,
-  input: CreateGigInput
-): Promise<CreateGigResult> {
+export async function createGig(ngoId: string, input: CreateGigInput): Promise<CreateGigResult> {
   const { data, error } = await supabaseAdmin.rpc('insert_gig', {
     p_title: input.title,
     p_description: input.description,
@@ -125,7 +113,7 @@ export async function createGig(
     throw new Error('Failed to create gig');
   }
 
-  if (!data || !data.id || typeof data.id !== 'string') {
+  if (!data?.id || typeof data.id !== 'string') {
     throw new Error('Gig creation RPC returned no valid id');
   }
 
@@ -133,33 +121,12 @@ export async function createGig(
     const { matched_count } = await runMatching(data.id, input.title);
     return { gig: data, matched_count };
   } catch (matchErr) {
-    logger.warn({ gigId: data.id, error: (matchErr as Error).message }, 'Matching skipped after gig creation');
+    logger.warn(
+      { gigId: data.id, error: (matchErr as Error).message },
+      'Matching skipped after gig creation',
+    );
     return { gig: data, matched_count: 0 };
   }
-}
-
-export async function updateGig(
-  gigId: string,
-  ngoId: string,
-  input: UpdateGigInput
-): Promise<Record<string, unknown>> {
-  const { data, error } = await supabaseAdmin.rpc('update_gig', {
-    p_gig_id: gigId,
-    p_title: input.title,
-    p_description: input.description,
-    p_lat: input.lat,
-    p_lng: input.lng,
-    p_required_skills: input.required_skills,
-    p_volunteers_needed: input.volunteers_needed,
-    p_gig_date: input.gig_date,
-  });
-
-  if (error) {
-    logger.error({ gigId, error: error.message }, 'Failed to update gig');
-    throw new Error('Failed to update gig');
-  }
-  if (!data) throw new Error('Update RPC returned no data');
-  return data as Record<string, unknown>;
 }
 
 export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
@@ -171,7 +138,12 @@ export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
     const { data: agg, error } = await supabaseAdmin.rpc('get_ngo_analytics', {
       p_ngo_id: ngoId,
     });
-    if (!error && agg && typeof agg === 'object' && 'total_gigs' in (agg as Record<string, unknown>)) {
+    if (
+      !error &&
+      agg &&
+      typeof agg === 'object' &&
+      'total_gigs' in (agg as Record<string, unknown>)
+    ) {
       return agg as unknown as AnalyticsResult;
     }
   } catch {
