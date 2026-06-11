@@ -13,3 +13,4 @@ frontend/.env
 backups/
 caddy_data/
 caddy_config/
+AGENTS.md
