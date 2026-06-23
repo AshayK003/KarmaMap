@@ -1,69 +1,122 @@
 # KarmaMap
 
-Hyper-local, real-time PWA connecting NGOs with nearby volunteers. Uses PostGIS geospatial queries for proximity matching, OSRM for road routing, and a weighted skill+location algorithm to rank volunteers.
+**Hyper-local volunteer & skill-matching platform connecting NGOs with nearby volunteers.**
 
-## Architecture
+KarmaMap is a production-grade PWA that bridges the gap between NGOs needing skilled help and volunteers looking for meaningful local impact. It uses PostGIS geospatial matching, real-time updates, and a karma-based incentive system to make volunteering accessible, trackable, and rewarding.
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Express-4-000?logo=express)](https://expressjs.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=fff)](https://supabase.com/)
+[![PostGIS](https://img.shields.io/badge/PostGIS-316192?logo=postgresql&logoColor=fff)](https://postgis.net/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=fff)](https://vite.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+---
+
+## Features
+
+- **🗺️ Proximity Matching** — PostGIS-powered geospatial queries find volunteers within range of NGO gigs, ranked by a weighted skill + location algorithm.
+- **🛣️ Real Routing** — OSRM road distance scores complement straight-line proximity for realistic volunteer availability.
+- **📊 Role-Based Dashboards** — Separate views for volunteers, NGOs, and corporate partners — each with analytics, history, and management tools.
+- **🏆 Karma System** — Earn karma points and build streaks for completed participation. Leaderboard fosters community recognition.
+- **📱 PWA Ready** — Works offline, installable on mobile. Built with React + Vite for fast interactions.
+- **🔐 Row-Level Security** — Supabase RLS protects reads; the Express backend handles writes via `service_role` key (never exposed to the client).
+- **📸 Verified Photo Uploads** — Volunteers submit completion photos to a dedicated Supabase storage bucket for accountability.
+- **📧 Email Notifications** — Optional EmailJS integration for participation confirmations and updates.
+- **📍 Public Portfolios** — Volunteers get shareable profile pages (`/p/:slug`) showcasing their impact.
+- **🏢 Corporate CSR Tools** — Organizations can track team participation, manage members, and generate CSR analytics.
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 19, TypeScript, Vite, React Router 7, Tailwind CSS, Leaflet, Recharts |
+| **Backend** | Express 4, TypeScript, Zod validation, Pino logging, Rate limiting |
+| **Database** | Supabase (PostgreSQL + PostGIS), Row-Level Security |
+| **Maps & Geo** | Leaflet, react-leaflet, OSRM routing, PostGIS geography |
+| **Auth** | Supabase Auth (email/password) |
+| **Testing** | Vitest, Supertest |
+| **Linting** | Biome |
+| **Infra** | Docker, Vercel, supabase/migrations |
+
+## Architecture Overview
 
 ```
-┌────────────────────────────────────────────────────┐
-│  Frontend (React SPA, port 5173)                    │
-│  ┌──────────┐  ┌─────────┐  ┌───────────────────┐  │
-│  │ Supabase  │  │ REST    │  │ Recharts, Leaflet │  │
-│  │ anon reads│  │ API     │  │ (charts, maps)    │  │
-│  └──────────┘  └──┬──────┘  └───────────────────┘  │
-└───────────────────┼────────────────────────────────┘
-                    │ POST/PATCH (JWT)
-┌───────────────────┼────────────────────────────────┐
-│  Backend (Express, port 3001)                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Routes   │→ │Controllers│→ │ Services         │  │
-│  └──────────┘  └──────────┘  │ (gig,            │  │
-│                               │  participation,  │  │
-│                               │  matching, email) │  │
-│                               └────────┬─────────┘  │
-│                                        │              │
-│                          ┌─────────────┴────────────┐ │
-│                          │ Supabase service_role     │ │
-│                          └──────────────────────────┘ │
-└────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                   Frontend (React SPA)                │
+│  ┌──────────┐   ┌─────────┐   ┌──────────────────┐  │
+│  │ Supabase  │   │ REST    │   │ Recharts, Leaflet │  │
+│  │ anon reads│   │ API     │   │ (charts, maps)    │  │
+│  └──────────┘   └──┬──────┘   └──────────────────┘  │
+└─────────────────────┼────────────────────────────────┘
+                      │ POST/PATCH (JWT)
+┌─────────────────────┼────────────────────────────────┐
+│           Backend (Express, port 3001)                │
+│  ┌──────────┐  ┌────────────┐  ┌──────────────────┐  │
+│  │ Routes   │→ │Controllers  │→ │ Services          │  │
+│  └──────────┘  └────────────┘  │ (matching, gig,    │  │
+│                                │  participation,     │  │
+│                                │  email, karma)      │  │
+│                                └────────┬──────────┘  │
+│                                         │              │
+│                           ┌─────────────┴───────────┐ │
+│                           │  Supabase service_role   │ │
+│                           │  (writes — never client) │ │
+│                           └─────────────────────────┘ │
+└───────────────────────────────────────────────────────┘
 ```
 
-**Key design decisions**:
-- **Reads via anon client** — the frontend queries Supabase directly for reads (RPCs, `SELECT`). Only writes go through the backend.
-- **Backend uses `service_role` key** — bypasses RLS for writes. Never expose this key to the client.
-- **Testing** — Vitest + Supertest for backend API tests; Vitest for frontend. Business logic lives in services for unit testability.
-- **No icon library** — all icons are inline SVGs. Zero cost to add a new icon.
-- **Avatars** — DiceBear initials SVG API generates avatars from user names. Falls back to a user silhouette icon on load failure.
-- **No external state library** — plain React Context + hooks.
-- **Graceful fallbacks** — matching, email, and karma award all degrade gracefully when their dependencies (RPC functions, EmailJS, migrations) are unavailable.
+**Key decisions:**
+- **Reads via anon client** — Frontend queries Supabase directly for reads via RPCs and SELECTs. Only writes route through the backend.
+- **Backend writes via `service_role`** — The Express backend uses Supabase's `service_role` key for writes, bypassing RLS intentionally. This key is never exposed to the client.
+- **Graceful degradation** — Matching, email notifications, and karma awards all degrade gracefully when their dependencies are unavailable.
+- **No external state library** — Plain React Context + hooks. No Redux, no Zustand — just enough state management for a focused PWA.
+- **Inline SVGs** — No icon library dependency. All icons are inline SVGs.
 
-## Prerequisites
+## Matching Algorithm
+
+```ts
+final_score = 0.5 × proximityScore + 0.5 × skillOverlap
+```
+
+The matching service (`backend/src/lib/matchingService.ts`) uses a **two-tier fallback**:
+1. **Primary** — `nearby_volunteers_for_gig` RPC (PostGIS proximity + skill scoring)
+2. **Fallback** — All profiles scored at a fixed 5000m radius (no redundant RPC retry)
+
+Notifications are delivered in-app (via a `notifications` table) and optionally via email (EmailJS).
+
+## Quick Start
+
+### Prerequisites
 
 - Node.js 20+
-- Supabase project (free tier) with **PostGIS** extension enabled
+- A [Supabase](https://supabase.com/) project (free tier) with **PostGIS** extension enabled
 - (Optional) EmailJS account for email notifications
 
-## Setup
+### 1. Supabase Setup
 
-### 1. Supabase
+```sql
+-- Enable PostGIS
+CREATE EXTENSION IF NOT EXISTS postgis;
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Enable **PostGIS** extension in the SQL editor:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS postgis;
-   ```
-3. Create a public storage bucket named `participation-photos`
-4. Enable the **Email** auth provider (Settings → Authentication → Providers)
-5. Run migrations in order (see [Migrations](#migrations))
-6. Copy your project URL, anon key, and service_role key
+-- Create storage bucket
+-- Name: participation-photos (public)
+
+-- Enable Email auth provider in Supabase dashboard
+```
+
+Then run the migrations under `supabase/migrations/` in order.
 
 ### 2. Backend
 
 ```bash
 cd backend
 cp .env.example .env
+# Edit .env with your Supabase project URL and service_role key
 npm install
-npm run dev   # starts on port 3001 with hot reload via tsx
+npm run dev    # → http://localhost:3001
 ```
 
 ### 3. Frontend
@@ -71,175 +124,179 @@ npm run dev   # starts on port 3001 with hot reload via tsx
 ```bash
 cd frontend
 cp .env.example .env
+# Edit .env with your Supabase URL and anon key
 npm install
-npm run dev   # starts on port 5173, proxies /api → localhost:3001
+npm run dev    # → http://localhost:5173 (proxies /api → backend)
 ```
 
-## Environment Variables
+### Environment Variables
 
-### Backend (`backend/.env`)
+#### Backend (`backend/.env`)
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT` | No | Server port (default 3001) |
-| `SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | `service_role` key (secret — never commit) |
-| `FRONTEND_URL` | No | CORS origin (default `http://localhost:5173`) |
-| `EMAILJS_PUBLIC_KEY` | No | EmailJS public key (skip = emails disabled) |
-| `EMAILJS_SERVICE_ID` | No | EmailJS service ID |
-| `EMAILJS_TEMPLATE_ID` | No | EmailJS template ID |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `PORT` | No | 3001 | Server port |
+| `SUPABASE_URL` | **Yes** | — | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | — | Secret key — never commit |
+| `FRONTEND_URL` | No | `http://localhost:5173` | CORS origin |
+| `EMAILJS_PUBLIC_KEY` | No | — | EmailJS public key |
+| `EMAILJS_SERVICE_ID` | No | — | EmailJS service ID |
+| `EMAILJS_TEMPLATE_ID` | No | — | EmailJS template ID |
 
-### Frontend (`frontend/.env`)
+#### Frontend (`frontend/.env`)
 
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon key |
-| `VITE_API_URL` | No | Backend URL (default `/api`, proxied in dev) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VITE_SUPABASE_URL` | **Yes** | — | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | **Yes** | — | Supabase anon key |
+| `VITE_API_URL` | No | `/api` | Backend URL (proxied in dev) |
 
-## Local Development Flow
+### Build for Production
 
-```
-npm run dev (frontend:5173)  ──proxy──→  npm run dev (backend:3001)
-                                                │
-                                          Supabase (service_role)
-```
-
-1. Start the backend first (`cd backend && npm run dev`)
-2. Start the frontend (`cd frontend && npm run dev`)
-3. Open `http://localhost:5173`
-4. Sign up as either **volunteer** or **NGO** to test role-specific flows
-
-**Build for production**:
 ```bash
-cd backend && npm run build   # → dist/
-cd frontend && npm run build  # → dist/ (static SPA)
+cd backend && npm run build      # → dist/
+cd frontend && npm run build     # → dist/ (static SPA)
 ```
 
-## Routes
+## Routes & API
+
+### Pages
 
 | Path | Page | Access |
-|---|---|---|---|
-| `/` | Home landing | Public |
-| `/login` | Login | Public |
-| `/signup` | Signup (role toggle) | Public |
-| `/p/:slug` | Public Portfolio | Public |
-| `/ngo/:id` | Public NGO Profile + Donation | Public |
+|------|------|--------|
+| `/` | Home Landing | Public |
+| `/login` / `/signup` | Auth | Public |
 | `/map` | Discovery Map | Volunteer |
 | `/portfolio` | My Portfolio | Volunteer |
+| `/p/:slug` | Public Portfolio | Public |
 | `/gigs/:id` | Gig Detail | Public |
-| `/gigs/:id/participate` | Participate/Complete | Volunteer |
-| `/leaderboard` | Leaderboard | Auth'd |
+| `/gigs/:id/participate` | Participate / Complete | Volunteer |
 | `/ngo/dashboard` | NGO Dashboard | NGO |
 | `/ngo/create-gig` | Create Gig | NGO |
+| `/ngo/:id` | Public NGO Profile | Public |
 | `/corporate/dashboard` | Corporate Dashboard | Org Member |
 | `/corporate/manage` | Organization Manage | Org Admin |
+| `/leaderboard` | Leaderboard | Authenticated |
 
-## API Endpoints
+### API Endpoints
 
-| Method | Path | Auth | Role | Description |
-|---|---|---|---|---|---|
-| GET | `/health` | — | — | Health check |
-| POST | `/api/gigs` | JWT | ngo | Create gig + trigger matching |
-| GET | `/api/gigs/analytics` | JWT | ngo | Dashboard analytics |
-| POST | `/api/gigs/:gigId/match` | JWT | ngo | Manual re-match |
-| PATCH | `/api/gigs/:gigId/feature` | JWT | ngo | Feature gig (N hours) |
-| POST | `/api/participations/join/:gigId` | JWT | volunteer | Join gig (409 on dup) |
-| PATCH | `/api/participations/:id/complete` | JWT | volunteer | Complete + award karma |
-| PATCH | `/api/ngo/upi` | JWT | ngo | Update UPI ID / QR URL |
-| GET | `/api/organizations/analytics` | JWT | — | CSR analytics |
-| GET | `/api/organizations/my-org` | JWT | — | Current user's org membership |
-| POST | `/api/organizations/opt-in` | JWT | — | Toggle data-sharing opt-in |
-| POST | `/api/organizations/members` | JWT | admin | Add member |
-| GET | `/api/organizations/members` | JWT | admin | List members |
+| Method | Path | Role | Description |
+|--------|------|------|-------------|
+| GET | `/health` | — | Health check |
+| POST | `/api/gigs` | ngo | Create gig + trigger matching |
+| GET | `/api/gigs/analytics` | ngo | Dashboard analytics |
+| POST | `/api/gigs/:gigId/match` | ngo | Manual re-match |
+| PATCH | `/api/gigs/:gigId/feature` | ngo | Feature gig (N hours) |
+| POST | `/api/participations/join/:gigId` | volunteer | Join gig (409 on duplicate) |
+| PATCH | `/api/participations/:id/complete` | volunteer | Complete + award karma |
+| PATCH | `/api/ngo/upi` | ngo | Update UPI ID / QR URL |
+| GET | `/api/organizations/analytics` | — | CSR analytics |
+| POST | `/api/organizations/opt-in` | — | Toggle data-sharing opt-in |
+| POST | `/api/organizations/members` | admin | Add organization member |
 
-**Data flow**: Frontend calls REST API via `utils/api.ts` which injects the Supabase JWT into the `Authorization: Bearer` header.
-
-## Matching Algorithm
+## Project Structure
 
 ```
-final_score = 0.5 × proximityScore + 0.5 × skillOverlap
+KarmaMap/
+├── backend/                    # Express API server
+│   ├── src/
+│   │   ├── lib/                # Services (matching, gigs, email, karma)
+│   │   └── __tests__/          # Vitest + Supertest
+│   ├── index.ts                # Entry point
+│   └── package.json
+├── frontend/                   # React SPA
+│   ├── src/
+│   │   ├── components/         # Reusable UI components
+│   │   ├── context/            # React Context providers
+│   │   ├── hooks/              # Custom hooks
+│   │   ├── pages/              # Route pages
+│   │   ├── services/           # API & Supabase clients
+│   │   └── types/              # TypeScript type definitions
+│   └── package.json
+├── supabase/
+│   └── migrations/             # Database migrations (13 SQL files)
+├── docs/                       # Architecture, ADRs, deployment guides
+│   ├── architecture/
+│   ├── decisions/
+│   ├── deployment/
+│   └── flows/
+├── .env.example                # Environment template
+├── vercel.json                 # Frontend deployment config
+└── docker-compose.yml
 ```
 
-Two-tier fallback (`matchingService.ts`):
-1. `nearby_volunteers_for_gig` RPC (PostGIS proximity + skill scoring)
-2. All profiles scored at fixed 5000m (last resort — no redundant RPC retry)
+## Documentation
 
-Notifications: in-app (`notifications` table) + email (EmailJS via `fetch`).
+All architectural decisions, deployment guides, data flows, and design rationale live in the [`docs/`](docs/) directory:
+
+- **[Architecture Records](docs/decisions/)** — ADRs documenting key technical decisions and trade-offs
+- **[Deployment Guide](docs/deployment.md)** — Docker Compose + Caddy + VPS deployment runbook
+- **[Testing Strategy](docs/testing-strategy.md)** — Test pyramid, 75-test plan, sprint breakdown
+- **[Data Flows](docs/flows/)** — User journey maps and system interaction diagrams
+- **[Bug Reports](docs/bugs/)** — Reproduced issues with root cause analysis
 
 ## Testing
 
-Tests use **Vitest** with **Supertest** for API integration tests. Run from either directory:
-
 ```bash
-cd backend   && npx vitest run
-cd frontend  && npx vitest run
+# Backend
+cd backend && npm test
+
+# Frontend
+cd frontend && npm test
+
+# Watch mode
+npm run test:watch
 ```
 
-141 tests across 13 files (105 backend + 36 frontend). See `docs/reviews/test-strategy-refined.md` for the full test plan.
-
-## Migrations
-
-Run in `supabase/migrations/` in this exact order:
-
-```
-00_schema_core.sql              → tables, enums, RLS, nearby_gigs RPC
-01_functions_and_realtime.sql   → helper RPCs + realtime publication
-02_featured_gigs.sql            → featured_until column + sort order
-storage_policies.sql            → storage bucket RLS policies
-03_atomic_karma.sql             → award_karma function
-04_analytics_optimization.sql   → aggregated analytics RPC
-06_location_label.sql           → location_label support
-07_fix_location_drift.sql       → conditional update_gic location fix
-08_drop_match_volunteers_for_gig.sql → remove dead wrapper RPC
-09_payments.sql                 → payment requests table + RPCs
-10_corporate_dashboard.sql      → organizations + organization_members
-11_gig_duration.sql             → duration column on gigs, RPC updates
-12_ngo_upi.sql                  → upi_id/upi_qr_url on profiles + storage policies
-```
-
-13 migrations total. Stale/obsolete migration files have been removed: `20240523000000_initial_schema.sql`, `fix_matching_functions.sql`, `fix_postgis_functions.sql`, `05_update_gig.sql`.
+Both use **Vitest** as the test runner. Backend API tests use **Supertest** for HTTP assertions.
 
 ## Deployment
 
-### Frontend (Vercel)
+### Docker (Recommended)
 
-- `vercel.json` configures build, output dir, SPA rewrites
-- Set env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`
+```bash
+docker compose up --build
+```
+
+### Static Frontend
+
+The frontend builds to `dist/` and can be deployed to any static host (Vercel, Netlify, Cloudflare Pages). A `vercel.json` config is included for Vercel deployments.
 
 ### Backend
 
-- `docker-compose up backend` (recommended) or deploy manually
-- Set env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, EmailJS vars
-
-## Common Troubleshooting
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| `"You have already joined this gig."` (409) | Duplicate participation | Each volunteer can join a gig once |
-| Matching returns empty | PostGIS not enabled or RPCs missing | Run missing migration files |
-| `award_karma` function not found | Migration `03_atomic_karma.sql` not applied | Run the migration, or the backend falls back to direct update automatically |
-| Emails not sending | EmailJS env vars missing | Skip is safe — in-app notifications still work |
-| Map tiles not loading | PWA cache or CORS | OSM tiles are cached with CacheFirst (200 max, 30d) |
-| Auth session lost on refresh | Token expiry | Supabase handles refresh automatically via `onAuthStateChange` |
-| `ZodError` (400) on API | Invalid request body | Check schema — backend validates with zod v4 |
-| Route path not updating on new marker | Stale route stays visible until async OSRM fetch completes | Marker click handler now checks cache first — cached routes swap instantly, uncached routes clear old path immediately before fetching |
+The Express server can be deployed to any Node.js host (Railway, Render, Fly.io, or a VPS behind Caddy/Nginx). See [`docs/deployment.md`](docs/deployment.md) for the full VPS + Caddy runbook.
 
 ## Contributing
 
-- **Branch from `main`**, PR back to `main`
-- Run `npm run build` in both projects before committing — the build must pass
-- Run `npx vitest run` in both projects; add tests for new code
-- Business logic goes in `services/`, not controllers
-- All icons are inline SVGs — don't add an icon library
-- No external state library — React Context + hooks is the pattern
-- Keep the dependency graph small — prefer the standard library
-- Update `AGENTS.md` when adding or changing files — it's the AI context reference
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+In short:
+1. Open an issue before starting architectural work
+2. Branch from `main`: `git checkout -b feature/my-change`
+3. Run `npm run lint` (Biome) before committing
+4. Ensure tests pass: `npm test`
+5. Open a PR
+
+### What's welcome
+- Bug fixes, edge cases, and test coverage improvements
+- New features that align with the project's scope
+- Documentation improvements and translation
+- UI/UX polish
+
+### What to avoid
+- New dependencies without discussion
+- Changes to core matching logic without understanding `docs/architecture/`
+- Large refactors without an associated issue
+
+## License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Developer Support
-
-If KarmaMap helps your NGO or volunteering efforts, consider supporting the developer:
-
-<a href="https://chai4.me/ashaykushwaha003" target="_blank" title="Support on Chai4Me" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff;padding:8px 32px;border-radius:16px;text-decoration:none;border:1px solid #e5e7eb;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);transition:transform 0.2s;"><img src="https://chai4.me/icons/wordmark.png" alt="Chai4Me" style="height:32px;object-fit:contain;margin-bottom:4px;"/><span style="color:#6b7280;font-family:sans-serif;font-size:14px;font-weight:600;">@ashaykushwaha003</span></a>
+<p align="center">
+  Built by <a href="https://github.com/AshayK003">Ashay Kushwaha</a> —
+  <a href="https://github.com/AshayK003">GitHub</a> •
+  <a href="https://x.com/sentinelcipher">X</a> •
+  <a href="https://medium.com/@darkcharon3301_96987">Medium</a>
+</p>
