@@ -11,8 +11,9 @@ COPY backend/ .
 # Build TypeScript
 RUN npm run build
 
-# Remove devDependencies after build
-RUN npm prune --production
+# Now set production and prune devDependencies
+ENV NODE_ENV=production
+RUN npm prune
 
 EXPOSE 3001
 CMD ["node", "dist/index.js"]
