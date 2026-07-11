@@ -4,6 +4,7 @@ import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import gigRoutes from './routes/gigs.js';
 import ngoRoutes from './routes/ngo.js';
@@ -18,6 +19,7 @@ export function createApp() {
   const app = express();
   const isDev = process.env.NODE_ENV !== 'production';
 
+  app.use(helmet());
   app.use(compression());
   app.use(
     cors({
