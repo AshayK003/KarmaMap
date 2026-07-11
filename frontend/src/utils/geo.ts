@@ -18,13 +18,13 @@ export function urgencyLabel(gig: {
   featured_until?: string;
 }): { label: string; variant: 'amber' | 'destructive' | 'default' } | null {
   if (gig.featured_until && new Date(gig.featured_until) > new Date()) {
-    return { label: '⭐ Featured', variant: 'amber' };
+    return { label: 'Featured', variant: 'amber' };
   }
   if (isStartingSoon(gig.gig_date)) {
-    return { label: '🔥 Starting Soon', variant: 'destructive' };
+    return { label: 'Starting Soon', variant: 'destructive' };
   }
   if (isFillingFast(gig.volunteers_joined, gig.volunteers_needed)) {
-    return { label: '⚡ Filling Fast', variant: 'amber' };
+    return { label: 'Filling Fast', variant: 'amber' };
   }
   return null;
 }

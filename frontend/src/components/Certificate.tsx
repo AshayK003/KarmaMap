@@ -1,3 +1,4 @@
+import { Award, Calendar, Clock, Leaf, Handshake, Sparkles } from 'lucide-react';
 import type { Participation } from '../types/database';
 
 interface CertificateProps {
@@ -25,8 +26,8 @@ export function Certificate({
       <div className="mx-auto mb-5 h-1 w-24 rounded-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300" />
 
       {/* Icon */}
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-2xl text-white shadow-md select-none">
-        🏅
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md select-none">
+        <Award className="h-7 w-7" />
       </div>
 
       {/* Title */}
@@ -54,9 +55,9 @@ export function Certificate({
 
       {/* Hours & date */}
       <div className="mx-auto mt-4 inline-flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500">
-        <span>⏱️ {participation.hours ?? 0} hours</span>
+        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {participation.hours ?? 0} hours</span>
         <span className="text-slate-300">|</span>
-        <span>📅 {completedDate}</span>
+        <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {completedDate}</span>
       </div>
 
       {/* Divider */}
@@ -67,10 +68,10 @@ export function Certificate({
       </div>
 
       {/* Icons row */}
-      <div className="flex justify-center gap-3 text-2xl select-none">
-        <span>🌱</span>
-        <span>✨</span>
-        <span>🤝</span>
+      <div className="flex justify-center gap-3 select-none text-emerald-600">
+        <Leaf className="h-6 w-6" />
+        <Sparkles className="h-6 w-6 text-amber-500" />
+        <Handshake className="h-6 w-6" />
       </div>
 
       {/* Verified footer */}

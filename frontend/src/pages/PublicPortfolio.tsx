@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Award, Calendar, Clock, ClipboardList, Flame, Hourglass, Leaf, MapPin, Shield, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Participation, Profile } from '../types/database';
 import { formatDate } from '../utils/format';
@@ -65,7 +66,7 @@ export function PublicPortfolio() {
     return (
       <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-gradient-to-b from-emerald-50/40 to-white dark:from-slate-900 dark:to-slate-900">
         <div className="text-center space-y-2">
-          <span className="text-4xl select-none">🗺️</span>
+          <MapPin className="h-10 w-10 text-slate-300" />
           <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">
             Portfolio Not Found
           </h2>
@@ -117,7 +118,7 @@ export function PublicPortfolio() {
                   alt={profile.name}
                 />
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
-                  🛡️
+                  <Shield className="h-4 w-4" />
                 </span>
               </div>
 
@@ -155,7 +156,7 @@ export function PublicPortfolio() {
                       key={s}
                       className="inline-flex items-center gap-1 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300"
                     >
-                      🌱 {s}
+                      <Leaf className="h-3 w-3 inline" /> {s}
                     </span>
                   ))}
                 </div>
@@ -175,7 +176,7 @@ export function PublicPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
                   Karma
                 </span>
-                <span className="text-xl">✨</span>
+                <Sparkles className="h-5 w-5 text-emerald-500" />
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
                 {profile.karma_points ?? 0}
@@ -204,7 +205,7 @@ export function PublicPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
                   Active Streak
                 </span>
-                <span className="text-xl animate-float">🔥</span>
+                <Flame className="h-5 w-5 text-amber-500 animate-float" />
               </div>
               <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">
                 {profile.streak ?? 0} days
@@ -221,7 +222,7 @@ export function PublicPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
                   Verified Time
                 </span>
-                <span className="text-xl">⏳</span>
+                <Hourglass className="h-5 w-5 text-blue-500" />
               </div>
               <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">
                 {totalHours}h
@@ -235,7 +236,7 @@ export function PublicPortfolio() {
           {/* Completed Gigs list */}
           <Card className="bg-white dark:bg-slate-800">
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-              <span>📋</span> Volunteer History & Accomplishments
+              <ClipboardList className="h-5 w-5" /> Volunteer History & Accomplishments
             </h2>
             <p className="text-xs font-bold text-slate-400 mt-0.5">
               Chronological log of volunteer participations and impact milestones.
@@ -244,7 +245,7 @@ export function PublicPortfolio() {
             <div className="mt-6 space-y-4">
               {completed.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
-                  <span className="text-3xl select-none">🌱</span>
+                  <Leaf className="h-8 w-8 text-emerald-300" />
                   <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">
                     No verified history found
                   </p>
@@ -270,14 +271,14 @@ export function PublicPortfolio() {
                     >
                       <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-xl font-bold text-emerald-600 dark:text-emerald-400 animate-float">
-                          🏅
+                          <Award className="h-5 w-5" />
                         </span>
                         <div>
                           <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
-                            <span>📅 {dateStr}</span>
+                            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateStr}</span>
                             <span className="text-slate-300">•</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified Accomplishment
@@ -288,7 +289,7 @@ export function PublicPortfolio() {
 
                       <div className="flex items-center justify-end">
                         <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-600/50">
-                          ⏱️ {p.hours ?? 0} hours contributed
+                          <Clock className="h-3.5 w-3.5 inline" /> {p.hours ?? 0} hours contributed
                         </span>
                       </div>
                     </div>

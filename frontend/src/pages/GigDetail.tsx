@@ -12,6 +12,7 @@ import { joinGigViaApi } from '../services/gigs';
 import type { Gig } from '../types/database';
 import { formatDate } from '../utils/format';
 import { parseGigLocation, skillOverlapScore } from '../utils/geo';
+import { AlertTriangle, Calendar, Clock, MapPin } from 'lucide-react';
 import {
   getWeatherAdvisory,
   getWeatherDescription,
@@ -136,7 +137,7 @@ export function GigDetail() {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center space-y-2">
-          <span className="text-4xl select-none">🗺️</span>
+          <MapPin className="h-10 w-10 text-slate-300" />
           <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">Gig Not Found</h2>
           <p className="text-xs font-semibold text-slate-400">
             This opportunity may have been removed or the link is incorrect.
@@ -150,7 +151,7 @@ export function GigDetail() {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center space-y-2">
-          <span className="text-4xl select-none">⚠️</span>
+          <AlertTriangle className="h-10 w-10 text-amber-500" />
           <h2 className="text-lg font-black text-slate-700 dark:text-slate-200">
             Failed to load gig
           </h2>
@@ -296,11 +297,11 @@ export function GigDetail() {
               })}
             </p>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              🕒 {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
+              <Calendar className="h-3.5 w-3.5 inline" /> {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
             </p>
             {gig.duration && (
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                ⏱️ {gig.duration}h expected
+                <Clock className="h-3.5 w-3.5 inline" /> {gig.duration}h expected
               </p>
             )}
             <button
@@ -390,7 +391,7 @@ export function GigDetail() {
         <div
           className={`mt-4 flex gap-3.5 rounded-2xl border p-4 shadow-2xs backdrop-blur-xs transition-all duration-300 ${advisory.bg}`}
         >
-          <span className="text-2xl shrink-0 select-none animate-float">{advisory.emoji}</span>
+          <span className="shrink-0 animate-float"><advisory.icon className="h-6 w-6" /></span>
           <div className="space-y-1">
             <h4 className="text-xs font-black uppercase tracking-wider">{advisory.title}</h4>
             <p className="text-xs font-semibold leading-relaxed opacity-95">

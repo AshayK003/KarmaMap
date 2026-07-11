@@ -168,8 +168,11 @@ export function getWeatherDescription(code: number): string {
   return 'Cloudy';
 }
 
+import { CloudLightning, CloudRain, Snowflake, Sparkles, Sun } from 'lucide-react';
+import type { ComponentType } from 'react';
+
 export function getWeatherAdvisory(weather: WeatherForecast | null): {
-  emoji: string;
+  icon: ComponentType<{ className?: string }>;
   bg: string;
   title: string;
   description: string;
@@ -180,7 +183,7 @@ export function getWeatherAdvisory(weather: WeatherForecast | null): {
 
   if (code >= 95 || [63, 65, 81, 82].includes(code)) {
     return {
-      emoji: '⛈️',
+      icon: CloudLightning,
       bg: 'bg-rose-50/70 border-rose-200/50 text-rose-800 shadow-rose-950/2 dark:bg-rose-900/30 dark:border-slate-700 dark:text-rose-300 dark:shadow-none',
       title: 'Severe Outdoor Advisory',
       description:
@@ -189,7 +192,7 @@ export function getWeatherAdvisory(weather: WeatherForecast | null): {
   }
   if ([51, 53, 55, 61, 80].includes(code)) {
     return {
-      emoji: '☔',
+      icon: CloudRain,
       bg: 'bg-blue-50/70 border-blue-200/50 text-blue-800 shadow-blue-950/2 dark:bg-blue-900/30 dark:border-slate-700 dark:text-blue-200 dark:shadow-none',
       title: 'Wet Weather Preparedness',
       description:
@@ -198,7 +201,7 @@ export function getWeatherAdvisory(weather: WeatherForecast | null): {
   }
   if (tempMax > 35) {
     return {
-      emoji: '☀️',
+      icon: Sun,
       bg: 'bg-amber-50/70 border-amber-200/50 text-amber-900 shadow-amber-950/2 dark:bg-amber-900/30 dark:border-slate-700 dark:text-amber-200 dark:shadow-none',
       title: 'Extreme Heat Advisory',
       description:
@@ -207,7 +210,7 @@ export function getWeatherAdvisory(weather: WeatherForecast | null): {
   }
   if (tempMax < 8) {
     return {
-      emoji: '❄️',
+      icon: Snowflake,
       bg: 'bg-sky-50/70 border-sky-200/50 text-sky-900 shadow-sky-950/2 dark:bg-sky-900/30 dark:border-slate-700 dark:text-sky-200 dark:shadow-none',
       title: 'Low Temperature Advisory',
       description:
@@ -216,7 +219,7 @@ export function getWeatherAdvisory(weather: WeatherForecast | null): {
   }
   if (code === 0 || code === 1) {
     return {
-      emoji: '✨',
+      icon: Sparkles,
       bg: 'bg-emerald-50/70 border-emerald-200/50 text-emerald-800 shadow-emerald-950/2 dark:bg-emerald-900/20 dark:border-slate-700 dark:text-slate-100 dark:shadow-none',
       title: 'Perfect Outdoor Weather',
       description:

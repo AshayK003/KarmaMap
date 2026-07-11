@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Certificate } from '../components/Certificate';
-import { Building2Icon } from '../components/NavIcons';
+import { Award, Building2, Calendar, Clock, ClipboardList, Edit, Eye, Flame, Globe, Hourglass, Leaf, Link, Printer, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { Participation } from '../types/database';
@@ -252,7 +252,7 @@ export function VolunteerPortfolio() {
       <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-emerald-100/60 dark:border-slate-700 pb-6">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            Volunteer Portfolio <span className="text-2xl animate-float">✨</span>
+            Volunteer Portfolio <Sparkles className="h-6 w-6 text-emerald-500 animate-float" />
           </h1>
           <p className="text-sm font-semibold text-slate-400 mt-1">
             Showcase your completed gigs, impact statistics, and verified accomplishments.
@@ -262,15 +262,15 @@ export function VolunteerPortfolio() {
         {/* Public Share Panel */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl p-2 shadow-xs dark:shadow-none dark:shadow-slate-900/50 backdrop-blur-sm">
           {!shareUrl ? (
-            <Button onClick={enableSharing}>🌐 Generate Public Page</Button>
+            <Button onClick={enableSharing}><Globe className="h-4 w-4 mr-1 inline" /> Generate Public Page</Button>
           ) : (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 select-all overflow-hidden max-w-[240px] truncate">
-                <span>🔗</span> {shareUrl}
+                <Link className="h-3.5 w-3.5 inline" /> {shareUrl}
               </div>
               <div className="flex gap-1.5">
                 <Button variant={copied ? 'default' : 'secondary'} onClick={handleCopyLink}>
-                  {copied ? '✅ Copied!' : '📋 Copy'}
+                  {copied ? 'Copied!' : 'Copy'}
                 </Button>
                 {typeof navigator.share === 'function' && (
                   <Button onClick={handleNativeShare}>
@@ -291,7 +291,7 @@ export function VolunteerPortfolio() {
                   </Button>
                 )}
                 <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline">👁️ View</Button>
+                  <Button variant="outline"><Eye className="h-4 w-4 mr-1 inline" /> View</Button>
                 </a>
               </div>
             </>
@@ -315,7 +315,7 @@ export function VolunteerPortfolio() {
                   alt={profile?.name ?? 'VM'}
                 />
                 <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-sm shadow-md dark:shadow-none dark:shadow-slate-900/50 border-2 border-white dark:border-slate-700 select-none">
-                  🛡️
+                  <Shield className="h-4 w-4" />
                 </span>
               </div>
 
@@ -344,7 +344,7 @@ export function VolunteerPortfolio() {
                     onClick={() => setIsEditingBio(true)}
                     className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
                   >
-                    ✏️ Edit
+                    <Edit className="h-3.5 w-3.5 inline" /> Edit
                   </button>
                 ) : null}
               </div>
@@ -401,7 +401,7 @@ export function VolunteerPortfolio() {
                     onClick={handleEditSkills}
                     className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
                   >
-                    ✏️ Edit
+                    <Edit className="h-3.5 w-3.5 inline" /> Edit
                   </button>
                 )}
               </div>
@@ -415,7 +415,7 @@ export function VolunteerPortfolio() {
                         variant="secondary"
                         className="gap-1 px-3 py-1.5 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                       >
-                        🌱 {s}
+                        <Leaf className="h-3 w-3 inline" /> {s}
                       </Badge>
                     ))}
                   </div>
@@ -432,7 +432,7 @@ export function VolunteerPortfolio() {
                         key={i}
                         className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 group"
                       >
-                        🌱 {s}
+                        <Leaf className="h-3 w-3 inline" /> {s}
                         <button
                           type="button"
                           onClick={() => handleRemoveSkill(i)}
@@ -508,7 +508,7 @@ export function VolunteerPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
                   Karma
                 </span>
-                <span className="text-xl">✨</span>
+                <Sparkles className="h-5 w-5 text-emerald-500" />
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
                 {profile?.karma_points ?? 0}
@@ -535,7 +535,7 @@ export function VolunteerPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-200">
                   Day Streak
                 </span>
-                <span className="text-xl animate-float">🔥</span>
+                <Flame className="h-5 w-5 text-amber-500 animate-float" />
               </div>
               <p className="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">
                 {profile?.streak ?? 0}
@@ -554,7 +554,7 @@ export function VolunteerPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
                   Dedicated Hours
                 </span>
-                <span className="text-xl">⏳</span>
+                <Hourglass className="h-5 w-5 text-blue-500" />
               </div>
               <p className="mt-2 text-3xl font-black text-slate-800 dark:text-slate-100">
                 {totalHours}h
@@ -579,7 +579,7 @@ export function VolunteerPortfolio() {
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
                   Eco-Savings
                 </span>
-                <span className="text-xl animate-bounce">🌳</span>
+                <Leaf className="h-5 w-5 text-emerald-500 animate-bounce" />
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
                 {co2SavedKg >= 1
@@ -600,7 +600,7 @@ export function VolunteerPortfolio() {
               {orgInfo && (
                 <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Building2Icon className="h-4 w-4 text-emerald-600" />
+                    <Building2 className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
                       Your Organization
                     </span>
@@ -650,7 +650,7 @@ export function VolunteerPortfolio() {
           {/* Completed Gigs List / Timeline */}
           <Card>
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-              <span>📋</span> Completed Gigs & Achievements
+              <ClipboardList className="h-5 w-5" /> Completed Gigs & Achievements
             </h2>
             <p className="text-xs font-bold text-slate-400 mt-0.5">
               Verified volunteer history with downloadable impact certificates.
@@ -659,7 +659,7 @@ export function VolunteerPortfolio() {
             <div className="mt-6 space-y-4">
               {completed.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 p-8 text-center">
-                  <span className="text-3xl select-none">🌱</span>
+                  <Leaf className="h-8 w-8 text-emerald-300" />
                   <p className="mt-2 text-sm font-extrabold text-slate-600 dark:text-slate-300">
                     No completed gigs logged yet
                   </p>
@@ -686,14 +686,14 @@ export function VolunteerPortfolio() {
                     >
                       <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                          🏅
+                          <Award className="h-5 w-5" />
                         </span>
                         <div>
                           <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors">
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
-                            <span>📅 {dateStr}</span>
+                            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateStr}</span>
                             <span className="text-slate-300">•</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified
@@ -704,14 +704,14 @@ export function VolunteerPortfolio() {
 
                       <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-slate-50 dark:border-slate-700 pt-2 sm:pt-0">
                         <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2.5 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-600/50">
-                          ⏱️ {p.hours ?? 0} hours
+                          <Clock className="h-3.5 w-3.5 inline" /> {p.hours ?? 0} hours
                         </span>
                         <button
                           type="button"
                           onClick={() => handleViewCert(p, gigTitle, rawDate || '')}
                           className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-xs dark:shadow-none dark:shadow-slate-900/50 transition-all cursor-pointer active:scale-95"
                         >
-                          📜 View Certificate
+                          <ClipboardList className="h-3.5 w-3.5 inline" /> View Certificate
                         </button>
                       </div>
                     </div>
@@ -767,7 +767,7 @@ export function VolunteerPortfolio() {
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 dark:bg-slate-900 hover:bg-slate-900 dark:hover:bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md dark:shadow-none dark:shadow-slate-900/50 shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
               >
-                🖨️ Print Certificate
+                <Printer className="h-4 w-4 inline" /> Print Certificate
               </button>
               <button
                 onClick={() => setSelectedCert(null)}

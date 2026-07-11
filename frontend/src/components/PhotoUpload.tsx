@@ -1,3 +1,4 @@
+import { Camera } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { PhotoUploadStatus } from '../services/storage';
@@ -93,7 +94,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
             onError={() => console.error('Photo display failed:', displaySrc)}
           />
         ) : (
-          <span className="text-2xl">📷</span>
+          <Camera className="h-8 w-8 text-slate-400" />
         )}
       </button>
 
