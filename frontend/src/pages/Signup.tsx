@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Building2, Handshake, Sprout } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -73,7 +74,7 @@ export function Signup() {
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center space-y-2 mb-6">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-2xl text-emerald-700 dark:text-emerald-400 shadow-sm dark:shadow-none dark:shadow-slate-900/50 shadow-emerald-500/10">
-            🌱
+            <Sprout className="h-6 w-6" />
           </span>
           <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-slate-100">
             Create Account
@@ -99,7 +100,7 @@ export function Signup() {
                     : 'border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600'
                 }`}
               >
-                <span className="text-xl mb-1">🤝</span>
+                <Handshake className="h-5 w-5 mb-1" />
                 <span className="text-xs font-extrabold">Volunteer</span>
                 <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 mt-0.5 leading-tight">
                   Help out & earn points
@@ -114,7 +115,7 @@ export function Signup() {
                     : 'border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600'
                 }`}
               >
-                <span className="text-xl mb-1">🏢</span>
+                <Building2 className="h-5 w-5 mb-1" />
                 <span className="text-xs font-extrabold">NGO / Cause</span>
                 <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 mt-0.5 leading-tight">
                   Post gigs & find help
