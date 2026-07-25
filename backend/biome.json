@@ -35,6 +35,6 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!dist", "!node_modules", "!scripts", "!**/__tests__/**", "!services/__tests__/**"]
+    "includes": ["**", "!dist", "!node_modules", "!scripts"]
   }
 }
