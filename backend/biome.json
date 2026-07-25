@@ -11,7 +11,8 @@
         "noBannedTypes": "warn"
       },
       "style": {
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "noUselessEscapeInRegex": "warn"
       }
     }
   },
