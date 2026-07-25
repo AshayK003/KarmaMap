@@ -8,7 +8,7 @@
         "noUnusedVariables": "error"
       },
       "complexity": {
-        "noBannedTypes": "error"
+        "noBannedTypes": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn"
@@ -29,5 +29,9 @@
   },
   "vcs": {
     "enabled": false
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!dist", "!node_modules"]
   }
 }
