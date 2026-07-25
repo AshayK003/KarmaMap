@@ -75,7 +75,7 @@ export function parseGigLocation(location: unknown): { lat: number; lng: number 
       const lng = new DataView(buf.buffer).getFloat64(0, true);
       for (let i = 0; i < 8; i++) buf[i] = parseInt(location.slice(34 + i * 2, 36 + i * 2), 16);
       const lat = new DataView(buf.buffer).getFloat64(0, true);
-      if (isFinite(lng) && isFinite(lat)) return { lng, lat };
+      if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
     }
   }
   return null;

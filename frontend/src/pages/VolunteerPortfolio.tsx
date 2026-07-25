@@ -1,4 +1,21 @@
 import confetti from 'canvas-confetti';
+import {
+  Award,
+  Building2,
+  Calendar,
+  ClipboardList,
+  Clock,
+  Edit,
+  Eye,
+  Flame,
+  Globe,
+  Hourglass,
+  Leaf,
+  Link,
+  Printer,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Certificate } from '../components/Certificate';
-import { Award, Building2, Calendar, Clock, ClipboardList, Edit, Eye, Flame, Globe, Hourglass, Leaf, Link, Printer, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { Participation } from '../types/database';
@@ -213,8 +229,6 @@ export function VolunteerPortfolio() {
     [completed],
   );
 
-
-
   const { co2SavedKg, treesPlanted } = useMemo(() => {
     const volParsed = profile?.location ? parseGigLocation(profile.location) : null;
 
@@ -262,7 +276,9 @@ export function VolunteerPortfolio() {
         {/* Public Share Panel */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl p-2 shadow-xs dark:shadow-none dark:shadow-slate-900/50 backdrop-blur-sm">
           {!shareUrl ? (
-            <Button onClick={enableSharing}><Globe className="h-4 w-4 mr-1 inline" /> Generate Public Page</Button>
+            <Button onClick={enableSharing}>
+              <Globe className="h-4 w-4 mr-1 inline" /> Generate Public Page
+            </Button>
           ) : (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 select-all overflow-hidden max-w-[240px] truncate">
@@ -291,7 +307,9 @@ export function VolunteerPortfolio() {
                   </Button>
                 )}
                 <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline"><Eye className="h-4 w-4 mr-1 inline" /> View</Button>
+                  <Button variant="outline">
+                    <Eye className="h-4 w-4 mr-1 inline" /> View
+                  </Button>
                 </a>
               </div>
             </>
@@ -569,7 +587,6 @@ export function VolunteerPortfolio() {
                   Avg {(totalHours / completed.length).toFixed(1)}h per gig
                 </p>
               )}
-
             </Card>
 
             {/* Eco-Hero Card */}
@@ -693,7 +710,9 @@ export function VolunteerPortfolio() {
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
-                            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateStr}</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="h-3 w-3" /> {dateStr}
+                            </span>
                             <span className="text-slate-300">•</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified

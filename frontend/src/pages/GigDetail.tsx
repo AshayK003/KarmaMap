@@ -1,3 +1,4 @@
+import { AlertTriangle, Calendar, Clock, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,7 +13,6 @@ import { joinGigViaApi } from '../services/gigs';
 import type { Gig } from '../types/database';
 import { formatDate } from '../utils/format';
 import { parseGigLocation, skillOverlapScore } from '../utils/geo';
-import { AlertTriangle, Calendar, Clock, MapPin } from 'lucide-react';
 import {
   getWeatherAdvisory,
   getWeatherDescription,
@@ -297,7 +297,8 @@ export function GigDetail() {
               })}
             </p>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 inline" /> {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
+              <Calendar className="h-3.5 w-3.5 inline" />{' '}
+              {formatDate(gig.gig_date, { hour: 'numeric', minute: '2-digit' })}
             </p>
             {gig.duration && (
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
@@ -391,7 +392,9 @@ export function GigDetail() {
         <div
           className={`mt-4 flex gap-3.5 rounded-2xl border p-4 shadow-2xs backdrop-blur-xs transition-all duration-300 ${advisory.bg}`}
         >
-          <span className="shrink-0 animate-float"><advisory.icon className="h-6 w-6" /></span>
+          <span className="shrink-0 animate-float">
+            <advisory.icon className="h-6 w-6" />
+          </span>
           <div className="space-y-1">
             <h4 className="text-xs font-black uppercase tracking-wider">{advisory.title}</h4>
             <p className="text-xs font-semibold leading-relaxed opacity-95">

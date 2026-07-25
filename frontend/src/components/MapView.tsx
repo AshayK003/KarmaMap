@@ -313,7 +313,9 @@ export const MapView = memo(function MapView({
                   {/* Title + badge */}
                   <div className="flex items-start gap-1.5">
                     {gig.featured_until && new Date(gig.featured_until) > new Date() && (
-                      <span className="shrink-0 inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[9px] font-black text-amber-800 dark:text-amber-400">★ FEATURED</span>
+                      <span className="shrink-0 inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[9px] font-black text-amber-800 dark:text-amber-400">
+                        ★ FEATURED
+                      </span>
                     )}
                     <p className="font-extrabold text-sm text-slate-800 dark:text-slate-100 leading-snug">
                       {gig.title}
@@ -327,43 +329,105 @@ export const MapView = memo(function MapView({
                   <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-100 dark:border-slate-700 pt-2">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
                         Distance
                       </span>
-                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{formatDistance(gig.distance_meters)}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">
+                        {formatDistance(gig.distance_meters)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
                         Spots
                       </span>
-                      <span className="text-slate-700 font-extrabold dark:text-slate-200">{gig.volunteers_joined}/{gig.volunteers_needed}</span>
+                      <span className="text-slate-700 font-extrabold dark:text-slate-200">
+                        {gig.volunteers_joined}/{gig.volunteers_needed}
+                      </span>
                     </div>
                     {gig.duration && (
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1">
-                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M13 10V3L4 14h7v7l9-11h-7z"
+                            />
+                          </svg>
                           Duration
                         </span>
-                        <span className="text-slate-700 font-extrabold dark:text-slate-200">{gig.duration}h</span>
+                        <span className="text-slate-700 font-extrabold dark:text-slate-200">
+                          {gig.duration}h
+                        </span>
                       </div>
                     )}
 
                     {activeRoute && activeRoute.gigId === gig.id ? (
                       <>
-                        <div className={`flex items-center justify-between font-black text-[10px] ${travelMode === 'foot' ? 'text-emerald-700 dark:text-emerald-400' : travelMode === 'bicycle' ? 'text-cyan-700 dark:text-cyan-400' : 'text-indigo-700 dark:text-indigo-400'}`}>
-                          <span className="flex items-center gap-1">{travelMode === 'foot' ? '🚶' : travelMode === 'bicycle' ? '🚲' : '🚗'} Travel</span>
-                          <span>{formatDistance(activeRoute.distance)} · {Math.round(activeRoute.duration / 60)}m</span>
+                        <div
+                          className={`flex items-center justify-between font-black text-[10px] ${travelMode === 'foot' ? 'text-emerald-700 dark:text-emerald-400' : travelMode === 'bicycle' ? 'text-cyan-700 dark:text-cyan-400' : 'text-indigo-700 dark:text-indigo-400'}`}
+                        >
+                          <span className="flex items-center gap-1">
+                            {travelMode === 'foot' ? '🚶' : travelMode === 'bicycle' ? '🚲' : '🚗'}{' '}
+                            Travel
+                          </span>
+                          <span>
+                            {formatDistance(activeRoute.distance)} ·{' '}
+                            {Math.round(activeRoute.duration / 60)}m
+                          </span>
                         </div>
-                        <div className={`flex items-center justify-between text-[10px] font-black ${travelMode !== 'car' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                        <div
+                          className={`flex items-center justify-between text-[10px] font-black ${travelMode !== 'car' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+                        >
                           <span>{travelMode !== 'car' ? '🌱 CO₂ Saved' : '🚗 CO₂ Emitted'}</span>
                           <span>{calculateCo2(activeRoute.distance)}</span>
                         </div>
                       </>
                     ) : loadingRoute ? (
-                      <div className="text-[10px] text-emerald-600 animate-pulse font-extrabold">Calculating route…</div>
+                      <div className="text-[10px] text-emerald-600 animate-pulse font-extrabold">
+                        Calculating route…
+                      </div>
                     ) : (
-                      <div className="text-[10px] text-slate-400 italic">Click marker for route</div>
+                      <div className="text-[10px] text-slate-400 italic">
+                        Click marker for route
+                      </div>
                     )}
                   </div>
 

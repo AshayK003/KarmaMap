@@ -1,9 +1,9 @@
+import { Flame, Sparkles, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Flame, Sparkles, Trophy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LeaderboardEntry {
@@ -13,7 +13,6 @@ interface LeaderboardEntry {
 }
 
 const TIER_COLORS = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
-
 
 export function Leaderboard() {
   const [volunteers, setVolunteers] = useState<LeaderboardEntry[]>([]);
@@ -94,7 +93,9 @@ export function Leaderboard() {
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-black">
                     {isTop3 ? (
-                      <Trophy className={`h-5 w-5 ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-slate-400' : 'text-amber-700'}`} />
+                      <Trophy
+                        className={`h-5 w-5 ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-slate-400' : 'text-amber-700'}`}
+                      />
                     ) : (
                       <span className="text-sm font-bold text-slate-400">#{i + 1}</span>
                     )}

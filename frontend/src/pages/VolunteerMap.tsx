@@ -114,7 +114,9 @@ export function VolunteerMap() {
 
   const filteredGigs = useMemo(() => {
     if (!categoryFilter) return gigs;
-    return gigs.filter((g) => g.required_skills.some((s) => s.toLowerCase() === categoryFilter.toLowerCase()));
+    return gigs.filter((g) =>
+      g.required_skills.some((s) => s.toLowerCase() === categoryFilter.toLowerCase()),
+    );
   }, [gigs, categoryFilter]);
 
   const sortedGigs = useMemo(() => {

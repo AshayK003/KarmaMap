@@ -1,6 +1,6 @@
-import { apiFetch } from '../utils/api';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
+import { apiFetch } from '../utils/api';
 import { compressImage } from './storage';
 
 export async function updateNgoUpi(upi_id: string): Promise<Profile> {

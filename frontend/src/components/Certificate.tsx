@@ -1,4 +1,4 @@
-import { Award, Calendar, Clock, Leaf, Handshake, Sparkles } from 'lucide-react';
+import { Award, Calendar, Clock, Handshake, Leaf, Sparkles } from 'lucide-react';
 import type { Participation } from '../types/database';
 
 interface CertificateProps {
@@ -55,9 +55,13 @@ export function Certificate({
 
       {/* Hours & date */}
       <div className="mx-auto mt-4 inline-flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500">
-        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {participation.hours ?? 0} hours</span>
+        <span className="inline-flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" /> {participation.hours ?? 0} hours
+        </span>
         <span className="text-slate-300">|</span>
-        <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {completedDate}</span>
+        <span className="inline-flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5" /> {completedDate}
+        </span>
       </div>
 
       {/* Divider */}

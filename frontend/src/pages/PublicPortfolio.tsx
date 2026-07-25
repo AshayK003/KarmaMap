@@ -1,8 +1,19 @@
+import {
+  Award,
+  Calendar,
+  ClipboardList,
+  Clock,
+  Flame,
+  Hourglass,
+  Leaf,
+  MapPin,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { Award, Calendar, Clock, ClipboardList, Flame, Hourglass, Leaf, MapPin, Shield, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Participation, Profile } from '../types/database';
 import { formatDate } from '../utils/format';
@@ -278,7 +289,9 @@ export function PublicPortfolio() {
                             {gigTitle}
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-400">
-                            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateStr}</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="h-3 w-3" /> {dateStr}
+                            </span>
                             <span className="text-slate-300">•</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100/50 dark:border-slate-700 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                               Verified Accomplishment

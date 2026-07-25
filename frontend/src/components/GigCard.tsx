@@ -1,9 +1,9 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
 import { joinGigViaApi } from '../services/gigs';
 import type { NearbyGig } from '../types/database';
 import { estimateTravelTime, formatDistance, skillOverlapScore, urgencyLabel } from '../utils/geo';
@@ -14,7 +14,11 @@ interface GigCardProps {
   onJoined?: (gigId: string) => void;
 }
 
-export const GigCard = memo(function GigCard({ gig, volunteerSkills = [], onJoined }: GigCardProps) {
+export const GigCard = memo(function GigCard({
+  gig,
+  volunteerSkills = [],
+  onJoined,
+}: GigCardProps) {
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
   const overlap = skillOverlapScore(gig.required_skills, volunteerSkills);
@@ -101,10 +105,24 @@ export const GigCard = memo(function GigCard({ gig, volunteerSkills = [], onJoin
           {gig.required_skills.map((skill) => {
             const hasSkill = volunteerSkills.some((s) => s.toLowerCase() === skill.toLowerCase());
             return (
-              <Badge key={skill} variant={hasSkill ? 'default' : 'secondary'} className="gap-0.5 text-[10px] sm:text-xs px-2 py-0.5">
+              <Badge
+                key={skill}
+                variant={hasSkill ? 'default' : 'secondary'}
+                className="gap-0.5 text-[10px] sm:text-xs px-2 py-0.5"
+              >
                 {hasSkill && (
-                  <svg className="h-2.5 w-2.5 mr-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="h-2.5 w-2.5 mr-0.5 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3.5"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
                 {skill}
