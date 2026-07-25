@@ -20,35 +20,56 @@ export const optInSchema = z.object({
   opted_in: z.boolean(),
 });
 
+function requireUser(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+  return userId;
+}
+
 async function _getAnalytics(req: AuthRequest, res: Response): Promise<void> {
-  const result = await getOrgAnalytics(req.user!.id);
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const result = await getOrgAnalytics(userId);
   res.json(result);
 }
 
 async function _getMyOrg(req: AuthRequest, res: Response): Promise<void> {
-  const result = await getMyOrg(req.user!.id);
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const result = await getMyOrg(userId);
   res.json({ org: result ?? null });
 }
 
 async function _updateOptIn(req: AuthRequest, res: Response): Promise<void> {
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { opted_in } = req.body as z.infer<typeof optInSchema>;
-  const result = await updateOptIn(req.user!.id, opted_in);
+  const result = await updateOptIn(userId, opted_in);
   res.json({ member: result });
 }
 
 async function _addMember(req: AuthRequest, res: Response): Promise<void> {
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { profile_id, department } = req.body as z.infer<typeof addMemberSchema>;
-  const result = await addOrgMember(req.user!.id, profile_id, department);
+  const result = await addOrgMember(userId, profile_id, department);
   res.status(201).json({ member: result });
 }
 
 async function _getMembers(req: AuthRequest, res: Response): Promise<void> {
-  const members = await getOrgMembers(req.user!.id);
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const members = await getOrgMembers(userId);
   res.json({ members });
 }
 
 async function _getOrgName(req: AuthRequest, res: Response): Promise<void> {
-  const name = await getOrgName(req.user!.id);
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const name = await getOrgName(userId);
   res.json({ name });
 }
 

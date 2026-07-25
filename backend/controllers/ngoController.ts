@@ -4,7 +4,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import type { AuthRequest } from '../middleware/auth.js';
 import { updateUpiInfo as updateUpiService } from '../services/ngoService.js';
 
-const upiIdPattern = /^[\w.\-_]+@[\w.\-]+$/;
+const upiIdPattern = /^[\w.-]+@[\w.-]+$/;
 
 export const updateUpiSchema = z.object({
   upi_id: z.string().regex(upiIdPattern, 'Invalid UPI ID format').optional(),
@@ -29,7 +29,11 @@ export const updateUpiSchema = z.object({
 });
 
 async function _updateUpi(req: AuthRequest, res: Response): Promise<void> {
-  const ngoId = req.user!.id;
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
   const { upi_id, upi_qr_url } = req.body as z.infer<typeof updateUpiSchema>;
 
   const profile = await updateUpiService(ngoId, upi_id, upi_qr_url);

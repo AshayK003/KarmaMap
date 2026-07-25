@@ -24,14 +24,22 @@ export const createGigSchema = z.object({
 
 async function _createGig(req: AuthRequest, res: Response): Promise<void> {
   const body = req.body as CreateGigInput;
-  const ngoId = req.user!.id;
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
   const result = await createGigService(ngoId, body);
   res.status(201).json(result);
 }
 
 async function _getNgoAnalytics(req: AuthRequest, res: Response): Promise<void> {
-  const ngoId = req.user!.id;
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
   const result = await getAnalyticsService(ngoId);
   res.json(result);
 }
@@ -48,8 +56,13 @@ async function _featureGig(req: AuthRequest, res: Response): Promise<void> {
   }
 
   const { hours } = req.body as z.infer<typeof featureGigSchema>;
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
-  const result = await featureGigService(gigId, req.user!.id, hours);
+  const result = await featureGigService(gigId, ngoId, hours);
   res.json(result);
 }
 
@@ -60,7 +73,13 @@ async function _triggerMatching(req: AuthRequest, res: Response): Promise<void> 
     return;
   }
 
-  const result = await triggerMatchingService(gigId, req.user!.id);
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const result = await triggerMatchingService(gigId, ngoId);
   res.json(result);
 }
 
