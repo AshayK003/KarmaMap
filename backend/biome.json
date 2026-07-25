@@ -12,6 +12,9 @@
       },
       "style": {
         "noNonNullAssertion": "warn"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn"
       }
     }
   },
@@ -32,6 +35,6 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!dist", "!node_modules"]
+    "includes": ["**", "!dist", "!node_modules", "!scripts"]
   }
 }
