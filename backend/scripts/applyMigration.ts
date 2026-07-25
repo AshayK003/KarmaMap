@@ -11,7 +11,11 @@ const MIGRATION_PATH = path.resolve(
 );
 
 const sql = fs.readFileSync(MIGRATION_PATH, 'utf-8');
-const password = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const password = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!password) {
+  console.log('SUPABASE_SERVICE_ROLE_KEY not set');
+  process.exit(0);
+}
 
 const REGIONS = ['us-east-1', 'eu-west-1', 'ap-south-1', 'ap-southeast-1'];
 
