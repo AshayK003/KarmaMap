@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import compression from 'compression';
@@ -11,6 +12,7 @@ import ngoRoutes from './routes/ngo.js';
 import organizationRoutes from './routes/organizations.js';
 import participationRoutes from './routes/participations.js';
 import { logger } from './src/lib/logger.js';
+import { supabaseAdmin } from './services/supabase.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
@@ -19,21 +21,32 @@ export function createApp() {
   const app = express();
   const isDev = process.env.NODE_ENV !== 'production';
 
+  // Fail fast on a missing production origin instead of silently trusting
+  // localhost with credentials.
+  if (!isDev && !process.env.FRONTEND_URL) {
+    throw new Error('FRONTEND_URL must be set when NODE_ENV=production');
+  }
+
   app.use(helmet());
   app.use(compression());
   app.use(
     cors({
-      origin: isDev ? true : process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: isDev ? true : process.env.FRONTEND_URL,
       credentials: true,
     }),
   );
   app.use(express.json({ limit: '1mb' }));
 
+  // Request ID + structured request logging for log correlation.
   app.use((req, res, next) => {
+    const requestId = randomUUID();
+    req.headers['x-request-id'] = requestId;
+    res.setHeader('X-Request-Id', requestId);
     const start = Date.now();
     res.on('finish', () => {
       logger.info(
         {
+          requestId,
           method: req.method,
           path: req.originalUrl,
           status: res.statusCode,
@@ -54,7 +67,19 @@ export function createApp() {
   });
   app.use('/api/', generalLimiter);
 
-  app.get('/health', (_req, res) => {
+  app.get('/health', async (_req, res) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact', head: true });
+      if (error) {
+        res.status(503).json({ status: 'degraded', service: 'karmamap-api', database: 'down' });
+        return;
+      }
+    } catch {
+      res.status(503).json({ status: 'degraded', service: 'karmamap-api', database: 'unreachable' });
+      return;
+    }
     res.json({ status: 'ok', service: 'karmamap-api' });
   });
 

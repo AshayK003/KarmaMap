@@ -55,11 +55,20 @@ async function runMatching(
   return { matched_count: matched.length, volunteers: matched };
 }
 
+/** Upper bound for featured duration to prevent runaway/abusive requests. */
+export const MAX_FEATURE_HOURS = 24 * 30;
+
 export async function featureGig(
   gigId: string,
   ngoId: string,
   hours: number,
 ): Promise<{ featured_until: string }> {
+  if (!Number.isFinite(hours) || hours <= 0 || hours > MAX_FEATURE_HOURS) {
+    throw Object.assign(new Error(`hours must be between 0 and ${MAX_FEATURE_HOURS}`), {
+      statusCode: 400,
+    });
+  }
+
   await verifyGigOwnership(gigId, ngoId);
 
   const featuredUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();

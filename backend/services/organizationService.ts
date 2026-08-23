@@ -263,6 +263,10 @@ export async function addOrgMember(
     if (error.code === '23505') {
       throw Object.assign(new Error('User is already a member'), { statusCode: 409 });
     }
+    if (error.code === '23503') {
+      // Foreign key violation: the target profile does not exist.
+      throw Object.assign(new Error('User not found'), { statusCode: 404 });
+    }
     logger.error({ orgId, targetProfileId, error: error.message }, 'Failed to add member');
     throw new Error('Failed to add member');
   }

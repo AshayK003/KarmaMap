@@ -17,171 +17,117 @@ interface JoinGigResult {
   participation: Record<string, unknown>;
 }
 
+/**
+ * Completes a participation and awards karma in a single database transaction
+ * (complete_participation RPC). The RPC verifies the participation belongs to
+ * the volunteer, guards against double completion, and only awards karma after
+ * the status update succeeds — so a failure can never pay karma for work that
+ * was not recorded.
+ */
 export async function completeParticipation(
   participationId: string,
   volunteerId: string,
   input: CompleteGigInput,
 ): Promise<CompleteGigResult> {
-  const { data: participation, error: fetchError } = await supabaseAdmin
-    .from('participations')
-    .select('gig_id')
-    .eq('id', participationId)
-    .eq('volunteer_id', volunteerId)
-    .single();
+  const { data, error } = await supabaseAdmin.rpc('complete_participation', {
+    p_participation_id: participationId,
+    p_volunteer_id: volunteerId,
+    p_hours: input.hours,
+    p_before_photo_url: input.before_photo_url ?? null,
+    p_after_photo_url: input.after_photo_url ?? null,
+  });
 
-  if (fetchError || !participation) {
+  if (error || !data) {
     logger.error(
-      { participationId, volunteerId, error: fetchError?.message },
-      'Participation not found for completion',
+      { participationId, volunteerId, error: error?.message },
+      'Atomic participation completion failed',
     );
-    throw new Error('Participation not found');
+    throw Object.assign(new Error('Failed to complete participation'), { statusCode: 400 });
   }
 
-  const { data: gig } = await supabaseAdmin
-    .from('gigs')
-    .select('title')
-    .eq('id', participation.gig_id)
-    .single();
+  const participation = data as Record<string, unknown>;
+  // The RPC awards round(hours * 10) points atomically alongside the update.
+  const karmaEarned = Math.round(input.hours * 10);
 
-  const gigTitle = gig?.title ?? 'Gig';
+  notifyAndEmail(volunteerId, participation, String(participation.gig_id ?? ''), karmaEarned);
 
-  const karmaEarned = await awardKarma(volunteerId, input.hours);
+  return { participation, karma_earned: karmaEarned };
+}
 
-  const { data: updated, error: updateError } = await supabaseAdmin
-    .from('participations')
-    .update({
-      status: 'completed',
-      hours: input.hours,
-      before_photo_url: input.before_photo_url,
-      after_photo_url: input.after_photo_url,
-    })
-    .eq('id', participationId)
-    .eq('volunteer_id', volunteerId)
-    .select()
-    .single();
-
-  if (updateError || !updated) {
-    logger.error(
-      { participationId, error: updateError?.message },
-      'Failed to update participation after karma award',
-    );
-    throw new Error('Failed to complete participation');
-  }
-
-  const [profile, notifResult] = await Promise.all([
-    supabaseAdmin.from('profiles').select('name').eq('id', volunteerId).single(),
-    supabaseAdmin
-      .from('notifications')
-      .insert({
+/** Best-effort notification + email; failures are logged, never thrown. */
+async function notifyAndEmail(
+  volunteerId: string,
+  participation: Record<string, unknown>,
+  _gigId: string,
+  karmaEarned: number,
+): Promise<void> {
+  try {
+    const gigTitle = await fetchGigTitleForParticipation(participation);
+    const [profileResult, notifResult] = await Promise.all([
+      supabaseAdmin.from('profiles').select('name').eq('id', volunteerId).single(),
+      supabaseAdmin.from('notifications').insert({
         user_id: volunteerId,
         message: `You earned ${karmaEarned} karma points for completing "${gigTitle}"!`,
         read_status: false,
       }),
-  ]);
+    ]);
 
-  if (notifResult?.error) {
-    logger.warn(
-      { participationId, error: notifResult.error.message },
-      'Failed to insert completion notification',
-    );
-  }
+    if (notifResult.error) {
+      logger.warn({ error: notifResult.error.message }, 'Failed to insert completion notification');
+    }
 
-  try {
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(volunteerId);
     if (user?.user?.email) {
-      await sendCompletionEmail(user.user.email, profile?.data?.name ?? 'Volunteer', gigTitle);
+      await sendCompletionEmail(user.user.email, profileResult.data?.name ?? 'Volunteer', gigTitle);
     }
   } catch {
-    logger.warn({ volunteerId }, 'Failed to send completion email');
+    logger.warn({ volunteerId }, 'Post-completion notification/email failed');
   }
-
-  return { participation: updated, karma_earned: karmaEarned };
 }
 
-export async function joinGig(gigId: string, volunteerId: string): Promise<JoinGigResult> {
-  const { data: gig, error: gigError } = await supabaseAdmin
+async function fetchGigTitleForParticipation(
+  participation: Record<string, unknown>,
+): Promise<string> {
+  const gigId = participation.gig_id;
+  if (typeof gigId !== 'string') return 'Gig';
+  const { data: gig } = await supabaseAdmin
     .from('gigs')
-    .select('status, volunteers_needed, volunteers_joined')
+    .select('title')
     .eq('id', gigId)
     .single();
+  return gig?.title ?? 'Gig';
+}
 
-  if (gigError || !gig) {
-    logger.error({ gigId, error: gigError?.message }, 'Gig not found for join');
-    throw Object.assign(new Error('Gig not found'), { statusCode: 404 });
-  }
+/**
+ * Joins a gig through the join_gig RPC, which locks the gig row, re-checks
+ * capacity inside the transaction, inserts the participation, and increments
+ * the counter atomically. Concurrent joins can no longer overflow capacity.
+ */
+export async function joinGig(gigId: string, volunteerId: string): Promise<JoinGigResult> {
+  const { data, error } = await supabaseAdmin.rpc('join_gig', {
+    p_gig_id: gigId,
+    p_volunteer_id: volunteerId,
+  });
 
-  if (gig.status !== 'open' && gig.status !== 'in_progress') {
-    throw Object.assign(new Error('This gig is no longer accepting volunteers'), { statusCode: 400 });
-  }
-
-  if (gig.volunteers_joined >= gig.volunteers_needed) {
-    throw Object.assign(new Error('This gig is full'), { statusCode: 400 });
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from('participations')
-    .insert({
-      volunteer_id: volunteerId,
-      gig_id: gigId,
-      status: 'joined',
-    })
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === '23505') {
+  if (error || !data) {
+    const message = error?.message ?? 'Failed to join gig';
+    if (message.includes('already joined')) {
       throw Object.assign(new Error('You have already joined this gig.'), { statusCode: 409 });
     }
-    logger.error({ gigId, volunteerId, error: error.message }, 'Failed to join gig');
+    if (message.includes('full')) {
+      throw Object.assign(new Error('This gig is full'), { statusCode: 400 });
+    }
+    if (message.includes('not found')) {
+      throw Object.assign(new Error('Gig not found'), { statusCode: 404 });
+    }
+    if (message.includes('no longer accepting')) {
+      throw Object.assign(new Error('This gig is no longer accepting volunteers'), {
+        statusCode: 400,
+      });
+    }
+    logger.error({ gigId, volunteerId, error: message }, 'Atomic gig join failed');
     throw Object.assign(new Error('Failed to join gig'), { statusCode: 400 });
   }
 
-  return { participation: data };
-}
-
-export async function awardKarma(volunteerId: string, hours: number): Promise<number> {
-  const karmaEarned = Math.round(hours * 10);
-
-  const { data, error } = await supabaseAdmin.rpc('award_karma', {
-    p_user_id: volunteerId,
-    p_hours: hours,
-  });
-
-  if (!error && typeof data === 'number') {
-    return data;
-  }
-
-  logger.warn(
-    { volunteerId, error: error?.message },
-    'award_karma RPC unavailable, falling back to direct update',
-  );
-
-  const { data: profile, error: fetchError } = await supabaseAdmin
-    .from('profiles')
-    .select('karma_points, streak')
-    .eq('id', volunteerId)
-    .single();
-
-  if (fetchError) {
-    logger.error({ volunteerId, error: fetchError.message }, 'Failed to fetch profile for karma');
-    throw Object.assign(new Error('Failed to award karma'), { statusCode: 400 });
-  }
-
-  const currentKarma = profile?.karma_points ?? 0;
-  const currentStreak = profile?.streak ?? 0;
-
-  const { error: updateError } = await supabaseAdmin
-    .from('profiles')
-    .update({
-      karma_points: currentKarma + karmaEarned,
-      streak: currentStreak + 1,
-    })
-    .eq('id', volunteerId);
-
-  if (updateError) {
-    logger.error({ volunteerId, error: updateError.message }, 'Failed to update karma');
-    throw Object.assign(new Error('Failed to award karma'), { statusCode: 400 });
-  }
-
-  return karmaEarned;
+  return { participation: data as Record<string, unknown> };
 }

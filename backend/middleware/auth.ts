@@ -6,6 +6,33 @@ export interface AuthRequest extends Request {
   user?: { id: string; role?: string };
 }
 
+/**
+ * Short-lived in-memory cache of profile roles. Saves one profiles query per
+ * authenticated request; entries expire quickly so role changes propagate
+ * within ROLE_TTL_MS.
+ */
+const ROLE_TTL_MS = 60_000;
+const ROLE_CACHE_MAX = 5_000;
+const roleCache = new Map<string, { role?: string; expiresAt: number }>();
+
+function getCachedRole(userId: string): { role?: string } | undefined {
+  const hit = roleCache.get(userId);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expiresAt) {
+    roleCache.delete(userId);
+    return undefined;
+  }
+  return hit;
+}
+
+function setCachedRole(userId: string, role?: string): void {
+  if (roleCache.size >= ROLE_CACHE_MAX && !roleCache.has(userId)) {
+    const firstKey = roleCache.keys().next().value;
+    if (firstKey !== undefined) roleCache.delete(firstKey);
+  }
+  roleCache.set(userId, { role, expiresAt: Date.now() + ROLE_TTL_MS });
+}
+
 export async function verifyJwt(
   req: AuthRequest,
   res: Response,
@@ -28,13 +55,21 @@ export async function verifyJwt(
       return;
     }
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
+    const userId = data.user.id;
+    const cached = getCachedRole(userId);
+    let role = cached?.role;
 
-    req.user = { id: data.user.id, role: profile?.role };
+    if (!cached) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      role = profile?.role;
+      setCachedRole(userId, role);
+    }
+
+    req.user = { id: userId, role };
     next();
   } catch {
     logger.warn({ path: req.originalUrl }, 'Auth verification threw');

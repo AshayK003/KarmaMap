@@ -12,3 +12,15 @@ export function validateBody<T>(schema: ZodType<T>) {
     next();
   };
 }
+
+/** Validates req.params against a schema (e.g. UUID checks on route IDs). */
+export function validateParams(schema: ZodType<Record<string, unknown>>) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.params);
+    if (!result.success) {
+      res.status(400).json({ error: 'Invalid route parameters' });
+      return;
+    }
+    next();
+  };
+}
