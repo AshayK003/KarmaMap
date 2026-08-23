@@ -19,3 +19,7 @@ caddy_config/
 
 # Internal files
 internals/
+
+# Scratch artifacts
+backend/npm
+backend/temp_*.txt

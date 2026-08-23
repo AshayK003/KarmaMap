@@ -214,26 +214,12 @@ KarmaMap/
 │   │   └── types/              # TypeScript type definitions
 │   └── package.json
 ├── supabase/
-│   └── migrations/             # Database migrations (13 SQL files)
-├── docs/                       # Architecture, ADRs, deployment guides
-│   ├── architecture/
-│   ├── decisions/
-│   ├── deployment/
-│   └── flows/
+│   └── migrations/             # Database migrations (17 SQL files)
+├── CHANGELOG.md                # Release notes
 ├── .env.example                # Environment template
-├── vercel.json                 # Frontend deployment config
-└── docker-compose.yml
+├── vercel.json                 # Frontend deployment config (proxies /api to the backend)
+└── render.yaml                 # Backend deployment config
 ```
-
-## Documentation
-
-All architectural decisions, deployment guides, data flows, and design rationale live in the [`docs/`](docs/) directory:
-
-- **[Architecture Records](docs/decisions/)** — ADRs documenting key technical decisions and trade-offs
-- **[Deployment Guide](docs/deployment.md)** — Docker Compose + Caddy + VPS deployment runbook
-- **[Testing Strategy](docs/testing-strategy.md)** — Test pyramid, 75-test plan, sprint breakdown
-- **[Data Flows](docs/flows/)** — User journey maps and system interaction diagrams
-- **[Bug Reports](docs/bugs/)** — Reproduced issues with root cause analysis
 
 ## Testing
 
@@ -248,7 +234,9 @@ cd frontend && npm test
 npm run test:watch
 ```
 
-Both use **Vitest** as the test runner. Backend API tests use **Supertest** for HTTP assertions.
+Both use **Vitest** as the test runner. Backend API tests use **Supertest** for HTTP assertions. Current suite: **115 backend + 38 frontend tests**, all passing in CI.
+
+> **Note on migrations:** files 00–12 are numbered historically; applying them in filename order on a fresh project yields the full schema (RLS policies, atomic `join_gig`/`complete_participation` functions, public stats RPC, storage buckets). Files 13–16 harden row-level security and make join/complete flows atomic — apply them after the base schema on any existing database.
 
 ## Deployment
 
@@ -260,11 +248,11 @@ docker compose up --build
 
 ### Static Frontend
 
-The frontend builds to `dist/` and can be deployed to any static host (Vercel, Netlify, Cloudflare Pages). A `vercel.json` config is included for Vercel deployments.
+The frontend builds to `dist/` and is deployed to Vercel (`vercel.json` included). The production rewrite proxies `/api/*` to the backend service, so the SPA and API share one origin in production.
 
 ### Backend
 
-The Express server can be deployed to any Node.js host (Railway, Render, Fly.io, or a VPS behind Caddy/Nginx). See [`docs/deployment.md`](docs/deployment.md) for the full VPS + Caddy runbook.
+The Express server deploys via the included `render.yaml` (Docker runtime, health check on `/health`). Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, and optionally the three `EMAILJS_*` variables in the host's dashboard.
 
 ## Contributing
 
@@ -285,7 +273,7 @@ In short:
 
 ### What to avoid
 - New dependencies without discussion
-- Changes to core matching logic without understanding `docs/architecture/`
+- Changes to core matching logic without reading `backend/services/matchingService.ts` first
 - Large refactors without an associated issue
 
 ## License
