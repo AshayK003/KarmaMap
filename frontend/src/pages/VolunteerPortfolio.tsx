@@ -1,4 +1,4 @@
-import confetti from 'canvas-confetti';
+const confetti = () => import('canvas-confetti').then((m) => m.default);
 import {
   Award,
   Building2,
@@ -30,6 +30,7 @@ import { apiFetch } from '../utils/api';
 import { formatDate } from '../utils/format';
 import { calculateHaversineDistance, generatePortfolioSlug, parseGigLocation } from '../utils/geo';
 import { getKarmaLevel } from '../utils/karma';
+import { logger } from '../utils/logger';
 
 export function VolunteerPortfolio() {
   const { profile, user, refreshProfile } = useAuth();
@@ -64,7 +65,7 @@ export function VolunteerPortfolio() {
         .eq('volunteer_id', user.id)
         .eq('status', 'completed')
         .then(({ data }) => setCompleted((data as Participation[]) ?? [])),
-    ).catch((err: unknown) => console.error('Failed to fetch completed gigs:', err));
+    ).catch((err: unknown) => logger.error('Failed to fetch completed gigs:', err));
 
     if (profile?.portfolio_slug) {
       setShareUrl(`${window.location.origin}/p/${profile.portfolio_slug}`);
@@ -96,7 +97,7 @@ export function VolunteerPortfolio() {
       setShareUrl(`${window.location.origin}/p/${slug}`);
       await refreshProfile();
     } catch (err) {
-      console.error('Failed to enable sharing:', err);
+      logger.error('Failed to enable sharing:', err);
     }
   };
 
@@ -110,7 +111,7 @@ export function VolunteerPortfolio() {
       });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      console.error('Sharing failed', err);
+      logger.error('Sharing failed', err);
     }
   };
 
@@ -121,7 +122,7 @@ export function VolunteerPortfolio() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy', err);
+      logger.error('Failed to copy', err);
     }
   };
 
@@ -158,7 +159,7 @@ export function VolunteerPortfolio() {
       await refreshProfile();
       setIsEditingSkills(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setSaveLoading(false);
     }
@@ -172,7 +173,7 @@ export function VolunteerPortfolio() {
       await refreshProfile();
       setIsEditingBio(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setSaveLoading(false);
     }
@@ -189,7 +190,7 @@ export function VolunteerPortfolio() {
       });
       setOrgInfo({ ...orgInfo, opted_in: newVal });
     } catch (err) {
-      console.error('Failed to update sharing preference:', err);
+      logger.error('Failed to update sharing preference:', err);
     } finally {
       setOrgLoading(false);
     }
@@ -204,23 +205,23 @@ export function VolunteerPortfolio() {
 
     try {
       // Cannon from left
-      confetti({
+      void confetti().then((f) => f({
         particleCount: 50,
         angle: 60,
         spread: 60,
         origin: { x: 0, y: 0.8 },
         colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
-      });
+      }))
       // Cannon from right
-      confetti({
+      void confetti().then((f) => f({
         particleCount: 50,
         angle: 120,
         spread: 60,
         origin: { x: 1, y: 0.8 },
         colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
-      });
+      }))
     } catch (e) {
-      console.error('Failed to launch confetti:', e);
+      logger.error('Failed to launch confetti:', e);
     }
   };
 
@@ -229,28 +230,30 @@ export function VolunteerPortfolio() {
     [completed],
   );
 
-  const { co2SavedKg, treesPlanted } = useMemo(() => {
+  // Real, verifiable figure: how far the volunteer traveled to serve,
+  // summed one-way from their saved location to each completed gig's location.
+  const { distanceKm, measuredGigs } = useMemo(() => {
     const volParsed = profile?.location ? parseGigLocation(profile.location) : null;
 
-    let totalCo2SavedMeters = 0;
+    let totalMeters = 0;
+    let measured = 0;
     for (const p of completed) {
       const gigLoc = (p as unknown as Record<string, unknown> & { gigs?: { location?: unknown } })
         ?.gigs?.location;
       if (volParsed && gigLoc) {
         const gigParsed = parseGigLocation(gigLoc);
         if (gigParsed) {
-          const distance = calculateHaversineDistance(
+          totalMeters += calculateHaversineDistance(
             volParsed.lat,
             volParsed.lng,
             gigParsed.lat,
             gigParsed.lng,
           );
-          totalCo2SavedMeters += distance * 2;
+          measured += 1;
         }
       }
     }
-    const c = (totalCo2SavedMeters / 1000) * 0.12;
-    return { co2SavedKg: c, treesPlanted: c / 22 };
+    return { distanceKm: totalMeters / 1000, measuredGigs: measured };
   }, [completed, profile?.location]);
 
   const karma = profile?.karma_points ?? 0;
@@ -589,30 +592,22 @@ export function VolunteerPortfolio() {
               )}
             </Card>
 
-            {/* Eco-Hero Card */}
+            {/* Distance Card — real measured travel, not estimated offsets */}
             <Card className="relative overflow-hidden bg-emerald-50/25 dark:bg-emerald-900/20 p-5 shadow-xs">
               <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-emerald-500/25 blur-xl" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
-                  Eco-Savings
+                  Distance Volunteered
                 </span>
                 <Leaf className="h-5 w-5 text-emerald-500 animate-bounce" />
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">
-                {co2SavedKg >= 1
-                  ? `${co2SavedKg.toFixed(2)} kg`
-                  : `${Math.round(co2SavedKg * 1000)} g`}
+                {distanceKm >= 1 ? `${distanceKm.toFixed(1)} km` : `${Math.round(distanceKm * 1000)} m`}
               </p>
-              <div className="mt-4">
-                <div className="flex justify-between text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 mb-1">
-                  <span>Carbon Offset</span>
-                  <span>{treesPlanted.toFixed(2)} Trees Eq.</span>
-                </div>
-                <Progress
-                  value={Math.min(100, treesPlanted * 100)}
-                  indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500"
-                />
-              </div>
+              <p className="mt-4 text-[10px] font-bold text-slate-400 leading-normal">
+                Total travel across {measuredGigs} location-tracked gig
+                {measuredGigs === 1 ? '' : 's'}, measured from your saved home area.
+              </p>
 
               {orgInfo && (
                 <div className="mt-6 border-t border-slate-100/80 dark:border-slate-700 pt-5">
@@ -777,12 +772,12 @@ export function VolunteerPortfolio() {
               <button
                 onClick={() => {
                   window.print();
-                  confetti({
+                  void confetti().then((f) => f({
                     particleCount: 80,
                     spread: 60,
                     origin: { y: 0.7 },
                     colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
-                  });
+                  }))
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 dark:bg-slate-900 hover:bg-slate-900 dark:hover:bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md dark:shadow-none dark:shadow-slate-900/50 shadow-slate-800/10 transition-all cursor-pointer active:scale-95"
               >

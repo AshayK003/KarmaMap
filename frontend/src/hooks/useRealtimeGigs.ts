@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Gig, Notification } from '../types/database';
+import { logger } from '../utils/logger';
 
 async function enrichGigProfile(gig: Gig): Promise<Gig> {
   if (gig.profiles?.name) return gig;
@@ -42,7 +43,7 @@ export function useRealtimeGigs(ngoId?: string) {
       const { data } = await query.order('created_at', { ascending: false });
       setGigs((data as Gig[]) ?? []);
     } catch (err) {
-      console.error('Failed to fetch gigs:', err);
+      logger.error('Failed to fetch gigs:', err);
     }
   }, [ngoId]);
 
@@ -112,7 +113,7 @@ export function useRealtimeNotifications(userId?: string) {
         .limit(20);
       setNotifications((data as Notification[]) ?? []);
     } catch (err) {
-      console.error('Failed to fetch notifications:', err);
+      logger.error('Failed to fetch notifications:', err);
     }
   }, [userId]);
 
@@ -170,7 +171,7 @@ export function useRealtimeNotifications(userId?: string) {
       await supabase.from('notifications').update({ read_status: true }).eq('id', id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_status: true } : n)));
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+      logger.error('Failed to mark notification as read:', err);
     }
   };
 
@@ -184,7 +185,7 @@ export function useRealtimeNotifications(userId?: string) {
         .eq('read_status', false);
       setNotifications((prev) => prev.map((n) => ({ ...n, read_status: true })));
     } catch (err) {
-      console.error('Failed to mark all notifications as read:', err);
+      logger.error('Failed to mark all notifications as read:', err);
     }
   };
 
@@ -197,6 +198,7 @@ export function useRealtimeParticipations(gigId?: string) {
   useEffect(() => {
     if (!gigId) return;
 
+    // Count active statuses only (pending/cancelled do not occupy a spot).
     const fetchCount = async () => {
       try {
         const { count: c } = await supabase
@@ -206,7 +208,7 @@ export function useRealtimeParticipations(gigId?: string) {
           .in('status', ['joined', 'checked_in', 'completed']);
         setCount(c ?? 0);
       } catch (err) {
-        console.error('Failed to fetch participation count:', err);
+        logger.error('Failed to fetch participation count:', err);
       }
     };
 
@@ -216,23 +218,11 @@ export function useRealtimeParticipations(gigId?: string) {
       .channel(`participations-${gigId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'participations',
-          filter: `gig_id=eq.${gigId}`,
-        },
-        () => setCount((c) => c + 1),
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'participations',
-          filter: `gig_id=eq.${gigId}`,
-        },
-        () => setCount((c) => Math.max(0, c - 1)),
+        { event: '*', schema: 'public', table: 'participations', filter: `gig_id=eq.${gigId}` },
+        // Re-fetch authoritative counts instead of guessing +/- deltas locally;
+        // blind increments drifted from reality when rows were inserted as
+        // 'pending' or cancelled later.
+        fetchCount,
       )
       .subscribe();
 

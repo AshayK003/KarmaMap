@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Profile, UserRole } from '../types/database';
+import { logger } from '../utils/logger';
 
 interface AuthContextValue {
   user: User | null;
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem(cacheKey, JSON.stringify(data));
       }
     } catch (err) {
-      console.error('Failed to fetch profile:', err);
+      logger.error('Failed to fetch profile:', err);
     }
   }, []);
 
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await supabase.from('profiles').update({ role, name, skills }).eq('id', data.user.id);
         } catch (profileErr) {
-          console.error('Failed to update profile after signup:', profileErr);
+          logger.error('Failed to update profile after signup:', profileErr);
         }
       }
 
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.auth.signOut();
     } catch (err) {
-      console.error('Sign out failed:', err);
+      logger.error('Sign out failed:', err);
     }
     setProfile(null);
     for (let i = sessionStorage.length - 1; i >= 0; i--) {

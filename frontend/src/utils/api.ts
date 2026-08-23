@@ -16,7 +16,11 @@ async function tryFetch(url: string, opts: RequestInit): Promise<Response> {
       typeof body.error === 'string'
         ? body.error
         : (body.error?.formErrors?.[0] ?? body.error?.fieldErrors ?? res.statusText);
-    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    throw Object.assign(
+      new Error(typeof msg === 'string' ? msg : JSON.stringify(msg)),
+      // Carry the status so the retry loop can tell permanent from transient.
+      { status: res.status },
+    );
   }
   return res;
 }
@@ -48,6 +52,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
         const res = await tryFetch(url, opts);
         return res.json() as Promise<T>;
       } catch (e) {
+        // 4xx responses are permanent: retrying other URLs or attempts only
+        // amplifies load (up to NxM identical failures). Fail immediately.
+        if (typeof e === 'object' && e !== null && 'status' in e) {
+          const status = (e as { status: number }).status;
+          if (status >= 400 && status < 500) throw e;
+        }
         lastErr = e;
       }
     }

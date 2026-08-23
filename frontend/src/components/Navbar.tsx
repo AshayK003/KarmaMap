@@ -21,6 +21,7 @@ import {
   XIcon,
 } from './NavIcons';
 import { NotificationBell } from './NotificationBell';
+import { logger } from '../utils/logger';
 
 export function Navbar() {
   const { profile, signOut, user } = useAuth();
@@ -33,7 +34,7 @@ export function Navbar() {
     try {
       await signOut();
     } catch (err) {
-      console.error('Sign out failed:', err);
+      logger.error('Sign out failed:', err);
     }
     setMobileOpen(false);
     navigate('/login');

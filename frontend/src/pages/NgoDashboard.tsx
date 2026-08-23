@@ -14,6 +14,7 @@ import { fetchNgoAnalytics } from '../services/gigs';
 import { updateNgoUpi, uploadNgoQrCode } from '../services/ngo';
 import type { GigStatus } from '../types/database';
 import { formatDate } from '../utils/format';
+import { logger } from '../utils/logger';
 
 type FilterKey = 'all' | GigStatus;
 
@@ -89,7 +90,7 @@ export function NgoDashboard() {
   useEffect(() => {
     if (analyticsTimer.current) clearTimeout(analyticsTimer.current);
     analyticsTimer.current = setTimeout(() => {
-      fetchNgoAnalytics().then(setAnalytics).catch(console.error);
+      fetchNgoAnalytics().then(setAnalytics).catch(logger.error);
     }, 2000);
     return () => {
       if (analyticsTimer.current) clearTimeout(analyticsTimer.current);

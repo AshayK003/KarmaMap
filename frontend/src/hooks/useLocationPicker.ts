@@ -1,9 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useGeolocation } from './useGeolocation';
 
-/** Lucknow RDSO area — handy preset when GPS differs between devices */
-export const PRESET_LUCKNOW_RDSO = { lat: 26.8193, lng: 80.8853, label: 'Lucknow (RDSO)' };
-
 export function useLocationPicker() {
   const geo = useGeolocation();
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { PhotoUploadStatus } from '../services/storage';
 import { compressAndUpload, createLocalPreview, revokePreview } from '../services/storage';
+import { logger } from '../utils/logger';
 
 interface PhotoUploadProps {
   label: string;
@@ -91,7 +92,7 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
             src={displaySrc}
             alt={label}
             className="w-full h-auto rounded-lg object-contain"
-            onError={() => console.error('Photo display failed:', displaySrc)}
+            onError={() => logger.error('Photo display failed:', displaySrc)}
           />
         ) : (
           <Camera className="h-8 w-8 text-slate-400" />

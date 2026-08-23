@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 
 interface LeaderboardEntry {
   name: string;
@@ -48,7 +49,7 @@ export function Leaderboard() {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
         }),
     )
-      .catch(console.error)
+      .catch(logger.error)
       .finally(() => setLoading(false));
   }, []);
 

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import confetti from 'canvas-confetti';
+const confetti = () => import('canvas-confetti').then((m) => m.default);
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase';
 import { completeParticipationViaApi, joinGigViaApi } from '../services/gigs';
 import type { Participation } from '../types/database';
 import { formatDate } from '../utils/format';
+import { logger } from '../utils/logger';
 
 const schema = z.object({
   hours: z.coerce.number().min(0.5, 'Minimum 0.5 hours').max(24, 'Maximum 24 hours'),
@@ -123,14 +124,14 @@ export function ParticipateGig() {
       await refreshProfile();
 
       try {
-        confetti({
+        void confetti().then((f) => f({
           particleCount: 150,
           spread: 85,
           origin: { y: 0.6 },
           colors: ['#10b981', '#059669', '#34d399', '#6366f1', '#a855f7'],
-        });
+        }))
       } catch (e) {
-        console.error('Failed to launch confetti:', e);
+        logger.error('Failed to launch confetti:', e);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete';
@@ -201,7 +202,7 @@ export function ParticipateGig() {
                   alt="Before"
                   className="w-full h-auto rounded-lg object-contain"
                   onError={() =>
-                    console.error(
+                    logger.error(
                       'Before photo failed to load:',
                       participation.before_photo_url || beforeUrl,
                     )
@@ -217,7 +218,7 @@ export function ParticipateGig() {
                   alt="After"
                   className="w-full h-auto rounded-lg object-contain"
                   onError={() =>
-                    console.error(
+                    logger.error(
                       'After photo failed to load:',
                       participation.after_photo_url || afterUrl,
                     )

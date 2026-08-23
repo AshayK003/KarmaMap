@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabase';
 import type { Participation, Profile } from '../types/database';
 import { formatDate } from '../utils/format';
 import { getKarmaLevel } from '../utils/karma';
+import { logger } from '../utils/logger';
 
 export function PublicPortfolio() {
   const { slug } = useParams<{ slug: string }>();
@@ -32,11 +33,11 @@ export function PublicPortfolio() {
     Promise.resolve(
       supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, bio, skills, karma_points, streak')
         .eq('portfolio_slug', slug)
         .single()
         .then(({ data }) => {
-          setProfile(data);
+          setProfile(data as Partial<Profile> as Profile);
           if (data) {
             Promise.resolve(
               supabase
@@ -49,7 +50,7 @@ export function PublicPortfolio() {
                   setLoading(false);
                 }),
             ).catch((err: unknown) => {
-              console.error('Failed to fetch participations:', err);
+              logger.error('Failed to fetch participations:', err);
               setLoading(false);
             });
           } else {
@@ -57,7 +58,7 @@ export function PublicPortfolio() {
           }
         }),
     ).catch((err: unknown) => {
-      console.error('Failed to fetch profile:', err);
+      logger.error('Failed to fetch profile:', err);
       setLoading(false);
     });
   }, [slug]);

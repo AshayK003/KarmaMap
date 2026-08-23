@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase';
 import { fetchNearbyGigs, updateProfileLocation } from '../services/gigs';
 import type { NearbyGig } from '../types/database';
 import { DEFAULT_RADIUS_METERS, skillOverlapScore } from '../utils/geo';
+import { logger } from '../utils/logger';
 
 const RADIUS_OPTIONS = [
   { label: '10 km', value: 10000 },
@@ -77,11 +78,14 @@ export function VolunteerMap() {
     setLoading(true);
     setLoadError(null);
     try {
-      const locChanged =
-        !lastSavedLoc.current ||
-        lastSavedLoc.current.lat !== lat ||
-        lastSavedLoc.current.lng !== lng;
-      if (locChanged) {
+      // Only sync the stored profile location when the volunteer explicitly
+      // picked a new spot (GPS/manual/search) — not when they pan or click the
+      // map while browsing, which silently rewrote their saved location.
+      const explicitPick = source === 'gps' || source === 'manual' || source === 'search';
+      if (
+        explicitPick &&
+        (!lastSavedLoc.current || lastSavedLoc.current.lat !== lat || lastSavedLoc.current.lng !== lng)
+      ) {
         try {
           await updateProfileLocation(lat, lng);
         } catch {
@@ -93,13 +97,13 @@ export function VolunteerMap() {
       setGigs(data);
       setRefreshCounter((c) => c + 1);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setLoadError(err instanceof Error ? err.message : 'Could not load gigs');
       setGigs([]);
     } finally {
       setLoading(false);
     }
-  }, [lat, lng, radius]);
+  }, [lat, lng, radius, source]);
 
   const debouncedLoadGigs = useCallback(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);

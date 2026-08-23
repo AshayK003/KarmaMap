@@ -19,6 +19,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { Link } from 'react-router-dom';
 import type { NearbyGig } from '../types/database';
 import { formatDistance } from '../utils/geo';
+import { logger } from '../utils/logger';
 
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -163,7 +164,7 @@ export const MapView = memo(function MapView({
           });
         }
       } catch (err) {
-        console.error('Error fetching OSRM route:', err);
+        logger.error('Error fetching OSRM route:', err);
       } finally {
         if (isMounted) setLoadingRoute(false);
       }

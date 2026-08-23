@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '');
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -11,7 +12,7 @@ export const supabaseConfigOk = Boolean(
 );
 
 if (!supabaseConfigOk) {
-  console.error(
+  logger.error(
     '[KarmaMap] Missing Supabase config. Copy frontend/.env.example to frontend/.env, ' +
       'add your Project URL and publishable/anon key, then restart npm run dev.',
   );

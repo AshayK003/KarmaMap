@@ -3,6 +3,7 @@ import { Progress } from '@/components/ui/progress';
 import { updateGigStatus } from '../services/gigs';
 import type { Gig, GigStatus } from '../types/database';
 import { parseGigLocation } from '../utils/geo';
+import { logger } from '../utils/logger';
 
 interface NgoGigCardProps {
   gig: Gig;
@@ -93,7 +94,7 @@ export const NgoGigCard = memo(function NgoGigCard({ gig, onUpdated }: NgoGigCar
       onUpdated();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? String(err);
-      console.error('[NgoGigCard] Action failed:', err);
+      logger.error('[NgoGigCard] Action failed:', err);
       setError(msg);
     } finally {
       setBusy(false);

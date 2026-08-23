@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_CENTER } from '../utils/geo';
 
 interface GeoState {
@@ -6,33 +6,53 @@ interface GeoState {
   lng: number;
   loading: boolean;
   error: string | null;
+  /** True when coordinates come from the local cache, not a live GPS fix. */
+  stale: boolean;
 }
 
 const LS_KEY = 'karmamap_last_position';
+/** Cached positions older than this are ignored entirely. */
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-function loadCachedPosition(): [number, number] | null {
+interface CachedPosition {
+  coords: [number, number];
+  savedAt: number;
+}
+
+function loadCachedPosition(): CachedPosition | null {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
-    const [lat, lng] = JSON.parse(raw);
-    if (typeof lat === 'number' && typeof lng === 'number') return [lat, lng];
-  } catch {}
-  return null;
+    const parsed = JSON.parse(raw);
+    const coords: [number, number] | null =
+      Array.isArray(parsed) && typeof parsed[0] === 'number' ? [parsed[0], parsed[1]] : null;
+    if (coords) return { coords, savedAt: Date.now() };
+    // New format with timestamp.
+    if (parsed?.coords && typeof parsed.savedAt === 'number') {
+      if (Date.now() - parsed.savedAt > CACHE_MAX_AGE_MS) return null;
+      return { coords: parsed.coords as [number, number], savedAt: parsed.savedAt };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function savePosition(lat: number, lng: number) {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify([lat, lng]));
+    localStorage.setItem(LS_KEY, JSON.stringify({ coords: [lat, lng], savedAt: Date.now() }));
   } catch {}
 }
 
 export function useGeolocation() {
-  const cached = loadCachedPosition();
+  // Read the cache once per hook instance, not on every render.
+  const initial = useMemo(() => loadCachedPosition(), []);
   const [state, setState] = useState<GeoState>({
-    lat: cached?.[0] ?? DEFAULT_CENTER[0],
-    lng: cached?.[1] ?? DEFAULT_CENTER[1],
+    lat: initial?.coords[0] ?? DEFAULT_CENTER[0],
+    lng: initial?.coords[1] ?? DEFAULT_CENTER[1],
     loading: true,
     error: null,
+    stale: initial !== null,
   });
 
   const refresh = useCallback(() => {
@@ -53,7 +73,7 @@ export function useGeolocation() {
       (pos) => {
         const { latitude, longitude } = pos.coords;
         savePosition(latitude, longitude);
-        setState({ lat: latitude, lng: longitude, loading: false, error: null });
+        setState({ lat: latitude, lng: longitude, loading: false, error: null, stale: false });
       },
       () => {
         // Phase 2: fallback to low accuracy
@@ -61,15 +81,16 @@ export function useGeolocation() {
           (pos) => {
             const { latitude, longitude } = pos.coords;
             savePosition(latitude, longitude);
-            setState({ lat: latitude, lng: longitude, loading: false, error: null });
+            setState({ lat: latitude, lng: longitude, loading: false, error: null, stale: false });
           },
           (err) => {
             const cached = loadCachedPosition();
             setState({
-              lat: cached?.[0] ?? DEFAULT_CENTER[0],
-              lng: cached?.[1] ?? DEFAULT_CENTER[1],
+              lat: cached?.coords[0] ?? DEFAULT_CENTER[0],
+              lng: cached?.coords[1] ?? DEFAULT_CENTER[1],
               loading: false,
               error: err.message,
+              stale: cached !== null,
             });
           },
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 },

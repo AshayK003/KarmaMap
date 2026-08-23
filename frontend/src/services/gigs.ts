@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Gig, GigStatus, NearbyGig } from '../types/database';
 import { apiFetch } from '../utils/api';
+import { logger } from '../utils/logger';
 
 export async function fetchNearbyGigs(
   lat: number,
@@ -72,7 +73,7 @@ export async function updateGigStatus(gigId: string, status: GigStatus) {
     .single();
 
   if (error) {
-    console.error('[updateGigStatus] Supabase error:', JSON.stringify(error));
+    logger.error('[updateGigStatus] Supabase error:', JSON.stringify(error));
     throw error;
   }
   return data as Gig;

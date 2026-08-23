@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Building2Icon, UserCircleIcon, UsersIcon } from '../components/NavIcons';
 import type { OrganizationMember } from '../types/database';
 import { apiFetch } from '../utils/api';
+import { logger } from '../utils/logger';
 
 export function OrganizationManage() {
   const [orgName, setOrgName] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function OrganizationManage() {
       setMembers(membersRes.members);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load organization';
-      console.error('OrganizationManage fetch error:', msg);
+      logger.error('OrganizationManage fetch error:', msg);
       setError(msg);
     } finally {
       setLoading(false);

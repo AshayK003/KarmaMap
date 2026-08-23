@@ -13,12 +13,13 @@ import { joinGigViaApi } from '../services/gigs';
 import type { Gig } from '../types/database';
 import { formatDate } from '../utils/format';
 import { parseGigLocation, skillOverlapScore } from '../utils/geo';
+import { logger } from '../utils/logger';
 import {
   getWeatherAdvisory,
   getWeatherDescription,
   type WeatherForecast,
   WeatherIcon,
-} from '../utils/weather.tsx';
+} from '../components/Weather';
 
 export function GigDetail() {
   const { id } = useParams<{ id: string }>();
@@ -112,7 +113,7 @@ export function GigDetail() {
           sessionStorage.setItem(cacheKey, JSON.stringify({ data: wf, ts: Date.now() }));
         }
       })
-      .catch((err) => console.error('Error fetching weather:', err))
+      .catch((err) => logger.error('Error fetching weather:', err))
       .finally(() => setLoadingWeather(false));
   }, [gig]);
 

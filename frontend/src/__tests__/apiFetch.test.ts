@@ -65,4 +65,43 @@ describe('apiFetch', () => {
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(call[1].headers.Authorization).toBe('Bearer test-token');
   });
+
+  it('fails fast on 4xx without retrying other URLs or attempts', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({ error: 'Gig not found' }),
+      statusText: 'Not Found',
+    } as Response);
+
+    const { apiFetch } = await import('../utils/api');
+    // In the default (no VITE_API_URL) configuration there are two candidate
+    // URLs and 4 attempts — a 4xx must short-circuit to exactly one fetch.
+    await expect(apiFetch('/test')).rejects.toThrow('Gig not found');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries on 5xx across attempts before giving up', async () => {
+    vi.useFakeTimers();
+    try {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: () => Promise.resolve({ error: 'unavailable' }),
+        statusText: 'Service Unavailable',
+      } as Response);
+
+      const { apiFetch } = await import('../utils/api');
+      const pending = apiFetch('/test').catch((e) => e);
+      // Flush all retry backoffs (500 + 1000 + 2000 ms).
+      await vi.advanceTimersByTimeAsync(4000);
+      const err = await pending;
+
+      expect(err).toBeInstanceOf(Error);
+      // Two candidate URLs x four attempts.
+      expect(global.fetch).toHaveBeenCalledTimes(8);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
