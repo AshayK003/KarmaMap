@@ -43,10 +43,65 @@ beforeEach(() => {
 });
 
 describe('GET /health', () => {
-  it('returns ok status', async () => {
+  it('returns ok status when database is reachable', async () => {
     const res = await supertest(app).get('/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', service: 'karmamap-api' });
+  });
+
+  it('returns 503 when the database check fails', async () => {
+    const { supabaseAdmin } = await import('../../services/supabase.js');
+    // One-shot override so later tests keep the default mock behaviour.
+    (supabaseAdmin.from as ReturnType<typeof vi.fn>).mockImplementationOnce(
+      () =>
+        ({
+          select: vi
+            .fn()
+            .mockResolvedValue({ count: null, error: { message: 'db down' } }),
+        }) as unknown as ReturnType<typeof supabaseAdmin.from>,
+    );
+
+    const res = await supertest(app).get('/health');
+    expect(res.status).toBe(503);
+    expect(res.body.status).toBe('degraded');
+  });
+});
+
+describe('route parameter validation', () => {
+  it('returns 400 for a non-UUID gigId on POST /api/gigs/:gigId/match', async () => {
+    const res = await supertest(app)
+      .post('/api/gigs/not-a-uuid/match')
+      .set('Authorization', 'Bearer test');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid route parameters');
+  });
+
+  it('returns 400 for a non-UUID participationId on PATCH complete', async () => {
+    mockUserRole = 'volunteer';
+    const res = await supertest(app)
+      .patch('/api/participations/nope/complete')
+      .set('Authorization', 'Bearer test')
+      .send({ hours: 2 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid route parameters');
+  });
+
+  it('accepts valid UUIDs and proceeds past validation', async () => {
+    const res = await supertest(app)
+      .post('/api/gigs/11111111-1111-4111-8111-111111111111/match')
+      .set('Authorization', 'Bearer test');
+    // Past param validation: ownership check fails on the default mock → 403.
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('PATCH /api/gigs/:gigId/feature hours cap', () => {
+  it('returns 400 for hours above the 720h cap', async () => {
+    const res = await supertest(app)
+      .patch('/api/gigs/11111111-1111-4111-8111-111111111111/feature')
+      .set('Authorization', 'Bearer test')
+      .send({ hours: 10000 });
+    expect(res.status).toBe(400);
   });
 });
 
@@ -110,9 +165,11 @@ describe('GET /api/gigs/analytics', () => {
 });
 
 describe('PATCH /api/gigs/:gigId/feature', () => {
+  const GIG_ID = '22222222-2222-4222-8222-222222222222';
+
   it('returns 400 for hours=0 (invalid schema)', async () => {
     const res = await supertest(app)
-      .patch('/api/gigs/gig-1/feature')
+      .patch(`/api/gigs/${GIG_ID}/feature`)
       .set('Authorization', 'Bearer test')
       .send({ hours: 0 });
     expect(res.status).toBe(400);
@@ -121,7 +178,7 @@ describe('PATCH /api/gigs/:gigId/feature', () => {
   it('returns 403 when ngo does not own the gig', async () => {
     // Default supabaseAdmin mock: single() returns { data: null } → gig not found → 403
     const res = await supertest(app)
-      .patch('/api/gigs/gig-1/feature')
+      .patch(`/api/gigs/${GIG_ID}/feature`)
       .set('Authorization', 'Bearer test')
       .send({ hours: 2 });
     expect(res.status).toBe(403);
@@ -143,7 +200,7 @@ describe('PATCH /api/gigs/:gigId/feature', () => {
     });
 
     const res = await supertest(app)
-      .patch('/api/gigs/gig-1/feature')
+      .patch(`/api/gigs/${GIG_ID}/feature`)
       .set('Authorization', 'Bearer test')
       .send({ hours: 2 });
     expect(res.status).toBe(200);
@@ -184,7 +241,7 @@ describe('POST /api/gigs/:gigId/match', () => {
     });
 
     const res = await supertest(app)
-      .post('/api/gigs/gig-1/match')
+      .post('/api/gigs/11111111-1111-4111-8111-111111111111/match')
       .set('Authorization', 'Bearer test');
     expect(res.status).toBe(200);
     expect(res.body.matched).toBe(1);
@@ -222,17 +279,19 @@ describe('POST /api/participations/join/:gigId', () => {
     });
 
     const res = await supertest(app)
-      .post('/api/participations/join/gig-1')
+      .post('/api/participations/join/44444444-4444-4444-8444-444444444444')
       .set('Authorization', 'Bearer test');
     expect(res.status).toBe(201);
   });
 });
 
 describe('PATCH /api/participations/:participationId/complete', () => {
+  const PART_ID = '33333333-3333-4333-8333-333333333333';
+
   it('returns 400 for hours out of range (0.1)', async () => {
     mockUserRole = 'volunteer';
     const res = await supertest(app)
-      .patch('/api/participations/part-1/complete')
+      .patch(`/api/participations/${PART_ID}/complete`)
       .set('Authorization', 'Bearer test')
       .send({ hours: 0.1 });
     expect(res.status).toBe(400);
@@ -241,7 +300,7 @@ describe('PATCH /api/participations/:participationId/complete', () => {
   it('returns 400 for hours > 24', async () => {
     mockUserRole = 'volunteer';
     const res = await supertest(app)
-      .patch('/api/participations/part-1/complete')
+      .patch(`/api/participations/${PART_ID}/complete`)
       .set('Authorization', 'Bearer test')
       .send({ hours: 25 });
     expect(res.status).toBe(400);
