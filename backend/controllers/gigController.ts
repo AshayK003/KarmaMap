@@ -45,7 +45,7 @@ async function _getNgoAnalytics(req: AuthRequest, res: Response): Promise<void> 
 }
 
 export const featureGigSchema = z.object({
-  hours: z.number().positive(),
+  hours: z.number().positive().max(24 * 30),
 });
 
 async function _featureGig(req: AuthRequest, res: Response): Promise<void> {
