@@ -70,7 +70,7 @@ export function Home() {
             Hyper-Local Geospatial Volunteer Network
           </Badge>
 
-          <h1 className="text-4xl font-black tracking-tight text-slate-800 dark:text-slate-100 sm:text-6xl max-w-4xl mx-auto leading-[1.1]">
+          <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 sm:text-6xl max-w-4xl mx-auto leading-[1.1] text-balance">
             Volunteer Locally.
             <br />
             <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
