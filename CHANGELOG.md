@@ -53,6 +53,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Storage policies are idempotent and create both buckets by SQL.
 - Stale migration helper removed; `pg` moved to dev dependencies.
 
+### Fixed
+
+- Volunteer discovery map invisible on mobile: the map wrapper's `flex-1`
+  in the single-column layout collapsed the percentage-height map to 0px
+  (desktop was unaffected). The wrapper now only grows on large screens,
+  so the map renders at 50vh on phones. Verified at 390px (0px to 420px)
+  with tap-to-pick working on touch; desktop unchanged at 1280px.
+- Mobile menu no longer strands signed-in users: when the session exists
+  but the profile is still loading or unreachable, the navbar (desktop bar
+  and mobile drawer) shows a loading note with a working Sign Out instead
+  of signed-out links.
+- Volunteer map hint no longer claims the map is "on the right" (on mobile
+  it sits above the picker).
+
 ## [1.1.0] - 2026-08-23
 
 Security and reliability release from a full-stack audit. Fixes race

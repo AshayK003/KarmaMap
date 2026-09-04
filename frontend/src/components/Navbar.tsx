@@ -24,7 +24,7 @@ import { NotificationBell } from './NotificationBell';
 import { logger } from '../utils/logger';
 
 export function Navbar() {
-  const { profile, signOut, user } = useAuth();
+  const { profile, signOut, user, loading } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -176,6 +176,14 @@ export function Navbar() {
                 </>
               )}
             </>
+          ) : user ? (
+            <div className="flex items-center gap-1.5 ml-auto">
+              {themeToggle}
+              <NotificationBell />
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOutIcon className="h-4 w-4 mr-1" /> Sign Out
+              </Button>
+            </div>
           ) : (
             <div className="flex items-center gap-2 ml-auto">
               {themeToggle}
@@ -290,6 +298,35 @@ export function Navbar() {
                     </Link>
                   </>
                 )}
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    aria-label="Toggle theme"
+                  >
+                    {theme === 'dark' ? (
+                      <SunIcon className="h-5 w-5 text-slate-400 dark:text-slate-300" />
+                    ) : (
+                      <MoonIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                    )}
+                  </button>
+                  <NotificationBell />
+                </div>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-3 py-3 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-left"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            ) : user ? (
+              <>
+                <div className="px-3 py-2 text-xs font-bold text-slate-400 dark:text-slate-500">
+                  {loading ? 'Loading your menu…' : 'Profile unavailable — check your connection'}
+                </div>
                 <div className="flex items-center gap-2 px-3 py-2">
                   <button
                     type="button"

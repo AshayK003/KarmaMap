@@ -218,7 +218,7 @@ export function VolunteerMap() {
       <div className="mx-auto max-w-7xl px-4 py-5">
         <div className="flex flex-col lg:flex-row gap-5 lg:items-start">
           {/* ─── Map (renders first on mobile, second on desktop) ─── */}
-          <div className="flex-1 order-first lg:order-2 lg:sticky lg:top-[76px] h-[50vh] min-h-[300px] lg:h-[calc(100vh-96px)]">
+          <div className="order-first lg:order-2 lg:flex-1 lg:sticky lg:top-[76px] h-[50vh] min-h-[300px] lg:h-[calc(100vh-96px)]">
             <MapView
               lat={lat}
               lng={lng}
@@ -244,7 +244,7 @@ export function VolunteerMap() {
               onPreset={usePreset}
               onManualApply={(a, b) => setLocation(a, b, 'manual')}
               onSearchSelect={setFromSearch}
-              mapHint="Tap the map on the right to move your pin"
+              mapHint="Tap the map to move your pin"
             />
 
             {/* Radius pills */}
