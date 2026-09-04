@@ -67,7 +67,7 @@ export function Home() {
         <section className="text-center space-y-6">
           <Badge variant="default" className="px-3.5 py-1 text-xs gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Hyper-Local Geospatial Volunteer Network
+            Real gigs near you
           </Badge>
 
           <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 sm:text-6xl max-w-4xl mx-auto leading-[1.1] text-balance">
@@ -79,9 +79,8 @@ export function Home() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-base sm:text-lg font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-            KarmaMap connects verified local NGOs with skilled volunteers using intelligent
-            geospatial coordinates, dynamic matching algorithms, and automated completion
-            verification.
+            Find volunteer gigs near you, matched to your skills. Give a few hours,
+            build real experience, and earn a verified record of your impact.
           </p>
 
           {user && profile ? (
@@ -93,23 +92,27 @@ export function Home() {
               </Link>
             </div>
           ) : (
-            <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <div className="pt-4 flex flex-col justify-center items-center gap-3">
               <Link to="/signup?role=volunteer">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                   Join as Volunteer
                 </Button>
               </Link>
-              <Link to="/signup?role=ngo">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Register NGO Organization
-                </Button>
+              <Link
+                to="/signup?role=ngo"
+                className="text-xs font-bold text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400 transition-colors"
+              >
+                Are you an NGO? List your organization
               </Link>
             </div>
           )}
         </section>
 
         {/* ─── Stats Grid Section ─── */}
-        <section className="mt-20 border-y border-slate-100 dark:border-slate-700 py-10 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xs rounded-3xl px-6 grid gap-8 sm:grid-cols-3 text-center">
+        {/* Hidden on all-zero data: zeros signal emptiness and hurt trust. */}
+        {(statsFailed ||
+          stats.totalHours + stats.openGigs + stats.ngoCount > 0) && (
+          <section className="mt-20 border-y border-slate-100 dark:border-slate-700 py-10 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xs rounded-3xl px-6 grid gap-8 sm:grid-cols-3 text-center">
           <div>
             <p className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-slate-100">
               {statsFailed ? '—' : `${stats.totalHours.toLocaleString()}+`}
@@ -134,24 +137,22 @@ export function Home() {
               Verified Partners
             </p>
           </div>
-        </section>
+          </section>
+        )}
 
         {/* ─── Features Grid ─── */}
         <section className="mt-20">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 sm:text-3xl">
-              Engineered for Community Impact
+              How KarmaMap works
             </h2>
-            <p className="text-xs font-bold text-slate-400 mt-1">
-              Advanced technologies driving local transformations daily.
-            </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
             {[
               {
                 title: 'Map Discovery',
-                desc: 'Find open volunteer opportunities within custom search radii on an interactive live map.',
+                desc: 'See open gigs around you on a live map, filtered by distance.',
                 svg: (
                   <svg
                     className="h-6 w-6 text-emerald-600 dark:text-emerald-400"
@@ -171,7 +172,7 @@ export function Home() {
               },
               {
                 title: 'Smart Skill Matching',
-                desc: 'Instant matching system that dynamically aligns opportunity requirements with volunteer skills.',
+                desc: 'Get matched to gigs that fit what you are good at.',
                 svg: (
                   <svg
                     className="h-6 w-6 text-emerald-600 dark:text-emerald-400"
@@ -191,7 +192,7 @@ export function Home() {
               },
               {
                 title: 'Verified Impact Ledger',
-                desc: 'Cryptographically secured records detailing completed service hours and downloadable certificates.',
+                desc: 'Every completed hour lands on your public record.',
                 svg: (
                   <svg
                     className="h-6 w-6 text-emerald-600 dark:text-emerald-400"

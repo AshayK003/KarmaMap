@@ -54,3 +54,41 @@ describe('Home hero', () => {
     await waitFor(() => expect(screen.getAllByText('—').length).toBeGreaterThan(0));
   });
 });
+
+describe('Home copy', () => {
+  it('leads with the outcome subhead, not jargon', async () => {
+    renderHome();
+    expect(await screen.findByText(/give a few hours/i)).toBeTruthy();
+    expect(screen.queryByText(/geospatial coordinates/i)).toBeNull();
+  });
+
+  it('keeps one primary CTA with the NGO path as a quiet link', async () => {
+    renderHome();
+    expect(await screen.findByRole('button', { name: /join as volunteer/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /list your organization/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /register ngo/i })).toBeNull();
+  });
+
+  it('hides the stats strip on all-zero data', async () => {
+    renderHome();
+    await screen.findByRole('heading', { name: /volunteer locally/i });
+    expect(screen.queryByText('Hours Logged')).toBeNull();
+  });
+
+  it('shows the stats strip once real numbers arrive', async () => {
+    const { supabase } = await import('../../lib/supabase');
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: { total_hours: 42, ngo_count: 3, open_gigs: 5 },
+      error: null,
+    });
+    renderHome();
+    expect(await screen.findByText('Hours Logged')).toBeTruthy();
+  });
+
+  it('explains the product in plain words', async () => {
+    renderHome();
+    expect(await screen.findByText('How KarmaMap works')).toBeTruthy();
+    expect(screen.getByText(/lands on your public record/i)).toBeTruthy();
+    expect(screen.queryByText(/cryptographically secured/i)).toBeNull();
+  });
+});
