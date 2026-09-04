@@ -101,8 +101,8 @@ Notifications are delivered in-app (via a `notifications` table) and optionally 
 -- Enable PostGIS
 CREATE EXTENSION IF NOT EXISTS postgis;
 
--- Create storage bucket
--- Name: participation-photos (public)
+-- Create storage buckets (both public)
+-- Names: participation-photos, ngo-qr-codes
 
 -- Enable Email auth provider in Supabase dashboard
 ```
@@ -187,6 +187,7 @@ cd frontend && npm run build     # → dist/ (static SPA)
 | GET | `/api/gigs/analytics` | ngo | Dashboard analytics |
 | POST | `/api/gigs/:gigId/match` | ngo | Manual re-match |
 | PATCH | `/api/gigs/:gigId/feature` | ngo | Feature gig (N hours) |
+| PATCH | `/api/gigs/:gigId/status` | ngo | Lifecycle transition (409 on illegal move) |
 | POST | `/api/participations/join/:gigId` | volunteer | Join gig (409 on duplicate) |
 | PATCH | `/api/participations/:id/complete` | volunteer | Complete + award karma |
 | PATCH | `/api/ngo/upi` | ngo | Update UPI ID / QR URL |
@@ -214,7 +215,7 @@ KarmaMap/
 │   │   └── types/              # TypeScript type definitions
 │   └── package.json
 ├── supabase/
-│   └── migrations/             # Database migrations (17 SQL files)
+│   └── migrations/             # Database migrations (19 SQL files)
 ├── CHANGELOG.md                # Release notes
 ├── .env.example                # Environment template
 ├── vercel.json                 # Frontend deployment config (proxies /api to the backend)

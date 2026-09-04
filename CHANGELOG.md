@@ -3,6 +3,37 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `PATCH /api/gigs/:gigId/status`: backend-owned gig lifecycle transitions
+  (open to in_progress/cancelled, in_progress to completed/cancelled,
+  cancelled to open) with 403 for non-owners and 409 for illegal moves.
+  Migration 18 adds a database trigger rejecting illegal direct writes.
+- 404 page with `*` catch-all route, skip-link and labelled main region.
+- Homepage hides the stats strip on all-zero data (zeros signal emptiness);
+  em-dash fallbacks remain for fetch failures.
+- 46 new tests across both suites (backend 149, frontend 63).
+
+### Changed
+
+- Homepage copy rewritten around volunteer outcomes; NGO call-to-action
+  demoted to a quiet link below the single primary CTA.
+- Hero headline scales from `text-3xl` on small screens (was fixed `text-4xl`).
+- Trust proxy enabled for correct rate limiting behind Render/Vercel.
+- Separate write-only rate limiter (60/min in production); reads unchanged.
+- Unknown `/api/*` routes return JSON 404; malformed JSON bodies return
+  a clean 400 instead of parser internals.
+- Raw database errors no longer leak to clients (`getMyOrg`, `getOrgName`).
+- Matching scores proximity against the requested radius, not a fixed 50km.
+- Email failure counting includes `false` results, not just rejections.
+- `AuthContext` survives offline boot and clears local state on sign-out.
+- `apiFetch` maps raw network failures to one friendly message.
+- Null-safe formatting/geo/slug utilities; RFC5545-safe calendar filenames.
+- Migrations 02, 12, 16 fixed for clean first-time apply (dropped the stale
+  overload before redefining; `USING` on DELETE policies).
+
 ## [1.1.0] - 2026-08-23
 
 Security and reliability release from a full-stack audit. Fixes race
