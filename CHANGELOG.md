@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `PATCH /api/participations/:participationId/leave`: volunteer leave path
+  through the new `leave_participation` RPC (migration 25) — row lock,
+  cancel-from-occupying-state guard, counter decrement in-transaction with
+  the legacy trigger silenced (same single-writer protocol as join). Also
+  closes a checked-in leak (the trigger only decremented joined→cancelled).
+- Migration 24: NOT VALID check constraints (volunteers_needed ≥ 1, counter
+  bounds, 30-day featured cap matching MAX_FEATURE_HOURS, payments
+  amount > 0, hours range). `gig_date` intentionally unconstrained —
+  completed gigs legitimately carry past dates; futurity is enforced at
+  creation time by `createGigSchema`.
+- Viva report pack (architecture, ER diagram, DFDs, SRS trace, test and
+  latency evidence) under gitignored `internals/`.
 - `PATCH /api/gigs/:gigId/status`: backend-owned gig lifecycle transitions
   (open to in_progress/cancelled, in_progress to completed/cancelled,
   cancelled to open) with 403 for non-owners and 409 for illegal moves.

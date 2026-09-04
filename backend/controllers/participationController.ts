@@ -5,6 +5,7 @@ import type { AuthRequest } from '../middleware/auth.js';
 import {
   completeParticipation as completeParticipationService,
   joinGig as joinGigService,
+  leaveParticipation as leaveParticipationService,
 } from '../services/participationService.js';
 
 export const completeGigSchema = z.object({
@@ -46,5 +47,15 @@ async function _joinGig(req: AuthRequest, res: Response): Promise<void> {
   res.status(201).json(result);
 }
 
+async function _leaveParticipation(req: AuthRequest, res: Response): Promise<void> {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const participationId = String(req.params.participationId);
+
+  const result = await leaveParticipationService(participationId, userId);
+  res.json(result);
+}
+
 export const completeParticipation = asyncHandler(_completeParticipation);
 export const joinGig = asyncHandler(_joinGig);
+export const leaveParticipation = asyncHandler(_leaveParticipation);

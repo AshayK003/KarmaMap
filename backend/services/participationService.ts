@@ -17,6 +17,10 @@ interface JoinGigResult {
   participation: Record<string, unknown>;
 }
 
+interface LeaveGigResult {
+  participation: Record<string, unknown>;
+}
+
 /**
  * Completes a participation and awards karma in a single database transaction
  * (complete_participation RPC). The RPC verifies the participation belongs to
@@ -145,6 +149,42 @@ export async function joinGig(gigId: string, volunteerId: string): Promise<JoinG
     }
     logger.error({ gigId, volunteerId, error: message }, 'Atomic gig join failed');
     throw Object.assign(new Error('Failed to join gig'), { statusCode: 400 });
+  }
+
+  return { participation: data as Record<string, unknown> };
+}
+
+/**
+ * Leaves a gig through the leave_participation RPC, which locks the row,
+ * moves it to cancelled only from an occupying state, and decrements the
+ * counter in the same transaction with the legacy trigger silenced — the
+ * same single-writer protocol as join_gig, so concurrent leave/rejoin
+ * cycles cannot drift volunteers_joined.
+ */
+export async function leaveParticipation(
+  participationId: string,
+  volunteerId: string,
+): Promise<LeaveGigResult> {
+  const { data, error } = await supabaseAdmin.rpc('leave_participation', {
+    p_participation_id: participationId,
+    p_volunteer_id: volunteerId,
+  });
+
+  if (error || !data) {
+    const message = error?.message ?? 'Failed to leave gig';
+    if (message.includes('already cancelled')) {
+      throw Object.assign(new Error('You have already left this gig.'), { statusCode: 409 });
+    }
+    if (message.includes('not found')) {
+      throw Object.assign(new Error('Participation not found'), { statusCode: 404 });
+    }
+    if (message.includes('Completed participations')) {
+      throw Object.assign(new Error('Completed participations cannot be cancelled'), {
+        statusCode: 400,
+      });
+    }
+    logger.error({ participationId, volunteerId, error: message }, 'Atomic gig leave failed');
+    throw Object.assign(new Error('Failed to leave gig'), { statusCode: 400 });
   }
 
   return { participation: data as Record<string, unknown> };

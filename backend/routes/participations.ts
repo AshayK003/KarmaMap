@@ -4,6 +4,7 @@ import {
   completeGigSchema,
   completeParticipation,
   joinGig,
+  leaveParticipation,
 } from '../controllers/participationController.js';
 import { requireRole, verifyJwt } from '../middleware/auth.js';
 import { validateBody, validateParams } from '../middleware/validate.js';
@@ -28,6 +29,14 @@ router.patch(
   validateParams(participationIdParams),
   validateBody(completeGigSchema),
   completeParticipation,
+);
+
+router.patch(
+  '/:participationId/leave',
+  verifyJwt,
+  requireRole('volunteer'),
+  validateParams(participationIdParams),
+  leaveParticipation,
 );
 
 export default router;
