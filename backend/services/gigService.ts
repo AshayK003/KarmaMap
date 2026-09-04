@@ -110,6 +110,58 @@ export async function verifyGigOwnership(gigId: string, ngoId: string): Promise<
   return gig;
 }
 
+export type GigStatusTransition = 'open' | 'in_progress' | 'completed' | 'cancelled';
+
+/** Legal gig lifecycle moves. `completed` is terminal; anything else is rejected. */
+const LEGAL_TRANSITIONS: Record<GigStatusTransition, GigStatusTransition[]> = {
+  open: ['in_progress', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  cancelled: ['open'],
+  completed: [],
+};
+
+/**
+ * Moves a gig through its lifecycle with ownership + transition checks.
+ * Throws 403 for non-owners/missing gigs, 409 for illegal transitions,
+ * 500 on database failure.
+ */
+export async function transitionGigStatus(
+  gigId: string,
+  ngoId: string,
+  toStatus: GigStatusTransition,
+): Promise<Record<string, unknown>> {
+  const { data: gig, error } = await supabaseAdmin
+    .from('gigs')
+    .select('ngo_id, status')
+    .eq('id', gigId)
+    .single();
+  if (error) {
+    logger.error({ gigId, error: error.message }, 'Failed to fetch gig for status transition');
+    throw Object.assign(new Error('Failed to verify gig ownership'), { statusCode: 500 });
+  }
+  if (!gig || gig.ngo_id !== ngoId) {
+    throw Object.assign(new Error('Not authorized'), { statusCode: 403 });
+  }
+  const fromStatus = gig.status as GigStatusTransition;
+  if (!(LEGAL_TRANSITIONS[fromStatus] ?? []).includes(toStatus)) {
+    throw Object.assign(new Error(`Cannot move gig from ${fromStatus} to ${toStatus}`), {
+      statusCode: 409,
+    });
+  }
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('gigs')
+    .update({ status: toStatus })
+    .eq('id', gigId)
+    .select()
+    .single();
+  if (updateError || !updated) {
+    logger.error({ gigId, error: updateError?.message }, 'Failed to update gig status');
+    throw Object.assign(new Error('Failed to update gig status'), { statusCode: 500 });
+  }
+  logger.info({ gigId, from: fromStatus, to: toStatus }, 'Gig status transitioned');
+  return updated as Record<string, unknown>;
+}
+
 export async function createGig(ngoId: string, input: CreateGigInput): Promise<CreateGigResult> {
   const { data, error } = await supabaseAdmin.rpc('insert_gig', {
     p_title: input.title,

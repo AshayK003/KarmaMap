@@ -6,6 +6,8 @@ import {
   featureGig,
   featureGigSchema,
   getNgoAnalytics,
+  transitionGigStatus,
+  gigStatusSchema,
   triggerMatching,
 } from '../controllers/gigController.js';
 import { requireRole, verifyJwt } from '../middleware/auth.js';
@@ -34,6 +36,15 @@ router.patch(
   validateParams(gigIdParams),
   validateBody(featureGigSchema),
   featureGig,
+);
+
+router.patch(
+  '/:gigId/status',
+  verifyJwt,
+  requireRole('ngo'),
+  validateParams(gigIdParams),
+  validateBody(gigStatusSchema),
+  transitionGigStatus,
 );
 
 export default router;

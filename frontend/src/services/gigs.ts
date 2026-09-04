@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Gig, GigStatus, NearbyGig } from '../types/database';
 import { apiFetch } from '../utils/api';
-import { logger } from '../utils/logger';
 
 export async function fetchNearbyGigs(
   lat: number,
@@ -65,18 +64,13 @@ export async function completeParticipationViaApi(
 }
 
 export async function updateGigStatus(gigId: string, status: GigStatus) {
-  const { data, error } = await supabase
-    .from('gigs')
-    .update({ status })
-    .eq('id', gigId)
-    .select()
-    .single();
-
-  if (error) {
-    logger.error('[updateGigStatus] Supabase error:', JSON.stringify(error));
-    throw error;
-  }
-  return data as Gig;
+  // Status moves go through the backend so illegal transitions
+  // (e.g. completed → open) are rejected instead of written directly.
+  const { gig } = await apiFetch<{ gig: Gig }>(`/api/gigs/${gigId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+  return gig;
 }
 
 export async function fetchNgoAnalytics() {

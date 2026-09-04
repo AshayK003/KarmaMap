@@ -7,6 +7,7 @@ import {
   createGig as createGigService,
   featureGig as featureGigService,
   getNgoAnalytics as getAnalyticsService,
+  transitionGigStatus as transitionGigStatusService,
   triggerMatching as triggerMatchingService,
 } from '../services/gigService.js';
 
@@ -91,3 +92,25 @@ export const createGig = asyncHandler(_createGig);
 export const getNgoAnalytics = asyncHandler(_getNgoAnalytics);
 export const featureGig = asyncHandler(_featureGig);
 export const triggerMatching = asyncHandler(_triggerMatching);
+
+export const gigStatusSchema = z.object({
+  status: z.enum(['open', 'in_progress', 'completed', 'cancelled']),
+});
+
+async function _transitionGigStatus(req: AuthRequest, res: Response): Promise<void> {
+  const gigId = req.params.gigId;
+  if (!gigId || typeof gigId !== 'string' || gigId.trim() === '') {
+    res.status(400).json({ error: 'Missing gigId parameter' });
+    return;
+  }
+  const ngoId = req.user?.id;
+  if (!ngoId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const { status } = req.body as z.infer<typeof gigStatusSchema>;
+  const result = await transitionGigStatusService(gigId, ngoId, status);
+  res.json({ gig: result });
+}
+
+export const transitionGigStatus = asyncHandler(_transitionGigStatus);
