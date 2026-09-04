@@ -166,6 +166,20 @@ describe('completeParticipation', async () => {
     expect(result.karma_earned).toBe(25);
   });
 
+  it('explains a not-started gig instead of failing generically', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'This gig has not started yet', code: '23514' },
+    });
+
+    await expect(completeParticipation('part-1', 'vol-1', { hours: 2.5 })).rejects.toMatchObject(
+      {
+        message: 'This gig has not started yet — ask the organizer to start it',
+        statusCode: 409,
+      },
+    );
+  });
+
   it('passes photo URLs through to the RPC', async () => {
     mockRpc.mockResolvedValue({
       data: { id: 'part-1', gig_id: 'gig-9', status: 'completed' },

@@ -48,6 +48,14 @@ export async function completeParticipation(
     if (message.includes('not found')) {
       throw Object.assign(new Error('Participation not found'), { statusCode: 404 });
     }
+    // The gig must leave open before hours count — tell the volunteer exactly
+    // what to do instead of a dead-end generic failure.
+    if (message.includes('has not started yet')) {
+      throw Object.assign(
+        new Error('This gig has not started yet — ask the organizer to start it'),
+        { statusCode: 409 },
+      );
+    }
     logger.error(
       { participationId, volunteerId, error: error?.message },
       'Atomic participation completion failed',
