@@ -61,7 +61,7 @@ export function VolunteerPortfolio() {
     Promise.resolve(
       supabase
         .from('participations')
-        .select('*, gigs(title, gig_date, location)')
+        .select('*, gigs(title, gig_date, location, profiles:ngo_id(name))')
         .eq('volunteer_id', user.id)
         .eq('status', 'completed')
         .then(({ data }) => setCompleted((data as Participation[]) ?? [])),
@@ -760,6 +760,13 @@ export function VolunteerPortfolio() {
                 volunteerName={profile?.name || ''}
                 participation={selectedCert.participation}
                 gigTitle={selectedCert.title}
+                orgName={
+                  (
+                    selectedCert.participation as Participation & {
+                      gigs?: { profiles?: { name: string } };
+                    }
+                  ).gigs?.profiles?.name
+                }
                 completedDate={formatDate(selectedCert.date, {
                   month: 'long',
                   day: 'numeric',

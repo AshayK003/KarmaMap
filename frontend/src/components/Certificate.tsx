@@ -1,4 +1,4 @@
-import { Award, Calendar, Clock, Handshake, Leaf, Sparkles } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock } from 'lucide-react';
 import type { Participation } from '../types/database';
 
 interface CertificateProps {
@@ -6,88 +6,74 @@ interface CertificateProps {
   participation: Participation;
   gigTitle: string;
   completedDate: string;
+  orgName?: string;
 }
 
+/**
+ * Printable certificate of impact. Formal document language: double-rule
+ * frame, generous whitespace, one seal motif. No decorative glyphs.
+ */
 export function Certificate({
   volunteerName,
   participation,
   gigTitle,
   completedDate,
+  orgName,
 }: CertificateProps) {
+  const certificateId = `KM-${String(participation.id ?? '').replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+  const hours = Number(participation.hours ?? 0);
+
   return (
-    <div className="certificate relative mx-auto max-w-lg overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50 to-white p-6 sm:p-8 text-center shadow-lg">
-      {/* Decorative corner ornaments */}
-      <div className="absolute top-3 left-3 text-2xl opacity-30 select-none">✦</div>
-      <div className="absolute top-3 right-3 text-2xl opacity-30 select-none">✦</div>
-      <div className="absolute bottom-3 left-3 text-2xl opacity-30 select-none">✦</div>
-      <div className="absolute bottom-3 right-3 text-2xl opacity-30 select-none">✦</div>
+    <div className="certificate relative mx-auto max-w-xl bg-white p-2 shadow-lg print:shadow-none">
+      <div className="border-2 border-emerald-900 px-6 py-10 text-center sm:px-12 print:border-emerald-900">
+        <div className="border border-amber-400/60 px-4 py-8 sm:px-8">
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-700">
+            Certificate of Impact
+          </p>
 
-      {/* Top gold accent line */}
-      <div className="mx-auto mb-5 h-1 w-24 rounded-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300" />
+          <div className="mx-auto my-5 h-px w-24 bg-amber-400/70" />
 
-      {/* Icon */}
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md select-none">
-        <Award className="h-7 w-7" />
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+            Proudly presented to
+          </p>
+          <h2 className="mt-2 font-serif text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+            {volunteerName}
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-md text-sm font-medium leading-relaxed text-slate-600">
+            For {hours} {hours === 1 ? 'hour' : 'hours'} of dedicated volunteer service
+          </p>
+
+          <p className="mt-3 text-2xl font-black tracking-tight text-emerald-800">{gigTitle}</p>
+
+          {orgName && (
+            <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+              Awarded by {orgName}
+            </p>
+          )}
+
+          <div className="mx-auto mt-6 flex max-w-sm flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-bold text-slate-500">
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              {hours} {hours === 1 ? 'hour' : 'hours'}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+              {completedDate}
+            </span>
+            <span className="font-mono tracking-wider text-slate-400">ID {certificateId}</span>
+          </div>
+
+          <div className="mx-auto my-6 h-px w-full max-w-xs bg-slate-200" />
+
+          <div className="flex items-center justify-center gap-2 text-emerald-800">
+            <BadgeCheck className="h-6 w-6" aria-hidden="true" />
+            <p className="text-[11px] font-black uppercase tracking-[0.2em]">
+              Verified by KarmaMap
+            </p>
+          </div>
+        </div>
       </div>
-
-      {/* Title */}
-      <p className="mt-4 text-[10px] font-black uppercase tracking-[0.25em] text-amber-600">
-        Certificate of Impact
-      </p>
-
-      {/* Divider */}
-      <div className="mx-auto my-3 flex items-center gap-2 text-amber-300">
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-300" />
-        <span className="text-xs">◈</span>
-        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-300" />
-      </div>
-
-      {/* Volunteer name */}
-      <h2 className="font-serif text-3xl font-bold tracking-tight text-slate-900">
-        {volunteerName}
-      </h2>
-
-      <p className="mt-4 text-sm font-semibold text-slate-500">
-        has successfully completed the volunteer gig
-      </p>
-
-      <p className="mt-2 text-xl font-bold text-emerald-700">{gigTitle}</p>
-
-      {/* Hours & date */}
-      <div className="mx-auto mt-4 inline-flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <Clock className="h-3.5 w-3.5" /> {participation.hours ?? 0} hours
-        </span>
-        <span className="text-slate-300">|</span>
-        <span className="inline-flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" /> {completedDate}
-        </span>
-      </div>
-
-      {/* Divider */}
-      <div className="mx-auto my-4 flex items-center gap-2 text-amber-300">
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-300" />
-        <span className="text-xs">◈</span>
-        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-300" />
-      </div>
-
-      {/* Icons row */}
-      <div className="flex justify-center gap-3 select-none text-emerald-600">
-        <Leaf className="h-6 w-6" />
-        <Sparkles className="h-6 w-6 text-amber-500" />
-        <Handshake className="h-6 w-6" />
-      </div>
-
-      {/* Verified footer */}
-      <div className="mt-5 flex items-center justify-center gap-1.5 border-t border-slate-100 pt-4 text-[10px] font-bold text-slate-400">
-        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white font-black">
-          ✓
-        </span>
-        Verified by KarmaMap
-      </div>
-
-      {/* Bottom gold accent line */}
-      <div className="mx-auto mt-5 h-1 w-24 rounded-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300" />
     </div>
   );
 }

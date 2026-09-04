@@ -51,7 +51,7 @@ export function ParticipateGig() {
     setPageError(null);
     const { data, error } = await supabase
       .from('participations')
-      .select('*, gigs(title)')
+      .select('*, gigs(title, profiles:ngo_id(name))')
       .eq('gig_id', gigId)
       .eq('volunteer_id', user.id)
       .maybeSingle();
@@ -143,7 +143,11 @@ export function ParticipateGig() {
   };
 
   const gigTitle =
-    (participation as Participation & { gigs?: { title: string } })?.gigs?.title ?? 'Volunteer Gig';
+    (participation as Participation & { gigs?: { title: string } })?.gigs?.title ??
+    'Volunteer Gig';
+  const gigOrgName = (
+    participation as Participation & { gigs?: { profiles?: { name: string } } }
+  )?.gigs?.profiles?.name;
 
   if (loadingParticipation) {
     return (
@@ -183,6 +187,7 @@ export function ParticipateGig() {
           volunteerName={profile.name}
           participation={participation}
           gigTitle={gigTitle}
+          orgName={gigOrgName}
           completedDate={formatDate(new Date(), {
             month: 'short',
             day: 'numeric',
