@@ -215,7 +215,7 @@ KarmaMap/
 │   │   └── types/              # TypeScript type definitions
 │   └── package.json
 ├── supabase/
-│   └── migrations/             # Database migrations (19 SQL files)
+│   └── migrations/             # Database migrations (22 SQL files)
 ├── CHANGELOG.md                # Release notes
 ├── .env.example                # Environment template
 ├── vercel.json                 # Frontend deployment config (proxies /api to the backend)

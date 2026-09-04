@@ -14,7 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - 404 page with `*` catch-all route, skip-link and labelled main region.
 - Homepage hides the stats strip on all-zero data (zeros signal emptiness);
   em-dash fallbacks remain for fetch failures.
-- 46 new tests across both suites (backend 149, frontend 63).
+- Rejoin after cancel (migration 19): a cancelled participation reactivates
+  instead of locking the volunteer out; double joins still raise.
+- Signup trigger guard (migration 20): retries are no-ops, unexpected roles
+  default to volunteer.
+- Gig read policy (migration 21): volunteers see open gigs; NGOs keep full
+  read access to their own.
+- CI `db-check` job: applies all 22 migration files to ephemeral
+  Postgres+PostGIS and verifies the 7 RPCs exist.
+- Test suites at backend 153 passing, frontend 63 passing.
 
 ### Changed
 
@@ -33,6 +41,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Null-safe formatting/geo/slug utilities; RFC5545-safe calendar filenames.
 - Migrations 02, 12, 16 fixed for clean first-time apply (dropped the stale
   overload before redefining; `USING` on DELETE policies).
+- Status transitions use conditional writes (id, owner, expected state);
+  trigger rejections and races map to 409 instead of 500.
+- Global error handler returns a generic message for database errors.
+- Create-gig skill lists capped at 20 items of 50 chars.
+- Org analytics pages large member lists and fails loudly on scan errors.
+- Skill overlap unified on the 0-1 scale across frontend and backend.
+- Gig weather uses the shared location parser (all formats, not just WKT).
+- Photo uploads accept same-file retries and report signed-out picks.
+- Map reloads on any gig update so closed gigs disappear without refresh.
+- Storage policies are idempotent and create both buckets by SQL.
+- Stale migration helper removed; `pg` moved to dev dependencies.
 
 ## [1.1.0] - 2026-08-23
 
