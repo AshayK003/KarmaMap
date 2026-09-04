@@ -1,6 +1,12 @@
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS upi_id TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS upi_qr_url TEXT;
 
+DROP POLICY IF EXISTS "Public can view NGO profiles" ON public.profiles;
+DROP POLICY IF EXISTS "NGOs can upload own QR codes" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view NGO QR codes" ON storage.objects;
+DROP POLICY IF EXISTS "NGOs can update own QR codes" ON storage.objects;
+DROP POLICY IF EXISTS "NGOs can delete own QR codes" ON storage.objects;
+
 CREATE POLICY "Public can view NGO profiles"
   ON public.profiles FOR SELECT TO anon
   USING (role = 'ngo');

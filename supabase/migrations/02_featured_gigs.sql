@@ -6,6 +6,8 @@ ADD COLUMN IF NOT EXISTS featured_until TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS gigs_featured_until_idx ON public.gigs (featured_until DESC);
 
+DROP FUNCTION IF EXISTS public.nearby_gigs(lat DOUBLE PRECISION, lng DOUBLE PRECISION, radius_meters DOUBLE PRECISION);
+
 CREATE OR REPLACE FUNCTION public.nearby_gigs(
   lat DOUBLE PRECISION,
   lng DOUBLE PRECISION,
