@@ -29,6 +29,8 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_public_stats TO anon, authenticated;
 
+DROP FUNCTION IF EXISTS public.nearby_volunteers_for_gig(UUID, DOUBLE PRECISION);
+
 CREATE OR REPLACE FUNCTION public.nearby_volunteers_for_gig(
   p_gig_id UUID,
   p_radius_meters DOUBLE PRECISION DEFAULT 10000
