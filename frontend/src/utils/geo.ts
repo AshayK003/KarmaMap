@@ -36,17 +36,20 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
+/**
+ * Skill overlap as a 0-1 fraction, matching the backend skillOverlap scale.
+ * Unknown requirements (null) score 0; explicitly-empty requirements mean
+ * "no filter" and score 1.
+ */
 export function skillOverlapScore(
   required: string[] | null | undefined,
   volunteer: string[] | null | undefined,
 ): number {
-  // Unknown requirements (null) must not inflate to a full match — 0 is the
-  // safe side. Explicitly-empty requirements still mean "no filter" (100).
   if (!required) return 0;
-  if (required.length === 0) return 100;
+  if (required.length === 0) return 1;
   const req = required.map((s) => s.toLowerCase());
   const matches = (volunteer ?? []).filter((s) => req.includes(s.toLowerCase())).length;
-  return Math.round((matches / required.length) * 100);
+  return matches / required.length;
 }
 
 export function generatePortfolioSlug(name: string): string {

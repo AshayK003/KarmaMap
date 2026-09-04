@@ -30,16 +30,16 @@ describe('formatDistance', () => {
 });
 
 describe('skillOverlapScore', () => {
-  it('returns 100 when no skills required', () => {
-    expect(skillOverlapScore([], ['a'])).toBe(100);
+  it('returns 1 when no skills required (matches backend scale)', () => {
+    expect(skillOverlapScore([], ['a'])).toBe(1);
   });
 
-  it('returns 100 on full match', () => {
-    expect(skillOverlapScore(['a', 'b'], ['a', 'b'])).toBe(100);
+  it('returns 1 on full match', () => {
+    expect(skillOverlapScore(['a', 'b'], ['a', 'b'])).toBe(1);
   });
 
-  it('returns 50 on half match', () => {
-    expect(skillOverlapScore(['a', 'b'], ['a'])).toBe(50);
+  it('returns 0.5 on half match', () => {
+    expect(skillOverlapScore(['a', 'b'], ['a'])).toBe(0.5);
   });
 
   it('returns 0 on no match', () => {
@@ -47,7 +47,7 @@ describe('skillOverlapScore', () => {
   });
 
   it('is case insensitive', () => {
-    expect(skillOverlapScore(['First Aid'], ['first aid'])).toBe(100);
+    expect(skillOverlapScore(['First Aid'], ['first aid'])).toBe(1);
   });
 
   it('treats null or undefined skill lists as empty', () => {

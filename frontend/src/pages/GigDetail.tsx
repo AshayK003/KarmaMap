@@ -55,11 +55,11 @@ export function GigDetail() {
   useEffect(() => {
     if (!gig || !gig.location) return;
 
-    const match = String(gig.location).match(/POINT\(([^ ]+) ([^ ]+)\)/);
-    const lng = match ? parseFloat(match[1]) : null;
-    const lat = match ? parseFloat(match[2]) : null;
-
-    if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return;
+    // One parser for every location shape (WKT, GeoJSON, hex-WKB) — an inline
+    // WKT-only regex silently skipped weather for Realtime/GeoJSON gigs.
+    const parsed = parseGigLocation(gig.location);
+    if (!parsed) return;
+    const { lat, lng } = parsed;
 
     const cacheKey = `karmamap-weather-${lat.toFixed(2)}-${lng.toFixed(2)}`;
     const cached = sessionStorage.getItem(cacheKey);
@@ -276,10 +276,10 @@ export function GigDetail() {
                 Profile Match
               </span>
               <Badge
-                variant={overlap >= 70 ? 'default' : overlap >= 40 ? 'amber' : 'secondary'}
+                variant={overlap >= 0.7 ? 'default' : overlap >= 0.4 ? 'amber' : 'secondary'}
                 className="text-[10px] px-2.5 py-0.5"
               >
-                {overlap}% overlap
+                {Math.round(overlap * 100)}% overlap
               </Badge>
             </div>
           )}

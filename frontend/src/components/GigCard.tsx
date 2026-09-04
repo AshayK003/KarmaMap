@@ -58,7 +58,7 @@ export const GigCard = memo(function GigCard({
             ? 'bg-gradient-to-r from-rose-500 to-pink-400'
             : urgency?.variant === 'amber'
               ? 'bg-gradient-to-r from-amber-400 to-yellow-300'
-              : overlap >= 75
+              : overlap >= 0.75
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
                 : 'bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-500'
         }`}

@@ -381,3 +381,54 @@ describe('getOrgName', () => {
     });
   });
 });
+
+describe('getOrgAnalytics member scan', () => {
+  it('throws instead of reporting zero members on scan failure', async () => {
+    const { getOrgAnalytics } = await import('../organizationService.js');
+
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      const c = chain();
+      if (callCount === 1) {
+        c.maybeSingle.mockResolvedValue({ data: { organization_id: 'org-1' }, error: null });
+      } else if (callCount === 2) {
+        c.setResolve({ data: [{ profile_id: 'v1', department: 'Ops' }], error: null });
+      } else {
+        c.setResolve({ data: null, error: { message: 'db down' } });
+      }
+      return c;
+    });
+
+    await expect(getOrgAnalytics('vol-1')).rejects.toMatchObject({
+      message: 'Failed to fetch analytics',
+    });
+  });
+
+  it('pages participations queries past 200 ids', async () => {
+    const { getOrgAnalytics } = await import('../organizationService.js');
+    const ids = Array.from({ length: 250 }, (_, i) => `v${i}`);
+    const members = ids.map((id) => ({ profile_id: id, department: 'Ops' }));
+
+    let callCount = 0;
+    mockFrom.mockImplementation((table: unknown) => {
+      callCount++;
+      const c = chain();
+      if (callCount === 1) {
+        c.maybeSingle.mockResolvedValue({ data: { organization_id: 'org-1' }, error: null });
+      } else if (callCount === 2) {
+        c.setResolve({ data: members, error: null });
+      } else if (callCount === 3) {
+        c.setResolve({ data: members.map((m) => ({ profile_id: m.profile_id, role: 'member' })), error: null });
+      } else {
+        c.setResolve({ data: [], error: null });
+      }
+      return c;
+    });
+
+    const result = await getOrgAnalytics('vol-1');
+    const partCalls = (mockFrom.mock.calls as unknown[][]).filter((a) => a[0] === 'participations');
+    expect(partCalls).toHaveLength(2);
+    expect(result.total_members).toBe(250);
+  });
+});

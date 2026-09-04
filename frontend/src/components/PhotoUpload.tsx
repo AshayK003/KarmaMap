@@ -36,7 +36,14 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    // Clear the input so re-selecting the same file fires change again.
+    e.target.value = '';
+    if (!file) return;
+    if (!user) {
+      setStatus('error');
+      setErrorMessage('Please sign in to upload photos.');
+      return;
+    }
     if (file.size > 10 * 1024 * 1024) {
       setStatus('error');
       setErrorMessage(`File too large (max 10MB). Got ${(file.size / 1024 / 1024).toFixed(1)}MB`);

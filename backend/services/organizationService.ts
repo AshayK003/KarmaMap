@@ -91,9 +91,12 @@ export async function getOrgAnalytics(profileId: string): Promise<OrgAnalyticsRe
     .select('profile_id, role')
     .eq('organization_id', orgId);
 
-  if (!allErr && allM) {
-    allMembers.push(...allM);
+  // A failed member scan must fail the report, not silently zero the headcount.
+  if (allErr || !allM) {
+    logger.error({ orgId, error: allErr?.message }, 'Failed to fetch all org members');
+    throw new Error('Failed to fetch analytics');
   }
+  allMembers.push(...allM);
 
   const totalMembers = allMembers.length;
   const optedInMemberIds = new Set((members ?? []).map((m) => m.profile_id));
@@ -120,18 +123,20 @@ export async function getOrgAnalytics(profileId: string): Promise<OrgAnalyticsRe
     };
   }
 
-  const { data: participations, error: pErr } = await supabaseAdmin
-    .from('participations')
-    .select('volunteer_id, hours, created_at, gigs!inner(title, gig_date)')
-    .in('volunteer_id', optedInIds)
-    .eq('status', 'completed');
-
-  if (pErr) {
-    logger.error({ orgId, error: pErr.message }, 'Failed to fetch participations');
-    throw new Error('Failed to fetch analytics');
+  // PostgREST URLs cap out on giant id lists: page instead of one huge .in().
+  const completed: any[] = [];
+  for (let i = 0; i < optedInIds.length; i += 200) {
+    const { data: page, error: pageErr } = await supabaseAdmin
+      .from('participations')
+      .select('volunteer_id, hours, created_at, gigs!inner(title, gig_date)')
+      .in('volunteer_id', optedInIds.slice(i, i + 200))
+      .eq('status', 'completed');
+    if (pageErr) {
+      logger.error({ orgId, error: pageErr.message }, 'Failed to fetch participations');
+      throw new Error('Failed to fetch analytics');
+    }
+    completed.push(...(page ?? []));
   }
-
-  const completed = participations ?? [];
   let totalHours = 0;
   const deptHours = new Map<string, number>();
   const monthHours = new Map<string, number>();

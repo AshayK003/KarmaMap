@@ -149,7 +149,9 @@ export function VolunteerMap() {
       .channel('volunteer-gig-changes')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'gigs', filter: 'status=eq.open' },
+        // Unfiltered: gigs leaving open status must also trigger a reload,
+        // or stale cards linger until manual refresh.
+        { event: 'UPDATE', schema: 'public', table: 'gigs' },
         debouncedLoadGigs,
       )
       .on(
