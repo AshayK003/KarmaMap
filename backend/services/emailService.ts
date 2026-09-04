@@ -100,7 +100,11 @@ export async function sendGigMatchEmails(
       ),
   );
 
-  const failures = results.filter((r) => r.status === 'rejected');
+  const failures = results.filter(
+    // sendEmail resolves false (not rejects) on 4xx/5xx/network failure —
+    // counting only rejections reported zero failures forever.
+    (r) => r.status === 'rejected' || (r.status === 'fulfilled' && r.value === false),
+  );
   if (failures.length > 0) {
     logger.warn({ total: results.length, failures: failures.length }, 'Match emails had failures');
   }

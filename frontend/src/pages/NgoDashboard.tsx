@@ -118,7 +118,7 @@ export function NgoDashboard() {
         (g) =>
           g.title.toLowerCase().includes(q) ||
           g.description.toLowerCase().includes(q) ||
-          g.required_skills.some((skill) => skill.toLowerCase().includes(q)),
+          (g.required_skills ?? []).some((skill) => skill.toLowerCase().includes(q)),
       );
     }
     return result;

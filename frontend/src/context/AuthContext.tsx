@@ -68,14 +68,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        fetchProfile(data.session.user.id);
-      }
-      setLoading(false);
-    });
+    supabase
+      .auth.getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          fetchProfile(data.session.user.id);
+        }
+      })
+      // Offline/sandboxed boot must not leave protected routes spinning forever.
+      .catch((err) => logger.error('Failed to restore session:', err))
+      .finally(() => setLoading(false));
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
@@ -133,6 +137,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       logger.error('Sign out failed:', err);
     }
+    // Clear local auth state unconditionally: the onAuthStateChange event may
+    // never arrive when offline, which would leave authed nav visible.
+    setUser(null);
+    setSession(null);
     setProfile(null);
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const key = sessionStorage.key(i);

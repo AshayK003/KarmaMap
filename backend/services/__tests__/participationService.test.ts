@@ -200,10 +200,37 @@ describe('completeParticipation', async () => {
     expect(result.karma_earned).toBe(20);
   });
 
-  it('throws 400 without touching notifications when the RPC fails', async () => {
+  it('throws 409 when the participation is already completed', async () => {
     mockRpc.mockResolvedValue({
       data: null,
       error: { message: 'Participation not found or already completed', code: 'P0002' },
+    });
+
+    await expect(completeParticipation('part-1', 'vol-1', { hours: 2 })).rejects.toMatchObject({
+      message: 'Participation already completed',
+      statusCode: 409,
+    });
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockGetUserById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the participation does not exist', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'Participation not found', code: 'P0002' },
+    });
+
+    await expect(completeParticipation('part-1', 'vol-1', { hours: 2 })).rejects.toMatchObject({
+      message: 'Participation not found',
+      statusCode: 404,
+    });
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('throws 400 without touching notifications on unexpected errors', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'connection reset', code: 'XX000' },
     });
 
     await expect(completeParticipation('part-1', 'vol-1', { hours: 2 })).rejects.toMatchObject({

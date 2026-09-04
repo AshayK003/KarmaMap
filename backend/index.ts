@@ -21,6 +21,10 @@ export function createApp() {
   const app = express();
   const isDev = process.env.NODE_ENV !== 'production';
 
+  // Behind Render/Vercel all clients share the proxy IP unless trusted —
+  // without this, one client can exhaust the rate limit for everyone.
+  app.set('trust proxy', 1);
+
   // Fail fast on a missing production origin instead of silently trusting
   // localhost with credentials.
   if (!isDev && !process.env.FRONTEND_URL) {
@@ -67,6 +71,23 @@ export function createApp() {
   });
   app.use('/api/', generalLimiter);
 
+  // Writes fan out (matching → notifications + emails), so they get a
+  // stricter budget. Reads stay on the general limiter.
+  const writeLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: isDev ? 1000 : 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later' },
+  });
+  app.use('/api/', (req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+      next();
+      return;
+    }
+    writeLimiter(req, res, next);
+  });
+
   app.get('/health', async (_req, res) => {
     try {
       const { error } = await supabaseAdmin
@@ -88,9 +109,14 @@ export function createApp() {
   app.use('/api/ngo', ngoRoutes);
   app.use('/api/organizations', organizationRoutes);
 
+  // JSON 404 for unknown API routes (Express's default HTML breaks clients).
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
   app.use(
     (
-      err: Error & { statusCode?: number },
+      err: Error & { statusCode?: number; type?: string },
       req: express.Request,
       res: express.Response,
       _next: express.NextFunction,
@@ -101,6 +127,13 @@ export function createApp() {
         path: req.originalUrl,
         statusCode: err.statusCode ?? 500,
       });
+
+      // express.json parse failure: body-parser sets status 400 but the raw
+      // message leaks parser internals.
+      if (err.type === 'entity.parse.failed') {
+        res.status(400).json({ error: 'Invalid JSON body' });
+        return;
+      }
 
       if (err.name === 'ZodError') {
         res.status(400).json({

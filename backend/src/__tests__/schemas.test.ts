@@ -6,6 +6,7 @@ import {
 import { completeGigSchema } from '../../controllers/participationController.js';
 
 describe('createGigSchema', () => {
+  const futureIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   const validInput = {
     title: 'Cleanup Drive',
     description: 'Join us for a monthly cleanup of the park',
@@ -13,7 +14,7 @@ describe('createGigSchema', () => {
     lng: 77.209,
     required_skills: ['cleaning', 'organizing'],
     volunteers_needed: 5,
-    gig_date: '2026-06-15T09:00:00Z',
+    gig_date: futureIso,
     location_label: 'Central Park',
   };
 
@@ -73,6 +74,20 @@ describe('createGigSchema', () => {
 
   it('rejects empty gig_date', () => {
     const result = createGigSchema.safeParse({ ...validInput, gig_date: '' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a gig_date in the past', () => {
+    const pastIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const result = createGigSchema.safeParse({ ...validInput, gig_date: pastIso });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain('gig_date');
+    }
+  });
+
+  it('rejects an unparseable gig_date', () => {
+    const result = createGigSchema.safeParse({ ...validInput, gig_date: 'not-a-date' });
     expect(result.success).toBe(false);
   });
 });

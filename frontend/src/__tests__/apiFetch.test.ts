@@ -21,11 +21,13 @@ beforeEach(() => {
 });
 
 describe('apiFetch', () => {
-  it('throws on network failure after retry', async () => {
+  it('throws a friendly message on network failure after retry', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
 
     const { apiFetch } = await import('../utils/api');
-    await expect(apiFetch('/test')).rejects.toThrow('Failed to fetch');
+    await expect(apiFetch('/test')).rejects.toThrow(
+      'Network error — check your connection and try again.',
+    );
   });
 
   it('parses error response body', async () => {

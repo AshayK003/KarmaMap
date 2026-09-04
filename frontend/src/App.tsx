@@ -39,6 +39,7 @@ const OrganizationManage = lazy(() =>
 const NgoProfile = lazy(() =>
   import('./pages/NgoProfile').then((m) => ({ default: m.NgoProfile })),
 );
+const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 function PageLoader() {
   return (
@@ -58,8 +59,14 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <div className="flex min-h-screen flex-col">
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:m-2 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-emerald-700"
+            >
+              Skip to content
+            </a>
             <Navbar />
-            <main className="flex-1 animate-fade-in">
+            <main id="main-content" className="flex-1 animate-fade-in">
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
@@ -133,6 +140,7 @@ function App() {
                       }
                     />
                     <Route path="/ngo/:id" element={<NgoProfile />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
               </ErrorBoundary>

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import type { UserRole } from '../types/database';
 
 const schema = z.object({
@@ -22,7 +23,10 @@ type FormData = z.infer<typeof schema>;
 
 export function Signup() {
   const [params] = useSearchParams();
-  const defaultRole = (params.get('role') as UserRole) || 'volunteer';
+  // Whitelist the role param: anything else (e.g. ?role=admin) silently broke
+  // validation with no visible error. Unknown values fall back to volunteer.
+  const rawRole = params.get('role');
+  const defaultRole: UserRole = rawRole === 'ngo' ? 'ngo' : 'volunteer';
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +58,20 @@ export function Signup() {
     if (error) {
       setError('root', { message: error.message });
       return;
+    }
+
+    // With email confirmation enabled there is no session yet: sending the
+    // user to a protected route would bounce them straight back to login.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast.success('Account created! Check your email to verify your account.');
+        navigate('/login');
+        return;
+      }
+    } catch {
+      // If the session check itself fails, fall through to the role route —
+      // ProtectedRoute will redirect to login if there is really no session.
     }
 
     toast.success('Account created! Check your email to verify your account.');

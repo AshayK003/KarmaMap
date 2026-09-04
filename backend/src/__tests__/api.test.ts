@@ -105,6 +105,25 @@ describe('PATCH /api/gigs/:gigId/feature hours cap', () => {
   });
 });
 
+describe('unknown API routes', () => {
+  it('returns JSON 404 instead of HTML', async () => {
+    const res = await supertest(app).get('/api/does-not-exist');
+    expect(res.status).toBe(404);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.body.error).toBe('Not found');
+  });
+
+  it('returns 400 with a clean message for malformed JSON', async () => {
+    const res = await supertest(app)
+      .post('/api/gigs')
+      .set('Authorization', 'Bearer test')
+      .set('Content-Type', 'application/json')
+      .send('{"title":');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid JSON body');
+  });
+});
+
 describe('POST /api/gigs', () => {
   it('returns 400 for invalid body (short title)', async () => {
     const res = await supertest(app)
@@ -126,7 +145,7 @@ describe('POST /api/gigs', () => {
       lat: 28.6,
       lng: 77.2,
       volunteers_needed: 0,
-      gig_date: '2026-06-01',
+      gig_date: '2030-06-01T09:00:00Z',
     });
     expect(res.status).toBe(400);
   });
@@ -148,7 +167,7 @@ describe('POST /api/gigs', () => {
         lng: 77.2,
         required_skills: ['first aid'],
         volunteers_needed: 3,
-        gig_date: '2026-06-01',
+        gig_date: '2030-06-01T09:00:00Z',
       });
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('gig');

@@ -17,7 +17,11 @@ export const createGigSchema = z.object({
   lng: z.number().min(-180).max(180),
   required_skills: z.array(z.string()).default([]),
   volunteers_needed: z.number().int().min(1).default(1),
-  gig_date: z.string().refine((val) => !Number.isNaN(Date.parse(val)), 'Invalid date format'),
+  gig_date: z
+    .string()
+    .refine((val) => !Number.isNaN(Date.parse(val)), 'Invalid date format')
+    // Gigs in the past would pollute discovery; 60s grace covers clock skew.
+    .refine((val) => Date.parse(val) >= Date.now() - 60_000, 'Gig date must be in the future'),
   location_label: z.string().optional(),
   duration: z.number().int().positive().optional(),
 });

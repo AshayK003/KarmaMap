@@ -21,6 +21,12 @@ describe('formatDistance', () => {
   it('handles 0', () => {
     expect(formatDistance(0)).toBe('0 m');
   });
+
+  it('returns a fallback for non-finite input instead of throwing', () => {
+    expect(formatDistance(Number.NaN)).toBe('N/A');
+    expect(formatDistance(Number.POSITIVE_INFINITY)).toBe('N/A');
+    expect(formatDistance(undefined as unknown as number)).toBe('N/A');
+  });
 });
 
 describe('skillOverlapScore', () => {
@@ -43,6 +49,14 @@ describe('skillOverlapScore', () => {
   it('is case insensitive', () => {
     expect(skillOverlapScore(['First Aid'], ['first aid'])).toBe(100);
   });
+
+  it('treats null or undefined skill lists as empty', () => {
+    expect(skillOverlapScore(null as unknown as string[], ['a'])).toBe(0);
+    expect(skillOverlapScore(['a'], null as unknown as string[])).toBe(0);
+    expect(
+      skillOverlapScore(undefined as unknown as string[], undefined as unknown as string[]),
+    ).toBe(0);
+  });
 });
 
 describe('generatePortfolioSlug', () => {
@@ -54,6 +68,12 @@ describe('generatePortfolioSlug', () => {
   it('handles single name', () => {
     const slug = generatePortfolioSlug('Alice');
     expect(slug).toMatch(/^alice-[a-z0-9]+$/);
+  });
+
+  it('strips URL-breaking characters', () => {
+    const slug = generatePortfolioSlug('John! Doe? /#');
+    expect(slug).toMatch(/^[a-z0-9-]+$/);
+    expect(slug).not.toContain('--');
   });
 });
 
@@ -68,6 +88,11 @@ describe('estimateTravelTime', () => {
 
   it('handles 0', () => {
     expect(estimateTravelTime(0)).toMatch(/min walk/);
+  });
+
+  it('returns a fallback for non-finite or negative input', () => {
+    expect(estimateTravelTime(Number.NaN)).toBe('N/A');
+    expect(estimateTravelTime(-5)).toBe('N/A');
   });
 });
 
@@ -102,6 +127,11 @@ describe('parseGigLocation', () => {
   it('handles POINT with negative longitude', () => {
     const result = parseGigLocation('POINT(-0.1276 51.5074)');
     expect(result).toEqual({ lng: -0.1276, lat: 51.5074 });
+  });
+
+  it('returns null for non-finite GeoJSON coordinates instead of NaN', () => {
+    expect(parseGigLocation({ type: 'Point', coordinates: ['abc', 'def'] })).toBeNull();
+    expect(parseGigLocation({ type: 'Point', coordinates: [null, 28.6] })).toBeNull();
   });
 });
 

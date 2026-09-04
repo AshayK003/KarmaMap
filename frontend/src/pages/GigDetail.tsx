@@ -1,6 +1,6 @@
 import { AlertTriangle, Calendar, Clock, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useRealtimeParticipations } from '../hooks/useRealtimeGigs';
 import { supabase } from '../lib/supabase';
 import { joinGigViaApi } from '../services/gigs';
 import type { Gig } from '../types/database';
-import { formatDate } from '../utils/format';
+import { escapeIcsText, formatDate, safeIcsFilename } from '../utils/format';
 import { parseGigLocation, skillOverlapScore } from '../utils/geo';
 import { logger } from '../utils/logger';
 import {
@@ -174,7 +174,9 @@ export function GigDetail() {
   }
 
   const overlap =
-    profile?.role === 'volunteer' ? skillOverlapScore(gig.required_skills, profile.skills) : 0;
+    profile?.role === 'volunteer'
+      ? skillOverlapScore(gig.required_skills ?? [], profile.skills ?? [])
+      : 0;
 
   const advisory = getWeatherAdvisory(weather);
 
@@ -213,7 +215,7 @@ export function GigDetail() {
           Required Skills
         </span>
         <div className="flex flex-wrap gap-2">
-          {gig.required_skills.map((s) => {
+          {(gig.required_skills ?? []).map((s) => {
             const hasSkill = profile?.skills?.some((ps) => ps.toLowerCase() === s.toLowerCase());
             return (
               <Badge
@@ -320,8 +322,8 @@ export function GigDetail() {
                   'BEGIN:VEVENT',
                   `DTSTART:${fmt(start)}`,
                   `DTEND:${fmt(end)}`,
-                  `SUMMARY:${gig.title}`,
-                  `DESCRIPTION:${gig.description.replace(/\n/g, '\\n')}`,
+                  `SUMMARY:${escapeIcsText(gig.title)}`,
+                  `DESCRIPTION:${escapeIcsText(gig.description)}`,
                   parsed ? `LOCATION:${parsed.lat},${parsed.lng}` : '',
                   `URL:${window.location.href}`,
                   'END:VEVENT',
@@ -333,8 +335,10 @@ export function GigDetail() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${gig.title.replace(/\s+/g, '_')}.ics`;
+                a.download = safeIcsFilename(gig.title);
+                document.body.appendChild(a);
                 a.click();
+                a.remove();
                 URL.revokeObjectURL(url);
               }}
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline transition-colors cursor-pointer"
@@ -405,7 +409,7 @@ export function GigDetail() {
         </div>
       )}
 
-      {profile?.role === 'volunteer' && user && (
+      {profile?.role === 'volunteer' && user ? (
         <div className="mt-6 space-y-2">
           {joinError && (
             <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700/50 px-4 py-2.5 text-xs font-bold text-rose-700 dark:text-rose-300">
@@ -429,6 +433,16 @@ export function GigDetail() {
             {joining ? 'Joining…' : 'Join gig'}
           </Button>
         </div>
+      ) : (
+        !user && (
+          <div className="mt-6">
+            <Link to={`/login?next=${encodeURIComponent(`/gigs/${id}`)}`}>
+              <Button className="w-full" size="lg" variant="outline">
+                Sign in to join this gig
+              </Button>
+            </Link>
+          </div>
+        )
       )}
     </div>
   );

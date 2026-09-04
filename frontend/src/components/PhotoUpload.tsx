@@ -1,5 +1,5 @@
 import { Camera } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { PhotoUploadStatus } from '../services/storage';
 import { compressAndUpload, createLocalPreview, revokePreview } from '../services/storage';
@@ -20,6 +20,8 @@ const STATUS_LABELS: Record<PhotoUploadStatus, string> = {
 
 export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // Unique per instance: the page renders before + after uploaders side by side.
+  const inputId = useId();
   const { user } = useAuth();
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
@@ -42,7 +44,11 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
     }
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       setStatus('error');
-      setErrorMessage('Invalid file type. Use JPEG, PNG, or WebP.');
+      // iPhone shoots HEIC by default, which browsers can't decode — tell the
+      // user how to fix it instead of a dead-end "invalid" message.
+      setErrorMessage(
+        'Unsupported photo format (iPhone saves HEIC by default — switch to Settings → Camera → Formats → Most Compatible). Use JPEG, PNG, or WebP.',
+      );
       return;
     }
     if (localPreview) revokePreview(localPreview);
@@ -129,9 +135,9 @@ export function PhotoUpload({ label, onUploadComplete }: PhotoUploadProps) {
 
       <input
         ref={inputRef}
-        id="photo-upload-input"
+        id={inputId}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         capture="environment"
         className="hidden"
         onChange={handleChange}

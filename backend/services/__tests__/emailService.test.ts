@@ -92,3 +92,46 @@ describe('sendEmail', () => {
     expect(result).toBe(false);
   });
 });
+
+describe('sendGigMatchEmails', () => {
+  it('counts false results as failures, not just rejections', async () => {
+    // No env vars: every sendEmail resolves false immediately (no retries).
+    delete process.env.EMAILJS_PUBLIC_KEY;
+    delete process.env.EMAILJS_SERVICE_ID;
+    delete process.env.EMAILJS_TEMPLATE_ID;
+
+    const { sendGigMatchEmails } = await import('../emailService.js');
+    const { logger } = await import('../../src/lib/logger.js');
+
+    await sendGigMatchEmails(
+      [
+        { email: 'a@t.com', name: 'Alice' },
+        { email: 'b@t.com', name: 'Bob' },
+      ],
+      'Park Cleanup',
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      { total: 2, failures: 2 },
+      'Match emails had failures',
+    );
+  });
+
+  it('stays quiet when every email sends', async () => {
+    process.env.EMAILJS_PUBLIC_KEY = 'pk_test';
+    process.env.EMAILJS_SERVICE_ID = 'svc_test';
+    process.env.EMAILJS_TEMPLATE_ID = 'tmpl_test';
+
+    global.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+
+    const { sendGigMatchEmails } = await import('../emailService.js');
+    const { logger } = await import('../../src/lib/logger.js');
+
+    await sendGigMatchEmails([{ email: 'a@t.com', name: 'Alice' }], 'Park Cleanup');
+
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      { total: 1, failures: expect.anything() },
+      'Match emails had failures',
+    );
+  });
+});

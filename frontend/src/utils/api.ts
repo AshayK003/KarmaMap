@@ -25,6 +25,26 @@ async function tryFetch(url: string, opts: RequestInit): Promise<Response> {
   return res;
 }
 
+export const FRIENDLY_NETWORK_ERROR = 'Network error — check your connection and try again.';
+
+/**
+ * Raw fetch failures ("Failed to fetch") leak browser internals into toasts.
+ * Remap them once, at the boundary — status-carrying HTTP errors pass through.
+ */
+function toFriendlyError(err: unknown): Error {
+  if (typeof err === 'object' && err !== null && 'status' in err)
+    return err as unknown as Error;
+  const message = err instanceof Error ? err.message : String(err);
+  if (
+    message === 'Failed to fetch' ||
+    message.toLowerCase().includes('networkerror') ||
+    message.toLowerCase().includes('load failed')
+  ) {
+    return new Error(FRIENDLY_NETWORK_ERROR);
+  }
+  return err instanceof Error ? err : new Error(message);
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const {
     data: { session },
@@ -66,5 +86,5 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     }
   }
 
-  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  throw toFriendlyError(lastErr);
 }

@@ -61,6 +61,16 @@ describe('verifyGigOwnership', () => {
       statusCode: 403,
     });
   });
+
+  it('throws 500 (not 403) when the ownership lookup itself fails', async () => {
+    const { verifyGigOwnership } = await import('../../services/gigService.js');
+    mockSingle.mockResolvedValue({ data: null, error: { message: 'db down' } });
+
+    await expect(verifyGigOwnership('gig-1', 'ngo-1')).rejects.toMatchObject({
+      message: 'Failed to verify gig ownership',
+      statusCode: 500,
+    });
+  });
 });
 
 describe('createGig', () => {
@@ -115,5 +125,18 @@ describe('getNgoAnalytics', () => {
       total_gigs: 0,
       chart_data: [],
     });
+  });
+
+  it('never emits undefined names or NaN volunteer counts', async () => {
+    const { getNgoAnalytics } = await import('../../services/gigService.js');
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'no rpc' } });
+    // Sparse legacy row: title and volunteers_joined missing entirely.
+    mockEq.mockResolvedValue({
+      data: [{ id: 'g1', status: 'open', gig_date: '2030-01-01' }],
+      error: null,
+    });
+
+    const result = await getNgoAnalytics('ngo-1');
+    expect(result.chart_data).toEqual([{ name: 'Gig', volunteers: 0, completed: 0 }]);
   });
 });

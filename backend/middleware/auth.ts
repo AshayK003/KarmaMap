@@ -60,13 +60,15 @@ export async function verifyJwt(
     let role = cached?.role;
 
     if (!cached) {
-      const { data: profile } = await supabaseAdmin
+      const { data: profile, error: profileError } = await supabaseAdmin
         .from('profiles')
         .select('role')
         .eq('id', userId)
         .single();
       role = profile?.role;
-      setCachedRole(userId, role);
+      // Never cache a failed lookup: a transient DB error would otherwise
+      // masquerade as "no role" (403s) for a full TTL window.
+      if (!profileError) setCachedRole(userId, role);
     }
 
     req.user = { id: userId, role };

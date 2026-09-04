@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Sprout } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,7 +20,13 @@ type FormData = z.infer<typeof schema>;
 export function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
+  // Honor ?next= deep links (e.g. "Sign in to join"), but only same-origin
+  // paths — never open-redirect to an external URL.
+  const nextParam = params.get('next');
+  const safeNext =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null;
 
   const {
     register,
@@ -44,12 +50,12 @@ export function Login() {
           .select('role')
           .eq('id', userId)
           .single();
-        navigate(prof?.role === 'ngo' ? '/ngo/dashboard' : '/map');
+        navigate(safeNext ?? (prof?.role === 'ngo' ? '/ngo/dashboard' : '/map'));
       } else {
-        navigate('/map');
+        navigate(safeNext ?? '/map');
       }
     } catch {
-      navigate('/map');
+      navigate(safeNext ?? '/map');
     }
   };
 

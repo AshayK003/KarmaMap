@@ -184,6 +184,21 @@ describe('getMyOrg', () => {
 
     expect(result).toBeNull();
   });
+
+  it('hides raw database errors behind a generic 400', async () => {
+    const { getMyOrg } = await import('../organizationService.js');
+    const c = chain();
+    c.maybeSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'relation "x" does not exist', code: '42P01' },
+    });
+    mockFrom.mockReturnValue(c);
+
+    await expect(getMyOrg('vol-1')).rejects.toMatchObject({
+      message: 'Failed to fetch organization',
+      statusCode: 400,
+    });
+  });
 });
 
 describe('updateOptIn', () => {
@@ -349,5 +364,20 @@ describe('getOrgName', () => {
     const result = await getOrgName('vol-404');
 
     expect(result).toBeNull();
+  });
+
+  it('throws instead of masquerading a DB error as non-membership', async () => {
+    const { getOrgName } = await import('../organizationService.js');
+    const c = chain();
+    c.maybeSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'connection reset', code: 'XX000' },
+    });
+    mockFrom.mockReturnValue(c);
+
+    await expect(getOrgName('vol-1')).rejects.toMatchObject({
+      message: 'Failed to fetch organization',
+      statusCode: 400,
+    });
   });
 });

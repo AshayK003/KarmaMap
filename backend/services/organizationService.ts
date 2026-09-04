@@ -200,7 +200,8 @@ export async function getMyOrg(profileId: string) {
       },
       'Failed to fetch org membership',
     );
-    throw Object.assign(new Error(error.message), { statusCode: 400, code: error.code });
+    // Never echo raw PostgREST internals to the client.
+    throw Object.assign(new Error('Failed to fetch organization'), { statusCode: 400 });
   }
 
   return data;
@@ -303,7 +304,10 @@ export async function getOrgName(profileId: string): Promise<string | null> {
 
   if (error) {
     requireTables(error);
-    return null;
+    // A real DB error is not "not a member" — surfacing null here made every
+    // outage look like a non-membership and hid it from monitoring.
+    logger.error({ profileId, error: error.message }, 'Failed to fetch org name');
+    throw Object.assign(new Error('Failed to fetch organization'), { statusCode: 400 });
   }
   if (!data) return null;
 

@@ -100,9 +100,9 @@ export const GigCard = memo(function GigCard({
       </p>
 
       {/* Skills */}
-      {gig.required_skills.length > 0 && (
+      {(gig.required_skills ?? []).length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {gig.required_skills.map((skill) => {
+          {(gig.required_skills ?? []).map((skill) => {
             const hasSkill = volunteerSkills.some((s) => s.toLowerCase() === skill.toLowerCase());
             return (
               <Badge

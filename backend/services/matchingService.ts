@@ -85,7 +85,9 @@ export async function findMatchedVolunteers(
   const ranked = (volunteers ?? []).map(
     (v: { id: string; name: string; email: string; skills: string[]; distance_meters: number }) => {
       const overlap = skillOverlap(gig.required_skills ?? [], v.skills ?? []);
-      const distScore = normalizeDistance(v.distance_meters);
+      // Score proximity against the requested radius so the edge scores 0 —
+      // the default 50km scale previously over-scored distant volunteers.
+      const distScore = normalizeDistance(v.distance_meters, radiusMeters);
       const final_score = 0.5 * distScore + 0.5 * overlap;
       return { ...v, skill_overlap: overlap, final_score };
     },
@@ -136,9 +138,7 @@ async function matchVolunteersFallback(
       matches.push({
         ...base,
         distance_meters: Math.round(distance),
-        final_score:
-          0.5 * normalizeDistance(distance, Math.max(radiusMeters, 50000)) +
-          0.5 * base.skill_overlap,
+        final_score: 0.5 * normalizeDistance(distance, radiusMeters) + 0.5 * base.skill_overlap,
       });
     } else {
       // No usable coordinates on either side: include with unknown distance.

@@ -18,6 +18,9 @@ const TIER_COLORS = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
 export function Leaderboard() {
   const [volunteers, setVolunteers] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  // A failed fetch previously rendered "No volunteers ranked yet" — a lie.
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const CACHE_KEY = 'karmamap-leaderboard';
@@ -35,6 +38,7 @@ export function Leaderboard() {
       }
     }
 
+    setLoadError(false);
     Promise.resolve(
       supabase
         .from('profiles')
@@ -43,15 +47,19 @@ export function Leaderboard() {
         .not('karma_points', 'is', null)
         .order('karma_points', { ascending: false })
         .limit(50)
-        .then(({ data }) => {
+        .then(({ data, error }) => {
+          if (error) throw error;
           const entries = (data as LeaderboardEntry[]) ?? [];
           setVolunteers(entries);
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: entries, ts: Date.now() }));
         }),
     )
-      .catch(logger.error)
+      .catch((err: unknown) => {
+        logger.error('Failed to fetch leaderboard:', err);
+        setLoadError(true);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [retryCount]);
 
   const chartData = volunteers.slice(0, 10);
 
@@ -71,6 +79,25 @@ export function Leaderboard() {
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-2xl" />
           ))}
+        </div>
+      ) : loadError ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 p-8 text-center space-y-3">
+          <p className="text-sm font-extrabold text-slate-600 dark:text-slate-300">
+            Couldn't load the leaderboard
+          </p>
+          <p className="text-xs font-semibold text-slate-400">
+            Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              setRetryCount((c) => c + 1);
+            }}
+            className="text-xs font-black text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+          >
+            Retry
+          </button>
         </div>
       ) : volunteers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 p-8 text-center">

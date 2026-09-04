@@ -105,6 +105,27 @@ describe('verifyJwt', () => {
     expect(req.user).toEqual({ id: 'user-2', role: undefined });
     expect(next).toHaveBeenCalledOnce();
   });
+
+  it('does not cache a failed profile lookup (no error poisoning)', async () => {
+    const { verifyJwt } = await import('../auth.js');
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-cache-1' } }, error: null });
+    // First call: transient DB error. Second call: role resolves.
+    mockProfileSingle
+      .mockResolvedValueOnce({ data: null, error: { message: 'db down' } })
+      .mockResolvedValueOnce({ data: { role: 'ngo' }, error: null });
+
+    const first = mockReqRes();
+    first.req.headers.authorization = 'Bearer valid-token';
+    await verifyJwt(first.req, first.res, first.next);
+    expect(first.req.user).toEqual({ id: 'user-cache-1', role: undefined });
+
+    const second = mockReqRes();
+    second.req.headers.authorization = 'Bearer valid-token';
+    await verifyJwt(second.req, second.res, second.next);
+    // A poisoned cache would have skipped the second lookup and kept undefined.
+    expect(mockProfileSingle).toHaveBeenCalledTimes(2);
+    expect(second.req.user).toEqual({ id: 'user-cache-1', role: 'ngo' });
+  });
 });
 
 describe('requireRole', () => {

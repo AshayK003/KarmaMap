@@ -38,6 +38,16 @@ export async function completeParticipation(
   });
 
   if (error || !data) {
+    const message = error?.message ?? 'Failed to complete participation';
+    // The RPC raises 'Participation not found' (P0002) vs
+    // 'Participation not found or already completed' — check the longer,
+    // more specific message first since it contains the shorter one.
+    if (message.includes('already completed')) {
+      throw Object.assign(new Error('Participation already completed'), { statusCode: 409 });
+    }
+    if (message.includes('not found')) {
+      throw Object.assign(new Error('Participation not found'), { statusCode: 404 });
+    }
     logger.error(
       { participationId, volunteerId, error: error?.message },
       'Atomic participation completion failed',
@@ -49,7 +59,7 @@ export async function completeParticipation(
   // The RPC awards round(hours * 10) points atomically alongside the update.
   const karmaEarned = Math.round(input.hours * 10);
 
-  notifyAndEmail(volunteerId, participation, String(participation.gig_id ?? ''), karmaEarned);
+  void notifyAndEmail(volunteerId, participation, String(participation.gig_id ?? ''), karmaEarned);
 
   return { participation, karma_earned: karmaEarned };
 }

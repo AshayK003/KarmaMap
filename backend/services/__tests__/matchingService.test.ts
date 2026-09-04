@@ -124,6 +124,33 @@ describe('findMatchedVolunteers', async () => {
     expect(result[2].name).toBe('Carol');
   });
 
+  it('scores proximity against the requested radius, not a fixed 50km', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'gig-1', required_skills: ['a', 'b'], location: null },
+        error: null,
+      }),
+    });
+
+    mockRpc.mockResolvedValue({
+      data: [
+        // At the 10km edge with full skills: 0.5 * 0 + 0.5 * 1 = 0.5.
+        { id: 'v1', name: 'Edge', email: 'e@t.com', skills: ['a', 'b'], distance_meters: 10000 },
+        // Halfway with no skills: 0.5 * 0.5 + 0.5 * 0 = 0.25.
+        { id: 'v2', name: 'Near', email: 'n@t.com', skills: [], distance_meters: 5000 },
+      ],
+      error: null,
+    });
+
+    const result = await findMatchedVolunteers('gig-1', 10000, 10);
+
+    expect(result[0].name).toBe('Edge');
+    expect(result[0].final_score).toBe(0.5);
+    expect(result[1].final_score).toBe(0.25);
+  });
+
   it('limits results to the limit parameter', async () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnThis(),

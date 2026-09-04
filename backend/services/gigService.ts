@@ -37,11 +37,16 @@ interface GigOwnership {
 }
 
 async function getGigOwnership(gigId: string): Promise<GigOwnership | null> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('gigs')
     .select('title, ngo_id')
     .eq('id', gigId)
     .single();
+  // A database failure is a 500, not a 403 — conflating them hides outages.
+  if (error) {
+    logger.error({ gigId, error: error.message }, 'Failed to fetch gig ownership');
+    throw Object.assign(new Error('Failed to verify gig ownership'), { statusCode: 500 });
+  }
   return data as GigOwnership | null;
 }
 
@@ -184,8 +189,9 @@ export async function getNgoAnalytics(ngoId: string): Promise<AnalyticsResult> {
   const completedGigs = (gigsData ?? []).filter((g) => g.status === 'completed').length;
 
   const chartData = (gigsData ?? []).map((g) => ({
-    name: String(g.title).slice(0, 20),
-    volunteers: Number(g.volunteers_joined),
+    // Sparse/legacy rows can miss these columns — never emit "undefined"/NaN.
+    name: String(g.title ?? 'Gig').slice(0, 20),
+    volunteers: Number(g.volunteers_joined ?? 0),
     completed: g.status === 'completed' ? 1 : 0,
   }));
 

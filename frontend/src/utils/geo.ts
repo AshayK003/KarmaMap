@@ -30,22 +30,38 @@ export function urgencyLabel(gig: {
 }
 
 export function formatDistance(meters: number): string {
+  // Callers pass RPC values that can be null/undefined on sparse rows.
+  if (!Number.isFinite(meters)) return 'N/A';
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
-export function skillOverlapScore(required: string[], volunteer: string[]): number {
+export function skillOverlapScore(
+  required: string[] | null | undefined,
+  volunteer: string[] | null | undefined,
+): number {
+  // Unknown requirements (null) must not inflate to a full match — 0 is the
+  // safe side. Explicitly-empty requirements still mean "no filter" (100).
+  if (!required) return 0;
   if (required.length === 0) return 100;
   const req = required.map((s) => s.toLowerCase());
-  const matches = volunteer.filter((s) => req.includes(s.toLowerCase())).length;
+  const matches = (volunteer ?? []).filter((s) => req.includes(s.toLowerCase())).length;
   return Math.round((matches / required.length) * 100);
 }
 
 export function generatePortfolioSlug(name: string): string {
-  return `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+  // Strip URL-breaking characters (/?#%…) so the slug never breaks /p/:slug.
+  const safe = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${safe || 'volunteer'}-${Date.now().toString(36)}`;
 }
 
 export function estimateTravelTime(meters: number): string {
+  if (!Number.isFinite(meters) || meters < 0) return 'N/A';
   const km = meters / 1000;
   if (km < 1.5) {
     const walkMinutes = Math.round((km / 5) * 60);
@@ -61,13 +77,27 @@ export function parseGigLocation(location: unknown): { lat: number; lng: number 
   if (typeof location === 'object' && location !== null) {
     const obj = location as Record<string, unknown>;
     if (obj.type === 'Point' && Array.isArray(obj.coordinates) && obj.coordinates.length === 2) {
-      return { lng: Number(obj.coordinates[0]), lat: Number(obj.coordinates[1]) };
+      const [rawLng, rawLat] = obj.coordinates;
+      // Number(null) is 0 and Number(true) is 1 — reject non-numeric JSON
+      // outright instead of mapping garbage to Gulf-of-Guinea coordinates.
+      if (typeof rawLng !== 'number' && typeof rawLng !== 'string') return null;
+      if (typeof rawLat !== 'number' && typeof rawLat !== 'string') return null;
+      if (rawLng === '' || rawLat === '') return null;
+      const lng = Number(rawLng);
+      const lat = Number(rawLat);
+      if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
+      return null;
     }
   }
   if (typeof location === 'string') {
     // E/WKT format: "SRID=4326;POINT(lng lat)" or "POINT(lng lat)"
     const wktMatch = location.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/i);
-    if (wktMatch) return { lng: Number(wktMatch[1]), lat: Number(wktMatch[2]) };
+    if (wktMatch) {
+      const lng = Number(wktMatch[1]);
+      const lat = Number(wktMatch[2]);
+      if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
+      return null;
+    }
     // Hex WKB format (from Supabase Realtime): 0101000020E6100000XXXX...YYYY...
     if (/^01[01]000020e6100000/i.test(location) && location.length >= 50) {
       const buf = new Uint8Array(8);

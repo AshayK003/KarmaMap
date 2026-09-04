@@ -19,6 +19,8 @@ const CACHE_TTL_MS = 60_000;
 export function Home() {
   const { user, profile } = useAuth();
   const [stats, setStats] = useState<Stats>({ totalHours: 0, ngoCount: 0, openGigs: 0 });
+  // Distinct from real zeros: a failed fetch must not masquerade as "0+".
+  const [statsFailed, setStatsFailed] = useState(false);
 
   useEffect(() => {
     const cached = sessionStorage.getItem(CACHE_KEY);
@@ -48,7 +50,10 @@ export function Home() {
           setStats(newStats);
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: newStats, ts: Date.now() }));
         }),
-    ).catch((err: unknown) => logger.error('Failed to fetch home stats:', err));
+    ).catch((err: unknown) => {
+      logger.error('Failed to fetch home stats:', err);
+      setStatsFailed(true);
+    });
   }, []);
 
   return (
@@ -107,7 +112,7 @@ export function Home() {
         <section className="mt-20 border-y border-slate-100 dark:border-slate-700 py-10 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xs rounded-3xl px-6 grid gap-8 sm:grid-cols-3 text-center">
           <div>
             <p className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-slate-100">
-              {stats.totalHours.toLocaleString()}+
+              {statsFailed ? '—' : `${stats.totalHours.toLocaleString()}+`}
             </p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
               Hours Logged
@@ -115,7 +120,7 @@ export function Home() {
           </div>
           <div className="border-y sm:border-y-0 sm:border-x border-slate-100 dark:border-slate-700 py-6 sm:py-0">
             <p className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
-              {stats.openGigs}+
+              {statsFailed ? '—' : `${stats.openGigs}+`}
             </p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
               Open Opportunities
@@ -123,7 +128,7 @@ export function Home() {
           </div>
           <div>
             <p className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-slate-100">
-              {stats.ngoCount}+
+              {statsFailed ? '—' : `${stats.ngoCount}+`}
             </p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
               Verified Partners

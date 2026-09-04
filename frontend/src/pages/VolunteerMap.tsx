@@ -112,14 +112,14 @@ export function VolunteerMap() {
 
   const allSkills = useMemo(() => {
     const set = new Set<string>();
-    gigs.forEach((g) => g.required_skills.forEach((s) => set.add(s)));
+    gigs.forEach((g) => (g.required_skills ?? []).forEach((s) => set.add(s)));
     return Array.from(set).sort();
   }, [gigs]);
 
   const filteredGigs = useMemo(() => {
     if (!categoryFilter) return gigs;
     return gigs.filter((g) =>
-      g.required_skills.some((s) => s.toLowerCase() === categoryFilter.toLowerCase()),
+      (g.required_skills ?? []).some((s) => s.toLowerCase() === categoryFilter.toLowerCase()),
     );
   }, [gigs, categoryFilter]);
 
@@ -127,7 +127,7 @@ export function VolunteerMap() {
     if (sortMode === 'nearest' || !profile?.skills) return filteredGigs;
     const withScore = filteredGigs.map((g) => ({
       ...g,
-      matchScore: skillOverlapScore(g.required_skills, profile.skills),
+      matchScore: skillOverlapScore(g.required_skills ?? [], profile.skills),
     }));
     withScore.sort((a, b) => {
       if (a.matchScore !== b.matchScore) return b.matchScore - a.matchScore;

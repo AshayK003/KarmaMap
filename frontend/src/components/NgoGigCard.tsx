@@ -187,9 +187,9 @@ export const NgoGigCard = memo(function NgoGigCard({ gig, onUpdated }: NgoGigCar
             <Progress value={cappedFillRate} indicatorClassName={progressTheme} />
           </div>
 
-          {gig.required_skills.length > 0 && (
+          {(gig.required_skills ?? []).length > 0 && (
             <div className="mt-3.5 flex flex-wrap gap-1.5">
-              {gig.required_skills.map((s) => (
+              {(gig.required_skills ?? []).map((s) => (
                 <span
                   key={s}
                   className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400 transition-colors"

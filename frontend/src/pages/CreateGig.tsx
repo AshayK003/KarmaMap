@@ -61,6 +61,12 @@ export function CreateGig() {
         setError('gig_date', { message: 'Invalid date or time' });
         return;
       }
+      // The date input clamps to today, but the combined date+time can still
+      // be in the past (e.g. earlier today). The backend re-checks this.
+      if (gigDate.getTime() < Date.now() - 60_000) {
+        setError('gig_date', { message: 'Pick a future date and time' });
+        return;
+      }
 
       await createGigViaApi({
         title: data.title,
