@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -30,8 +30,8 @@ const PublicPortfolio = lazy(() =>
 const Leaderboard = lazy(() =>
   import('./pages/Leaderboard').then((m) => ({ default: m.Leaderboard })),
 );
-const CorporateDashboard = lazy(() =>
-  import('./pages/CorporateDashboard').then((m) => ({ default: m.CorporateDashboard })),
+const OrganizationDashboard = lazy(() =>
+  import('./pages/OrganizationDashboard').then((m) => ({ default: m.OrganizationDashboard })),
 );
 const OrganizationManage = lazy(() =>
   import('./pages/OrganizationManage').then((m) => ({ default: m.OrganizationManage })),
@@ -136,20 +136,28 @@ function App() {
                       }
                     />
                     <Route
-                      path="/corporate/dashboard"
+                      path="/organization/dashboard"
                       element={
                         <ProtectedRoute roles={['volunteer', 'ngo']}>
-                          <CorporateDashboard />
+                          <OrganizationDashboard />
                         </ProtectedRoute>
                       }
                     />
                     <Route
-                      path="/corporate/manage"
+                      path="/organization/manage"
                       element={
                         <ProtectedRoute>
                           <OrganizationManage />
                         </ProtectedRoute>
                       }
+                    />
+                    <Route
+                      path="/corporate/dashboard"
+                      element={<Navigate to="/organization/dashboard" replace />}
+                    />
+                    <Route
+                      path="/corporate/manage"
+                      element={<Navigate to="/organization/manage" replace />}
                     />
                     <Route path="/ngo/:id" element={<NgoProfile />} />
                     <Route path="*" element={<NotFound />} />

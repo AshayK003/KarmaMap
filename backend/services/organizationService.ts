@@ -6,7 +6,7 @@ const PGRST_TABLE_NOT_FOUND = 'PGRST202';
 function requireTables(error: { code?: string; message?: string }): void {
   if (error.code === PGRST_TABLE_NOT_FOUND) {
     throw Object.assign(
-      new Error('Corporate features not configured. Ask an admin to apply the database migration.'),
+      new Error('Organization features not configured. Ask an admin to apply the database migration.'),
       { statusCode: 503 },
     );
   }

@@ -19,14 +19,14 @@ KarmaMap is a production-grade PWA that bridges the gap between NGOs needing ski
 
 - **🗺️ Proximity Matching** — PostGIS-powered geospatial queries find volunteers within range of NGO gigs, ranked by a weighted skill + location algorithm.
 - **🛣️ Real Routing** — OSRM road distance scores complement straight-line proximity for realistic volunteer availability.
-- **📊 Role-Based Dashboards** — Separate views for volunteers, NGOs, and corporate partners — each with analytics, history, and management tools.
+- **📊 Role-Based Dashboards** — Separate views for volunteers, NGOs, and organization members — each with analytics, history, and management tools.
 - **🏆 Karma System** — Earn karma points and build streaks for completed participation. Leaderboard fosters community recognition.
 - **📱 PWA Ready** — Works offline, installable on mobile. Built with React + Vite for fast interactions.
 - **🔐 Row-Level Security** — Supabase RLS protects reads; the Express backend handles writes via `service_role` key (never exposed to the client).
 - **📸 Verified Photo Uploads** — Volunteers submit completion photos to a dedicated Supabase storage bucket for accountability.
 - **📧 Email Notifications** — Optional EmailJS integration for participation confirmations and updates.
 - **📍 Public Portfolios** — Volunteers get shareable profile pages (`/p/:slug`) showcasing their impact.
-- **🏢 Corporate CSR Tools** — Organizations can track team participation, manage members, and generate CSR analytics.
+- **🏢 Organization Impact Tools** — Organizations can track team participation, manage members, and generate impact analytics.
 
 ## Tech Stack
 
@@ -174,8 +174,8 @@ cd frontend && npm run build     # → dist/ (static SPA)
 | `/ngo/dashboard` | NGO Dashboard | NGO |
 | `/ngo/create-gig` | Create Gig | NGO |
 | `/ngo/:id` | Public NGO Profile | Public |
-| `/corporate/dashboard` | Corporate Dashboard | Org Member |
-| `/corporate/manage` | Organization Manage | Org Admin |
+| `/organization/dashboard` | Organization Dashboard | Org Member |
+| `/organization/manage` | Organization Manage | Org Admin |
 | `/leaderboard` | Leaderboard | Authenticated |
 
 ### API Endpoints

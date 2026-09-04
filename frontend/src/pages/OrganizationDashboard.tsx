@@ -17,7 +17,7 @@ import { AwardIcon, Building2Icon, ClockIcon, UsersIcon } from '../components/Na
 import type { OrgAnalytics } from '../types/database';
 import { apiFetch } from '../utils/api';
 
-export function CorporateDashboard() {
+export function OrganizationDashboard() {
   const [analytics, setAnalytics] = useState<OrgAnalytics | null>(null);
   const [orgName, setOrgName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +98,7 @@ export function CorporateDashboard() {
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-3">
             <Building2Icon className="h-7 w-7 text-emerald-600" />
-            {orgName ? `${orgName} Impact Dashboard` : 'Corporate Dashboard'}
+            {orgName ? `${orgName} Impact Dashboard` : 'Organization Dashboard'}
           </h1>
           <p className="text-sm font-semibold text-slate-400 mt-1">
             Track your team's verified volunteer impact, hours, and ESG metrics.

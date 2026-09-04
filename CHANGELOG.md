@@ -52,6 +52,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Map reloads on any gig update so closed gigs disappear without refresh.
 - Storage policies are idempotent and create both buckets by SQL.
 - Stale migration helper removed; `pg` moved to dev dependencies.
+- Renamed Corporate Dashboard to Organization Dashboard (`/organization/*`;
+  old `/corporate/*` paths redirect) — no corporate role exists, so the old
+  name invited "who is this for?" questions.
 
 ### Fixed
 
