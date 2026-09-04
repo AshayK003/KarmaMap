@@ -65,7 +65,19 @@ function App() {
             >
               Skip to content
             </a>
-            <Navbar />
+            <ErrorBoundary
+              fallback={
+                <div className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80">
+                  <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6 py-3">
+                    <span className="text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
+                      Karma<span className="text-emerald-600">Map</span>
+                    </span>
+                  </div>
+                </div>
+              }
+            >
+              <Navbar />
+            </ErrorBoundary>
             <main id="main-content" className="flex-1 animate-fade-in">
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>

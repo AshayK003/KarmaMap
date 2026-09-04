@@ -66,6 +66,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of signed-out links.
 - Volunteer map hint no longer claims the map is "on the right" (on mobile
   it sits above the picker).
+- Mobile hamburger blank screen for signed-in users: the navbar renders one
+  notification bell on desktop and a second one in the mobile drawer, and
+  both shared a single realtime channel name. Opening the drawer threw
+  inside an effect with no error boundary above the navbar, unmounting the
+  whole app. Each realtime hook instance now uses a unique channel name, so
+  the drawer opens with its full menu on all three auth states (verified at
+  390px with zero page errors). The navbar is also wrapped in an error
+  boundary with a slim brand fallback, so a future nav error can never blank
+  the page again.
 
 ## [1.1.0] - 2026-08-23
 

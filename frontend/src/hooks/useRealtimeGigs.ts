@@ -29,6 +29,9 @@ function cacheProfile(cache: Map<string, string>, key: string, value: string) {
 export function useRealtimeGigs(ngoId?: string) {
   const [gigs, setGigs] = useState<Gig[]>([]);
   const profileCache = useRef<Map<string, string>>(new Map());
+  // Unique per mount: a second live instance sharing the channel name makes
+  // supabase throw on .on() after subscribe, unmounting the whole app.
+  const channelName = useRef(`gigs-realtime-${Math.random().toString(36).slice(2)}`).current;
 
   const fetchGigs = useCallback(async () => {
     try {
@@ -51,7 +54,7 @@ export function useRealtimeGigs(ngoId?: string) {
     fetchGigs();
 
     const channel = supabase
-      .channel('gigs-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'gigs' },
@@ -101,6 +104,10 @@ export function useRealtimeGigs(ngoId?: string) {
 
 export function useRealtimeNotifications(userId?: string) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Unique per mount: the navbar renders one bell on desktop and another in
+  // the mobile drawer. Sharing the channel name makes supabase throw on
+  // .on() after subscribe, unmounting the whole app (mobile blank screen).
+  const channelName = useRef(`notifications-realtime-${Math.random().toString(36).slice(2)}`).current;
 
   const fetchNotifications = useCallback(async () => {
     if (!userId) return;
@@ -123,7 +130,7 @@ export function useRealtimeNotifications(userId?: string) {
     if (!userId) return;
 
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -194,6 +201,10 @@ export function useRealtimeNotifications(userId?: string) {
 
 export function useRealtimeParticipations(gigId?: string) {
   const [count, setCount] = useState(0);
+  // Unique per mount so two views of the same gig never share a channel.
+  const channelName = useRef(
+    `participations-${gigId ?? 'none'}-${Math.random().toString(36).slice(2)}`,
+  ).current;
 
   useEffect(() => {
     if (!gigId) return;
@@ -215,7 +226,7 @@ export function useRealtimeParticipations(gigId?: string) {
     fetchCount();
 
     const channel = supabase
-      .channel(`participations-${gigId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'participations', filter: `gig_id=eq.${gigId}` },
