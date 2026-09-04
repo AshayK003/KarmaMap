@@ -151,7 +151,8 @@ export function createApp() {
       if ('code' in err && typeof (err as Error & { code: string }).code === 'string') {
         const code = (err as Error & { code: string }).code;
         if (code.startsWith('PGRST') || code.startsWith('235')) {
-          res.status(400).json({ error: err.message });
+          // Never echo PostgREST internals (constraint names, column hints).
+          res.status(400).json({ error: 'Invalid request' });
           return;
         }
       }

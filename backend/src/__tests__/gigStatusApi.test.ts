@@ -47,18 +47,15 @@ function mockGigFetch(status: string, ngoId = 'ngo-1') {
 }
 
 function mockGigUpdate(status: string) {
+  const updateChain: Record<string, ReturnType<typeof vi.fn>> = {};
+  updateChain.eq = vi.fn(() => updateChain);
+  updateChain.select = vi.fn(() => ({
+    single: vi.fn().mockResolvedValue({ data: { id: GIG_ID, status }, error: null }),
+  }));
   fromMock.mockImplementationOnce(
     () =>
       ({
-        update: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi
-                .fn()
-                .mockResolvedValue({ data: { id: GIG_ID, status }, error: null }),
-            })),
-          })),
-        })),
+        update: vi.fn(() => updateChain),
       }) as unknown as ReturnType<typeof supabaseAdmin.from>,
   );
 }

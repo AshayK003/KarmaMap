@@ -148,14 +148,35 @@ export async function transitionGigStatus(
       statusCode: 409,
     });
   }
+  // Conditional write: ownership + expected state re-checked atomically so a
+  // concurrent transition cannot slip between the SELECT above and this UPDATE.
   const { data: updated, error: updateError } = await supabaseAdmin
     .from('gigs')
     .update({ status: toStatus })
     .eq('id', gigId)
+    .eq('ngo_id', ngoId)
+    .eq('status', fromStatus)
     .select()
     .single();
-  if (updateError || !updated) {
+  if (updateError) {
+    // Zero rows (PGRST116) means a concurrent move already changed the state.
+    if ((updateError as { code?: string }).code === 'PGRST116') {
+      throw Object.assign(new Error(`Cannot move gig from ${fromStatus} to ${toStatus}`), {
+        statusCode: 409,
+      });
+    }
+    // DB-level guard rejection (migration 18) carries the same meaning.
+    const code = (updateError as { code?: string }).code;
+    if (code === '42501' || (updateError.message ?? '').includes('Illegal gig status transition')) {
+      throw Object.assign(new Error(`Cannot move gig from ${fromStatus} to ${toStatus}`), {
+        statusCode: 409,
+      });
+    }
     logger.error({ gigId, error: updateError?.message }, 'Failed to update gig status');
+    throw Object.assign(new Error('Failed to update gig status'), { statusCode: 500 });
+  }
+  if (!updated) {
+    logger.error({ gigId }, 'Failed to update gig status');
     throw Object.assign(new Error('Failed to update gig status'), { statusCode: 500 });
   }
   logger.info({ gigId, from: fromStatus, to: toStatus }, 'Gig status transitioned');

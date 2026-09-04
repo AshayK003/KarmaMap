@@ -7,11 +7,10 @@ const chain: Record<string, ReturnType<typeof vi.fn>> = {};
 chain.select = vi.fn(() => chain);
 chain.eq = vi.fn(() => chain);
 chain.single = mockSingle;
-chain.update = vi.fn(() => ({
-  eq: vi.fn(() => ({
-    select: vi.fn(() => ({ single: mockUpdateSingle })),
-  })),
-}));
+const updateChain: Record<string, ReturnType<typeof vi.fn>> = {};
+updateChain.eq = vi.fn(() => updateChain);
+updateChain.select = vi.fn(() => ({ single: mockUpdateSingle }));
+chain.update = vi.fn(() => updateChain);
 
 vi.mock('../../services/supabase.js', () => ({
   supabaseAdmin: {
@@ -101,6 +100,29 @@ describe('transitionGigStatus auth and failures', () => {
     await expect(transition('gig-1', 'ngo-1', 'in_progress')).rejects.toMatchObject({
       message: 'Failed to update gig status',
       statusCode: 500,
+    });
+  });
+
+  it('throws 409 when a concurrent move already changed the state', async () => {
+    mockSingle.mockResolvedValueOnce(OWNED);
+    mockUpdateSingle.mockResolvedValueOnce({ data: null, error: { message: '0 rows', code: 'PGRST116' } });
+
+    await expect(transition('gig-1', 'ngo-1', 'in_progress')).rejects.toMatchObject({
+      message: 'Cannot move gig from open to in_progress',
+      statusCode: 409,
+    });
+  });
+
+  it('throws 409 when the database guard rejects the move', async () => {
+    mockSingle.mockResolvedValueOnce(OWNED);
+    mockUpdateSingle.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Illegal gig status transition from open to cancelled', code: '42501' },
+    });
+
+    await expect(transition('gig-1', 'ngo-1', 'cancelled')).rejects.toMatchObject({
+      message: 'Cannot move gig from open to cancelled',
+      statusCode: 409,
     });
   });
 });
