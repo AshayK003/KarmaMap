@@ -750,7 +750,7 @@ export function VolunteerPortfolio() {
             <button
               onClick={() => setSelectedCert(null)}
               aria-label="Close certificate"
-              className="absolute top-4 right-4 rounded-full p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
+              className="no-print absolute top-4 right-4 rounded-full p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
             >
               ✕
             </button>
@@ -772,10 +772,11 @@ export function VolunteerPortfolio() {
                   day: 'numeric',
                   year: 'numeric',
                 })}
+                verifyUrl={shareUrl || undefined}
               />
             </div>
 
-            <div className="mt-6 flex justify-center gap-3">
+            <div className="no-print mt-6 flex justify-center gap-3">
               <button
                 onClick={() => {
                   window.print();

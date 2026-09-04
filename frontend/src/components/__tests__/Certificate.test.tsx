@@ -8,7 +8,7 @@ const participation = {
   hours: 2.5,
 } as unknown as Participation;
 
-function renderCert(orgName?: string) {
+function renderCert(orgName?: string, verifyUrl?: string) {
   return render(
     <Certificate
       volunteerName="Ashay Kushwaha"
@@ -16,6 +16,7 @@ function renderCert(orgName?: string) {
       gigTitle="Tree plantation drive"
       completedDate="September 4, 2026"
       orgName={orgName}
+      verifyUrl={verifyUrl}
     />,
   );
 }
@@ -38,5 +39,16 @@ describe('Certificate', () => {
   it('contains no decorative glyph characters', () => {
     const { container } = renderCert('Green Earth NGO');
     expect(container.textContent).not.toMatch(/[✦◈✕✓]/);
+  });
+
+  it('shows the seal and verification link', () => {
+    renderCert('Green Earth NGO', 'https://karma-map.vercel.app/p/ashay');
+    expect(screen.getByLabelText(/verified by karmamap seal/i)).toBeTruthy();
+    expect(screen.getByText(/karma-map\.vercel\.app\/p\/ashay/)).toBeTruthy();
+  });
+
+  it('omits the verification line when no URL is given', () => {
+    renderCert('Green Earth NGO');
+    expect(screen.queryByText(/verify at/i)).toBeNull();
   });
 });
